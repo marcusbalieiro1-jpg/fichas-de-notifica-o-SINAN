@@ -30,10 +30,11 @@ node scripts/baixar-fichas.js             # baixa o que tiver link cadastrado
 
 1. Abra <https://portalsinan.saude.gov.br/notificacoes>.
 2. Baixe o PDF da ficha de notificação/investigação do agravo.
-3. Salve nesta pasta **com exatamente o nome esperado** — a lista sai em
-   `node scripts/baixar-fichas.js --listar`, ou pelo botão
-   *Exportar catálogo para conferência (CSV)* na aba **Configurações** do
-   próprio sistema (coluna "Arquivo local").
+3. Salve nesta pasta **com exatamente o nome esperado**. A lista completa,
+   com caixas para ir marcando, está em
+   [LISTA-DE-ARQUIVOS.md](LISTA-DE-ARQUIVOS.md) — dá para abrir direto no
+   GitHub. Ela também sai por `node scripts/baixar-fichas.js --listar` e pelo
+   botão *Exportar catálogo para conferência (CSV)* na aba **Configurações**.
 
 Depois de copiar os arquivos, faça `git add fichas/ && git commit && git push`
 para que todos os computadores recebam o acervo.
