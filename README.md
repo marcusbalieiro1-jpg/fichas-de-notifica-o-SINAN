@@ -145,6 +145,7 @@ corporativo.
 | Documento | Para quem |
 |---|---|
 | [docs/IMPLANTACAO.md](docs/IMPLANTACAO.md) | Quem vai publicar e distribuir |
+| [docs/TRANSPORTE-E-INTRANET.md](docs/TRANSPORTE-E-INTRANET.md) | Quem vai levar o projeto para a rede interna do hospital |
 | [docs/CONFERENCIA-NORMATIVA.md](docs/CONFERENCIA-NORMATIVA.md) | Chefia do Núcleo de Epidemiologia |
 | [docs/MANUAL-MEDICO.md](docs/MANUAL-MEDICO.md) | Médicos assistentes (uma página, para imprimir) |
 | [backend/apps-script/README.md](backend/apps-script/README.md) | Quem vai ligar o modo compartilhado |
