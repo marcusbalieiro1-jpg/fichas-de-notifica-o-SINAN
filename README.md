@@ -36,7 +36,13 @@ computadores de atendimento. Sem instalação e sem login.
 
 ---
 
-## Começando
+## Experimentando
+
+O jeito mais rápido: baixe **[`HABE-SINAN.html`](HABE-SINAN.html)** — todo o
+sistema num arquivo só, com o CSS, os scripts e o brasão embutidos — e abra com
+dois cliques. Não precisa instalar nada, servidor nem internet.
+
+A partir do código:
 
 ```bash
 git clone https://github.com/marcusbalieiro1-jpg/fichas-de-notifica-o-SINAN.git
@@ -44,10 +50,21 @@ cd fichas-de-notifica-o-SINAN
 python3 -m http.server 8000      # ou: npx http-server -p 8000
 ```
 
-Abra <http://localhost:8000>. Também funciona abrindo `index.html`
-diretamente pelo Windows Explorer, sem servidor.
+Abra <http://localhost:8000>.
+
+> Para **testar**, use nomes fictícios de paciente. Enquanto o sistema não
+> estiver na intranet do hospital, dado real de paciente não deve ser digitado.
 
 Para publicar e distribuir de verdade, siga **[docs/IMPLANTACAO.md](docs/IMPLANTACAO.md)**.
+
+### Regerando o arquivo único
+
+`HABE-SINAN.html` é uma cópia congelada: não acompanha as alterações sozinho.
+Depois de mexer no catálogo, no CSS ou em qualquer script:
+
+```bash
+node scripts/gerar-arquivo-unico.js
+```
 
 ---
 
@@ -93,6 +110,8 @@ fichas/                         acervo de PDFs entregues por download
 scripts/
   descobrir-fichas.js           acha os links das fichas no portal do Sinan
   baixar-fichas.js              popula o acervo a partir dos links oficiais
+  gerar-arquivo-unico.js        monta o HABE-SINAN.html de arquivo único
+HABE-SINAN.html                 o sistema inteiro num arquivo, para dois cliques
 docs/                           implantação, conferência normativa, guia médico
 ```
 

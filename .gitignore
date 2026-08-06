@@ -1,0 +1,3 @@
+# Saída intermediária do gerador de arquivo único.
+# O HABE-SINAN.html, esse sim, é versionado: é o que se distribui.
+build/

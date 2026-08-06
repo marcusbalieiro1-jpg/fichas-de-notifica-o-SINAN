@@ -130,6 +130,29 @@ Paginas.solicitar = (function () {
 
   /* ---------- comprovante ---------- */
 
+  /* O desfecho da entrega depende de como a página foi aberta. Por servidor,
+     o sistema confere se o PDF existe antes de prometer o download; aberto
+     por file://, o navegador não permite essa checagem, e o texto precisa
+     dizer isso em vez de afirmar o que não foi verificado. */
+  function avisoDoDownload(desfecho) {
+    if (desfecho.origem === 'local') {
+      return '<div class="aviso aviso--sucesso nao-imprimir"><span class="aviso__icone">⬇</span><div>' +
+        '<strong>Ficha baixada automaticamente</strong>Arquivo <code>' +
+        U.esc(desfecho.nome) + '</code> — verifique a pasta de downloads do computador.</div></div>';
+    }
+    if (desfecho.origem === 'local-sem-verificacao') {
+      return '<div class="aviso nao-imprimir"><span class="aviso__icone">⬇</span><div>' +
+        '<strong>Download solicitado: <code>' + U.esc(desfecho.nome) + '</code></strong>' +
+        'O sistema está aberto direto do arquivo, sem servidor, e por isso não consegue ' +
+        'confirmar se a ficha existe no acervo. Se nada tiver sido baixado, é porque falta ' +
+        '<code>' + U.esc(desfecho.arquivo) + '</code> — avise o Núcleo de Epidemiologia.</div></div>';
+    }
+    return '<div class="aviso aviso--atencao nao-imprimir"><span class="aviso__icone">🔗</span><div>' +
+      '<strong>Ficha não encontrada no acervo local</strong>' +
+      'Foi aberta a versão do portal oficial em outra aba. Avise o Núcleo de Epidemiologia ' +
+      'para que o arquivo seja incluído no acervo.</div></div>';
+  }
+
   function mostrarComprovante(elemento, solicitacao, ficha, desfechoDownload) {
     var imediata = solicitacao.classificacaoEfetiva === 'imediata';
     var prazo = U.prazoLimite({ classificacao: solicitacao.classificacaoEfetiva },
@@ -141,14 +164,7 @@ Paginas.solicitar = (function () {
         '<p>Guarde o protocolo abaixo e anexe este comprovante à ficha preenchida.</p>' +
       '</div>' +
 
-      (desfechoDownload.origem === 'local'
-        ? '<div class="aviso aviso--sucesso nao-imprimir"><span class="aviso__icone">⬇</span><div>' +
-            '<strong>Ficha baixada automaticamente</strong>Arquivo <code>' +
-            U.esc(desfechoDownload.nome) + '</code> — verifique a pasta de downloads do computador.</div></div>'
-        : '<div class="aviso aviso--atencao nao-imprimir"><span class="aviso__icone">🔗</span><div>' +
-            '<strong>Ficha não encontrada no acervo local</strong>' +
-            'Foi aberta a versão do portal oficial em outra aba. Avise o Núcleo de Epidemiologia ' +
-            'para que o arquivo seja incluído no acervo.</div></div>') +
+      avisoDoDownload(desfechoDownload) +
 
       (imediata
         ? '<div class="aviso aviso--urgente"><span class="aviso__icone">⏱</span><div>' +

@@ -130,6 +130,9 @@ Paginas.fichas = (function () {
         U.entregarFicha(ficha, null).then(function (desfecho) {
           if (desfecho.origem === 'local') {
             U.torrada('Modelo em branco baixado: ' + desfecho.nome, 'sucesso');
+          } else if (desfecho.origem === 'local-sem-verificacao') {
+            U.torrada('Download solicitado: ' + desfecho.nome +
+                      '. Se nada baixar, a ficha ainda não está no acervo.');
           } else {
             U.torrada('Ficha ainda não incluída no acervo local — abrindo a versão oficial.', 'atencao');
           }

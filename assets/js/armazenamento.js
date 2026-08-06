@@ -36,7 +36,7 @@ var Armazenamento = (function () {
     setor: 'Núcleo de Epidemiologia',
     enderecoPublico: '',           // URL do sistema, usada no QR Code
     pinNucleo: '',                 // PIN de acesso à área do Núcleo
-    tema: 'claro',
+    tema: 'auto',              // 'auto' segue o sistema; 'claro'/'escuro' são escolhas explícitas
     tamanhoMaximoAnexoMb: 10
   };
 

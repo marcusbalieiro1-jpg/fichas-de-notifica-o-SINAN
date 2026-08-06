@@ -241,15 +241,22 @@ var U = (function () {
   function entregarFicha(ficha, solicitacao) {
     var nome = nomeArquivoFicha(ficha, solicitacao);
 
-    /* Aberto por file:// — fetch é bloqueado; usa link direto. */
+    /* Aberto por file:// — o navegador bloqueia fetch, então não há como saber
+       de antemão se o PDF existe. O link vai para uma aba nova: se o arquivo
+       estiver lá, baixa; se não estiver, o erro fica contido nessa aba em vez
+       de derrubar o sistema, que é o que aconteceria navegando a própria
+       página para um arquivo inexistente. */
     if (window.location.protocol === 'file:') {
       var a = document.createElement('a');
       a.href = ficha.arquivo;
       a.download = nome;
+      a.target = '_blank';
+      a.rel = 'noopener';
       document.body.appendChild(a);
       a.click();
       a.remove();
-      return Promise.resolve({ origem: 'local', nome: nome });
+      return Promise.resolve({ origem: 'local-sem-verificacao', nome: nome,
+                               arquivo: ficha.arquivo });
     }
 
     return fetch(ficha.arquivo, { cache: 'no-store' })

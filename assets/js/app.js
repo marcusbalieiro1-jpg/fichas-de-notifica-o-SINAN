@@ -108,17 +108,47 @@ var App = (function () {
 
   /* ---------- tema ---------- */
 
-  function aplicarTema(tema) {
+  /* 'claro' e 'escuro' são escolhas explícitas do usuário. Qualquer outro
+     valor significa "acompanhe o ambiente": o tema do sistema operacional ou,
+     quando a página está embutida em outro visualizador, o dele. */
+  function temaEfetivo(preferencia) {
+    if (preferencia === 'claro' || preferencia === 'escuro') { return preferencia; }
+    var doVisualizador = document.documentElement.getAttribute('data-theme');
+    if (doVisualizador === 'dark') { return 'escuro'; }
+    if (doVisualizador === 'light') { return 'claro'; }
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      ? 'escuro' : 'claro';
+  }
+
+  function aplicarTema(preferencia) {
+    var tema = temaEfetivo(preferencia);
     document.documentElement.setAttribute('data-tema', tema);
     var botao = U.$('#botaoTema');
     if (botao) { botao.classList.toggle('botao-icone--ativo', tema === 'escuro'); }
+    return tema;
   }
 
   function alternarTema() {
-    var config = Armazenamento.obterConfig();
-    var novo = config.tema === 'escuro' ? 'claro' : 'escuro';
+    var atual = document.documentElement.getAttribute('data-tema');
+    var novo = atual === 'escuro' ? 'claro' : 'escuro';
     Armazenamento.salvarConfig({ tema: novo });
     aplicarTema(novo);
+  }
+
+  /* Enquanto o usuário não escolher, acompanha mudanças de tema do ambiente. */
+  function seguirTemaDoAmbiente() {
+    function reaplicar() {
+      var preferencia = Armazenamento.obterConfig().tema;
+      if (preferencia !== 'claro' && preferencia !== 'escuro') { aplicarTema(preferencia); }
+    }
+    if (window.matchMedia) {
+      var consulta = window.matchMedia('(prefers-color-scheme: dark)');
+      if (consulta.addEventListener) { consulta.addEventListener('change', reaplicar); }
+    }
+    if (window.MutationObserver) {
+      new window.MutationObserver(reaplicar).observe(document.documentElement,
+        { attributes: true, attributeFilter: ['data-theme'] });
+    }
   }
 
   /* ---------- identidade e contadores ---------- */
@@ -159,6 +189,7 @@ var App = (function () {
 
   function iniciar() {
     aplicarTema(Armazenamento.obterConfig().tema);
+    seguirTemaDoAmbiente();
     aplicarIdentidade();
 
     U.$('#botaoTema').addEventListener('click', alternarTema);
