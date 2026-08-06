@@ -23,8 +23,17 @@ externa fora do ar.
 
 ```bash
 node scripts/baixar-fichas.js --listar    # mostra o que falta
-node scripts/baixar-fichas.js             # baixa o que tiver link cadastrado
+node scripts/descobrir-fichas.js          # procura os links no portal do Sinan
+                                          # e propõe qual PDF é de qual agravo
+node scripts/descobrir-fichas.js --aplicar   # grava as propostas de confiança alta
+node scripts/baixar-fichas.js             # baixa tudo o que tiver link cadastrado
 ```
+
+O `descobrir-fichas.js` varre o portal do Ministério da Saúde e escreve as
+propostas em `fichas/PROPOSTAS-DE-LINKS.md`, **sem gravar nada por conta
+própria**: entregar a ficha errada ao médico é pior do que não entregar ficha
+nenhuma. Confira o relatório antes de rodar com `--aplicar`, que só grava as
+propostas de confiança alta e nunca sobrescreve link já existente.
 
 **Manualmente** (jeito garantido):
 

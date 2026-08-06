@@ -90,7 +90,9 @@ assets/
                                 relatórios, médicos, acesso rápido, config
 backend/apps-script/            servidor opcional (planilha Google + Drive)
 fichas/                         acervo de PDFs entregues por download
-scripts/baixar-fichas.js        popula o acervo a partir dos links oficiais
+scripts/
+  descobrir-fichas.js           acha os links das fichas no portal do Sinan
+  baixar-fichas.js              popula o acervo a partir dos links oficiais
 docs/                           implantação, conferência normativa, guia médico
 ```
 
