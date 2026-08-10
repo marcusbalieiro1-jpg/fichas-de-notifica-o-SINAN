@@ -161,6 +161,67 @@ var U = (function () {
     return '—';
   }
 
+  /* ---------- perfil da página ---------- */
+
+  /* O sistema tem duas páginas, definidas pela variável HABE_PERFIL que cada
+     arquivo HTML declara antes de carregar os scripts:
+
+       'consulta' — usada pelos médicos da urgência e dos ambulatórios. Só
+                    consulta prazos e baixa fichas. Não registra, não guarda e
+                    nem sequer contém código que lide com dado de paciente.
+       'nucleo'   — usada pelo Núcleo Hospitalar de Epidemiologia. Registra as
+                    notificações, anexa as fichas digitalizadas e emite os
+                    relatórios.
+
+     Na dúvida, assume o perfil mais restrito. */
+  function perfilNucleo() {
+    return (typeof HABE_PERFIL !== 'undefined') && HABE_PERFIL === 'nucleo';
+  }
+
+  /* ---------- contato do Núcleo ---------- */
+
+  function unidade() {
+    return HABE_CATALOGO.unidade || {};
+  }
+
+  /* Como chamar o Núcleo, em uma linha. Vazio se nada foi cadastrado. */
+  function comoChamarNucleo() {
+    var u = unidade();
+    var partes = [];
+    if (u.ramal) { partes.push('ramal ' + u.ramal); }
+    if (u.plantao) { partes.push('plantão ' + u.plantao); }
+    if (u.email) { partes.push(u.email); }
+    return partes.join(' · ');
+  }
+
+  /* Bloco de contato exibido ao médico assistente. Em agravo de notificação
+     imediata, vem em vermelho e com o verbo no imperativo. */
+  function blocoContato(imediata) {
+    var u = unidade();
+    var contato = comoChamarNucleo();
+    var setor = u.setor || 'Núcleo de Epidemiologia';
+
+    if (imediata) {
+      return '<div class="aviso aviso--urgente" style="margin-top:1rem">' +
+        '<span class="aviso__icone">☎</span><div>' +
+        '<strong>Comunique o ' + esc(setor) + ' agora</strong>' +
+        (contato
+          ? 'Ligue: <strong>' + esc(contato) + '</strong>. '
+          : 'Ligue para o ' + esc(setor) + '. ') +
+        'A notificação de 24 horas começa na suspeita, não no resultado do exame — ' +
+        'a ficha em papel não substitui esse telefonema.' +
+        '</div></div>';
+    }
+
+    return '<div class="aviso" style="margin-top:1rem">' +
+      '<span class="aviso__icone">📨</span><div>' +
+      '<strong>Depois de preencher</strong>' +
+      'Assine a ficha e encaminhe ao ' + esc(setor) +
+      (contato ? ' — ' + esc(contato) : '') + '. ' +
+      'É o Núcleo que faz o registro no Sinan.' +
+      '</div></div>';
+  }
+
   /* ---------- avisos flutuantes ---------- */
 
   function torrada(mensagem, tipo, duracao) {
@@ -353,6 +414,8 @@ var U = (function () {
 
   return {
     $: $, $$: $$, esc: esc, normalizar: normalizar,
+    perfilNucleo: perfilNucleo, unidade: unidade,
+    comoChamarNucleo: comoChamarNucleo, blocoContato: blocoContato,
     hoje: hoje, paraData: paraData, formatarData: formatarData, formatarDataHora: formatarDataHora,
     semanaEpidemiologica: semanaEpidemiologica, competencia: competencia,
     competenciaPorExtenso: competenciaPorExtenso,

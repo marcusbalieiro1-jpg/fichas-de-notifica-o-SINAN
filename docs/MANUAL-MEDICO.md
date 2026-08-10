@@ -9,7 +9,8 @@
 - **Celular:** aponte a câmera para o QR Code afixado na parede.
 - **Computador:** clique no atalho **HABE SINAN** na área de trabalho.
 
-Não precisa instalar nada, nem fazer login.
+Não precisa instalar nada, nem fazer login. A página é só de consulta: mostra
+o prazo e entrega a ficha.
 
 ---
 
@@ -26,39 +27,25 @@ e o fundo destacado — dá para identificar sem ler.
 
 ---
 
-## Solicitar uma ficha (leva um minuto)
+## Pegar a ficha (leva quinze segundos)
 
-1. Toque em **Solicitar ficha**.
-2. **Escolha o agravo.** Pode digitar pelo nome popular (*catapora*,
-   *calazar*, *barriga d'água*) ou pelo CID (*A90*). O prazo aparece na hora.
-3. **Preencha:**
-   - Data do atendimento
-   - Nome completo do paciente (sem abreviar)
-   - Prontuário no sistema interno do hospital
-   - Destino: **domicílio**, **UI1**, **UI2** ou **UTI**
-4. **Selecione seu nome.** Na primeira vez, use **➕ Cadastrar novo médico** —
-   nome, CRM e setor. Depois disso é só escolher da lista.
-5. Toque em **Registrar e baixar a ficha**.
-
-A ficha correta baixa sozinha, já nomeada com o agravo, o prontuário e a data.
-
----
-
-## O comprovante
-
-Ao final aparece um comprovante com o **número de protocolo**
-(`HABE-2026-0007`). Imprima e prenda junto à ficha em papel: é por ele que o
-Núcleo liga a ficha preenchida ao registro do sistema.
-
-Precisa da ficha de novo? **Baixar a ficha novamente**, no mesmo comprovante.
+1. **Busque o agravo** na aba *Fichas A–Z*. Pode digitar o nome popular
+   (*catapora*, *calazar*, *barriga d'água*) ou o CID (*A90*).
+2. **Toque no nome.** Abre o prazo, o gatilho — quando houver — e a orientação
+   do Núcleo.
+3. **Toque em ⬇ Baixar a ficha.** Pronto. Não há formulário a preencher: você
+   não digita dado nenhum de paciente aqui.
 
 ---
 
 ## Depois de preencher
 
-Assine a ficha e devolva ao **Núcleo de Epidemiologia**. Se o Núcleo já
-tiver combinado com você, a ficha pode ser digitalizada — PDF do scanner ou
-foto legível — e anexada ao protocolo no próprio sistema.
+Assine a ficha e encaminhe ao **Núcleo de Epidemiologia**. É o Núcleo que faz
+o registro no Sinan e responde pelos prazos junto à vigilância — por isso a
+ficha precisa chegar lá rápido, e não no fim do mês.
+
+Em agravo **vermelho**, o telefonema vem antes: a ficha em papel não cumpre o
+prazo de 24 horas sozinha.
 
 ---
 

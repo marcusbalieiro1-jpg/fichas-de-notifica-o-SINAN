@@ -9,38 +9,53 @@ computadores de atendimento. Sem instalação e sem login.
 
 ---
 
-## O que o sistema faz
+## Duas páginas, dois públicos
 
-**Para o médico assistente**
+O sistema é composto por **duas páginas separadas**, e essa separação é
+deliberada: a que circula pelos consultórios não contém uma linha sequer de
+código que lide com dado de paciente.
 
-- Sumário de **69 agravos em ordem alfabética**, com destaque visual
-  inconfundível entre notificação **imediata (24 h)**, **semanal (7 dias)** e
-  **semanal com gatilho imediato**.
+### `index.html` — consulta (urgência e ambulatórios)
+
+Para o médico assistente, no atendimento. Faz uma coisa só, e bem:
+
+- Sumário dos **69 agravos em ordem alfabética**, com distinção visual
+  inconfundível entre **imediata (24 h)**, **semanal (7 dias)** e **semanal
+  com gatilho imediato**.
 - Busca por nome, sinônimo popular (*catapora*, *calazar*) ou CID-10.
-- Solicitação em um minuto: agravo, data do atendimento, nome completo do
-  paciente, prontuário e destino (domicílio, UI1, UI2 ou UTI).
-- **Download automático da ficha correta**, já renomeada
-  (`FICHA_DENGUE_PRONT-2026-04471_2026-08-06.pdf`).
-- Comprovante com número de protocolo, pronto para imprimir e anexar à ficha.
+- **Download da ficha** em um clique, sem preencher nada.
+- Aba *Como notificar*: os cinco passos e o contato do Núcleo. Em agravo
+  vermelho, a orientação de ligar antes de qualquer papel.
 
-**Para o Núcleo de Epidemiologia**
+Não registra, não guarda e não carrega a camada de armazenamento — apenas
+quatro scripts. É esta que vai no QR Code e nos atalhos dos consultórios.
 
-- Painel de todas as solicitações, com filtros por período, prazo, agravo,
-  médico, destino e situação; contador de pendências no menu.
-- **Anexo da ficha preenchida e digitalizada** — PDF ou foto legível, com
-  compressão automática das fotos.
-- Relatórios por mês de competência, **semana epidemiológica**, agravo,
-  grupo, prazo, destino e médico; exportação em CSV para o Excel.
-- Cadastro breve dos médicos solicitantes, com histórico por profissional.
-- Geração do QR Code, do cartaz A4 e do atalho `.url` para as máquinas.
+### `nucleo.html` — registro (Núcleo Hospitalar de Epidemiologia)
+
+Para o chefe do Núcleo, que alimenta o sistema manualmente a partir das
+fichas recebidas:
+
+- **Registro da notificação**: agravo, data do atendimento, data de chegada
+  ao Núcleo, paciente, prontuário, destino (domicílio, UI1, UI2, UTI) e médico
+  notificante. O sistema avisa na hora se o prazo foi cumprido.
+- **Anexo da ficha digitalizada** — PDF ou foto, com compressão automática.
+- **Relatórios** por mês, semana epidemiológica, agravo, grupo, prazo, destino
+  e médico, com o indicador de **oportunidade da notificação** e exportação CSV.
+- Painel com pendências e alerta de prazos vencidos sem ficha anexada.
+- Cadastro dos médicos notificantes.
+- Geração do QR Code, do cartaz A4 e do atalho `.url` — sempre apontando para
+  a página de consulta, nunca para esta.
+
+Contém dados pessoais sensíveis: fica em pasta restrita e o endereço não se
+divulga.
 
 ---
 
 ## Experimentando
 
-O jeito mais rápido: baixe **[`HABE-SINAN.html`](HABE-SINAN.html)** — todo o
-sistema num arquivo só, com o CSS, os scripts e o brasão embutidos — e abra com
-dois cliques. Não precisa instalar nada, servidor nem internet.
+Baixe **[`HABE-SINAN-consulta.html`](HABE-SINAN-consulta.html)** ou
+**[`HABE-SINAN-nucleo.html`](HABE-SINAN-nucleo.html)** — cada um traz o CSS, os
+scripts e o brasão embutidos num arquivo só — e abra com dois cliques.
 
 A partir do código:
 
@@ -50,17 +65,14 @@ cd fichas-de-notifica-o-SINAN
 python3 -m http.server 8000      # ou: npx http-server -p 8000
 ```
 
-Abra <http://localhost:8000>.
+`http://localhost:8000/` abre a consulta; `.../nucleo.html`, o Núcleo.
 
 > Para **testar**, use nomes fictícios de paciente. Enquanto o sistema não
-> estiver na intranet do hospital, dado real de paciente não deve ser digitado.
+> estiver na intranet do hospital, dado real não deve ser digitado.
 
-Para publicar e distribuir de verdade, siga **[docs/IMPLANTACAO.md](docs/IMPLANTACAO.md)**.
+### Regerando os arquivos únicos
 
-### Regerando o arquivo único
-
-`HABE-SINAN.html` é uma cópia congelada: não acompanha as alterações sozinho.
-Depois de mexer no catálogo, no CSS ou em qualquer script:
+São cópias congeladas: não acompanham as alterações sozinhas.
 
 ```bash
 node scripts/gerar-arquivo-unico.js
@@ -70,15 +82,18 @@ node scripts/gerar-arquivo-unico.js
 
 ## Antes de usar em produção
 
-Três passos, nesta ordem:
+Quatro passos, nesta ordem:
 
-1. **[Conferir a classificação dos prazos](docs/CONFERENCIA-NORMATIVA.md)** —
+1. **Preencher o contato do Núcleo** em `assets/js/dados-fichas.js`, no bloco
+   `unidade`: ramal e telefone de plantão. Sem isso a página dos médicos manda
+   ligar para o Núcleo sem dizer para onde.
+2. **[Conferir a classificação dos prazos](docs/CONFERENCIA-NORMATIVA.md)** —
    obrigatório. A coluna imediata/semanal orienta conduta médica e precisa ser
    validada pelo Núcleo de Epidemiologia contra a portaria vigente.
-2. **[Preencher o acervo de fichas](fichas/README.md)** — enquanto a pasta
+3. **[Preencher o acervo de fichas](fichas/README.md)** — enquanto a pasta
    `fichas/` estiver vazia, o sistema abre o portal do Ministério da Saúde em
    vez de entregar o PDF renomeado.
-3. **[Ligar o modo compartilhado](backend/apps-script/README.md)** — para que
+4. **[Ligar o modo compartilhado](backend/apps-script/README.md)** — para que
    todos os computadores enxerguem as mesmas solicitações.
 
 O brasão do HABE em `assets/img/logo-habe.svg` é um **redesenho vetorial** do
@@ -93,7 +108,8 @@ cartaz A4. Para usar o arquivo original em vez do redesenho, salve-o como
 ## Como está organizado
 
 ```
-index.html                      página única do sistema
+index.html                      ► página de CONSULTA (médicos assistentes)
+nucleo.html                     ► página do NÚCLEO (registro e relatórios)
 assets/
   css/estilo.css                identidade visual, tema claro/escuro, impressão
   img/logo-habe.svg             brasão do HABE, redesenhado em vetor
@@ -102,16 +118,23 @@ assets/
     armazenamento.js            modo local (navegador) e compartilhado (Google)
     qrcode.js                   gerador de QR Code próprio, sem dependências
     util.js                     datas, semana epidemiológica, downloads, CSV
-    app.js                      navegação entre páginas e trava por PIN
-    paginas/                    início, fichas, solicitar, solicitações,
-                                relatórios, médicos, acesso rápido, config
+    consulta.js                 navegação da página de consulta
+    app.js                      navegação da página do Núcleo e trava por PIN
+    paginas/
+      fichas.js                 sumário A–Z (usado pelas duas páginas)
+      painel.js                 painel do Núcleo
+      registrar.js              registro manual das notificações
+      notificacoes.js           lista, anexos e situação
+      relatorios.js             levantamentos e oportunidade
+      medicos.js, acesso.js, config.js
 backend/apps-script/            servidor opcional (planilha Google + Drive)
 fichas/                         acervo de PDFs entregues por download
 scripts/
   descobrir-fichas.js           acha os links das fichas no portal do Sinan
   baixar-fichas.js              popula o acervo a partir dos links oficiais
   gerar-arquivo-unico.js        monta o HABE-SINAN.html de arquivo único
-HABE-SINAN.html                 o sistema inteiro num arquivo, para dois cliques
+HABE-SINAN-consulta.html        a página dos médicos, num arquivo só
+HABE-SINAN-nucleo.html          a página do Núcleo, num arquivo só
 docs/                           implantação, conferência normativa, guia médico
 ```
 

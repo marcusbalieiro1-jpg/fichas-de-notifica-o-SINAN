@@ -39,7 +39,7 @@ internet e o tráfego não sai da rede do hospital.
 ### Opção C — pasta de rede compartilhada
 
 Copie o projeto para uma pasta compartilhada e abra o `index.html` pelo
-Windows Explorer. Funciona (o sistema não usa módulos que exijam servidor),
+Windows Explorer (ou `nucleo.html`, no computador do Núcleo). Funciona (o sistema não usa módulos que exijam servidor),
 mas cada computador terá seus próprios dados, salvo no modo compartilhado.
 
 ---
@@ -79,7 +79,7 @@ mesmo computador e naquele mesmo navegador.
 
 ### Modo compartilhado (recomendado em produção)
 
-Todos os computadores enxergam as mesmas solicitações, e os anexos vão para
+Todos os computadores enxergam os mesmos registros, e os anexos vão para
 uma pasta do Google Drive. Siga `backend/apps-script/README.md`: são cerca de
 dez minutos de configuração, sem custo.
 
@@ -93,12 +93,14 @@ definida no script e clique em **Testar conexão**.
 
 Ainda em **Configurações**:
 
-- **Unidade** e **Setor responsável**: aparecem no cabeçalho, no comprovante e
-  no cartaz.
-- **Endereço público**: cole o link do passo 1 para fixá-lo no QR Code.
-- **PIN da área do Núcleo**: se preenchido, Solicitações, Relatórios, Médicos
-  e Configurações passam a exigir o PIN. O sumário de fichas e a solicitação
-  continuam livres para os médicos.
+- **Endereço público**: cole o link da **página de consulta** (`index.html`)
+  do passo 1, para fixá-lo no QR Code e no atalho.
+- **PIN do Núcleo**: se preenchido, a página `nucleo.html` inteira passa a
+  exigi-lo. A página de consulta continua aberta — ela não tem o que proteger.
+
+A unidade, o setor e o contato do Núcleo não ficam aqui: estão em
+`assets/js/dados-fichas.js`, no bloco `unidade`, para valerem igualmente nas
+duas páginas e em todos os computadores.
 
 > O PIN é uma barreira de conveniência: evita abertura por engano num
 > computador de consultório. Ele **não** é criptografia nem controle de acesso
@@ -112,6 +114,9 @@ Ainda em **Configurações**:
 Abra a aba **Acesso rápido**.
 
 ### QR Code nos consultórios
+
+O QR sempre aponta para a **página de consulta**. O endereço da página do
+Núcleo não entra em cartaz nem em atalho de consultório.
 
 1. Confira o endereço no campo do topo.
 2. **Imprimir cartaz** → papel A4. O cartaz já traz o QR, o endereço por
@@ -144,26 +149,21 @@ como janela*: o sistema passa a se comportar como um aplicativo próprio.
 
 ## 7. Rotina de trabalho
 
-**Médico**, no atendimento:
+**Médico**, no atendimento (página `index.html`):
 
-1. Abre o sistema pelo QR Code ou pelo atalho.
-2. **Solicitar ficha** → escolhe o agravo (⏱ vermelho = 24 h).
-3. Informa data do atendimento, nome completo, prontuário e destino
-   (domicílio, UI1, UI2 ou UTI).
-4. A ficha correta baixa automaticamente; o comprovante com o protocolo pode
-   ser impresso e anexado à ficha em papel.
-5. Em agravo imediato, **comunica o Núcleo por telefone na hora** — a ficha
-   não substitui a comunicação.
+1. Abre pelo QR Code ou pelo atalho.
+2. Busca o agravo e confere a cor: ⏱ vermelho = 24 h.
+3. Em agravo imediato, **liga para o Núcleo na hora** — antes de qualquer papel.
+4. Baixa a ficha, preenche, assina e encaminha ao Núcleo.
 
-**Núcleo de Epidemiologia**, na rotina:
+**Núcleo de Epidemiologia** (página `nucleo.html`):
 
-1. **Solicitações** → acompanha o que foi pedido; o contador no menu mostra
-   quantas ainda estão sem ficha digitalizada.
-2. Recebe a ficha preenchida, digitaliza (PDF ou foto legível) e anexa ao
-   protocolo correspondente.
+1. Recebe a ficha preenchida e lança em **Registrar notificação**, informando
+   também a data em que ela chegou — é o que mede a oportunidade.
+2. Digitaliza (PDF ou foto legível) e anexa ao protocolo.
 3. Marca a situação como **Encerrada** depois de lançar no Sinan.
 4. **Relatórios** → levantamento por mês, semana epidemiológica, agravo,
-   prazo, destino e médico; exporta CSV para os relatórios internos.
+   prazo, destino e médico, com o percentual de notificações no prazo.
 
 ---
 

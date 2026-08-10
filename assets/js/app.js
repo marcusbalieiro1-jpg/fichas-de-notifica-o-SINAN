@@ -5,8 +5,10 @@
 var App = (function () {
   'use strict';
 
-  var ROTA_PADRAO = 'inicio';
-  var ROTAS_RESTRITAS = ['solicitacoes', 'relatorios', 'medicos', 'config'];
+  var ROTA_PADRAO = 'painel';
+  /* A página do Núcleo é restrita por inteiro: qualquer rota pede o PIN. */
+  var ROTAS_RESTRITAS = ['painel', 'registrar', 'notificacoes', 'relatorios',
+                         'medicos', 'acesso', 'config'];
   var CHAVE_DESTRAVA = 'habe_sinan_nucleo_liberado';
 
   /* ---------- endereço ---------- */
@@ -42,7 +44,7 @@ var App = (function () {
         '<img class="brasao--destrava" src="assets/img/logo-habe.svg" alt="">' +
         '<h1 style="font-size:1.25rem;margin-top:.6rem">Área do Núcleo de Epidemiologia</h1>' +
         '<p style="color:var(--texto-suave);font-size:.9rem">' +
-          'Informe o PIN para consultar solicitações, relatórios e cadastros.</p>' +
+          'Informe o PIN para registrar notificações e consultar relatórios.</p>' +
         '<div class="campo" style="text-align:left">' +
           '<label for="campoPin">PIN de acesso</label>' +
           '<input type="password" id="campoPin" inputmode="numeric" autocomplete="off" autofocus>' +
@@ -50,7 +52,8 @@ var App = (function () {
         '</div>' +
         '<button class="botao botao--bloco botao--grande" id="botaoDestravar" type="button">' +
           'Entrar</button>' +
-        '<p style="margin:.9rem 0 0"><a href="#/fichas">← Voltar ao sumário de fichas</a></p>' +
+        '<p style="margin:.9rem 0 0;font-size:.88rem">' +
+          '<a href="index.html">← Ir para a página de consulta dos médicos</a></p>' +
       '</div>';
 
     function tentar() {
@@ -154,9 +157,9 @@ var App = (function () {
   /* ---------- identidade e contadores ---------- */
 
   function aplicarIdentidade() {
-    var config = Armazenamento.obterConfig();
+    var u = U.unidade();
     var rodape = U.$('#rodapeUnidade');
-    if (rodape) { rodape.textContent = config.unidade + ' · ' + config.setor; }
+    if (rodape) { rodape.textContent = (u.nome || '') + (u.setor ? ' · ' + u.setor : ''); }
 
     var revisao = U.$('#rodapeRevisao');
     if (revisao) {

@@ -20,17 +20,31 @@ Paginas.config = (function () {
       /* ---- identificação ---- */
       '<div class="cartao">' +
         '<h2 style="font-size:1.05rem">Identificação da unidade</h2>' +
-        '<div class="grade grade--2" style="gap:0 1rem">' +
-          '<div class="campo"><label for="cfgUnidade">Unidade</label>' +
-            '<input type="text" id="cfgUnidade" value="' + U.esc(config.unidade) + '"></div>' +
-          '<div class="campo"><label for="cfgSetor">Setor responsável</label>' +
-            '<input type="text" id="cfgSetor" value="' + U.esc(config.setor) + '"></div>' +
-        '</div>' +
-        '<div class="campo"><label for="cfgEndereco">Endereço público do sistema' +
+        '<p style="font-size:.88rem;color:var(--texto-suave)">' +
+          'Estes dados ficam em <code>assets/js/dados-fichas.js</code>, no bloco ' +
+          '<code>unidade</code>, e não nas configurações do navegador — assim as duas ' +
+          'páginas mostram o mesmo contato em qualquer computador, sem configurar máquina ' +
+          'por máquina.</p>' +
+        '<dl class="dados-lista" style="margin-bottom:1rem">' +
+          '<div><dt>Unidade</dt><dd>' + U.esc(U.unidade().nome || '—') + '</dd></div>' +
+          '<div><dt>Setor</dt><dd>' + U.esc(U.unidade().setor || '—') + '</dd></div>' +
+          '<div><dt>Ramal</dt><dd>' + U.esc(U.unidade().ramal || '') +
+            (U.unidade().ramal ? '' : '<span style="color:var(--urgente)">não cadastrado</span>') +
+          '</dd></div>' +
+          '<div><dt>Plantão</dt><dd>' + U.esc(U.unidade().plantao || '') +
+            (U.unidade().plantao ? '' : '<span style="color:var(--urgente)">não cadastrado</span>') +
+          '</dd></div>' +
+        '</dl>' +
+        (U.comoChamarNucleo() ? '' :
+          '<div class="aviso aviso--atencao"><span class="aviso__icone">☎</span><div>' +
+          '<strong>Contato do Núcleo ainda não cadastrado</strong>' +
+          'Sem ramal nem telefone de plantão, a página dos médicos manda ligar para o Núcleo ' +
+          'sem dizer para onde. Preencha antes de distribuir os cartazes.</div></div>') +
+        '<div class="campo"><label for="cfgEndereco">Endereço público da página de consulta' +
           '<span class="campo__dica">Usado no QR Code e no atalho. Deixe em branco para ' +
-          'usar o endereço em que a página estiver aberta.</span></label>' +
+          'deduzir do endereço em uso.</span></label>' +
           '<input type="text" id="cfgEndereco" value="' + U.esc(config.enderecoPublico) + '" ' +
-            'placeholder="https://sua-organizacao.github.io/habe-sinan/"></div>' +
+            'placeholder="http://intranet.habe/sinan/index.html"></div>' +
       '</div>' +
 
       /* ---- armazenamento ---- */
@@ -148,8 +162,6 @@ Paginas.config = (function () {
         modo: modo,
         endpoint: endpoint,
         chave: U.$('#cfgChave', elemento).value,
-        unidade: U.$('#cfgUnidade', elemento).value.trim(),
-        setor: U.$('#cfgSetor', elemento).value.trim(),
         enderecoPublico: U.$('#cfgEndereco', elemento).value.trim(),
         pinNucleo: U.$('#cfgPin', elemento).value.trim(),
         tamanhoMaximoAnexoMb: Number(U.$('#cfgAnexo', elemento).value) || 10

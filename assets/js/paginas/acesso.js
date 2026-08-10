@@ -7,10 +7,16 @@ var Paginas = Paginas || {};
 Paginas.acesso = (function () {
   'use strict';
 
+  /* O QR Code e o atalho levam à PÁGINA DE CONSULTA, não a esta. Quem lê o
+     cartaz no consultório é o médico assistente; a página do Núcleo fica na
+     pasta restrita e não se divulga. */
   function enderecoAtual() {
     var config = Armazenamento.obterConfig();
     if (config.enderecoPublico) { return config.enderecoPublico; }
-    return window.location.href.split('#')[0];
+
+    var atual = window.location.href.split('#')[0];
+    if (/nucleo\.html$/i.test(atual)) { return atual.replace(/nucleo\.html$/i, 'index.html'); }
+    return atual;
   }
 
   function gerar(elemento) {
@@ -53,8 +59,6 @@ Paginas.acesso = (function () {
   }
 
   function render(elemento) {
-    var config = Armazenamento.obterConfig();
-
     elemento.innerHTML = '' +
       '<div class="pagina__cabecalho">' +
         '<h1 id="t-acesso">Acesso rápido</h1>' +
@@ -62,11 +66,17 @@ Paginas.acesso = (function () {
            'dos computadores de atendimento.</p>' +
       '</div>' +
 
+      '<div class="aviso nao-imprimir"><span class="aviso__icone">📱</span><div>' +
+        '<strong>O QR Code leva à página de consulta, não a esta</strong>' +
+        'Os consultórios recebem a página que só mostra prazos e baixa fichas — sem nenhum ' +
+        'dado de paciente. A página do Núcleo não entra em cartaz nem em atalho de ' +
+        'computador de atendimento.</div></div>' +
+
       '<div class="cartao nao-imprimir">' +
         '<div class="campo">' +
-          '<label for="campoEndereco">Endereço do sistema' +
+          '<label for="campoEndereco">Endereço da página de consulta' +
             '<span class="campo__dica">É o link que o QR Code e o atalho vão abrir. ' +
-            'Preenchido automaticamente com o endereço em uso.</span></label>' +
+            'Preenchido automaticamente; confira se aponta para <code>index.html</code>.</span></label>' +
           '<input type="text" id="campoEndereco" value="' + U.esc(enderecoAtual()) + '">' +
         '</div>' +
         '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' +
@@ -87,7 +97,7 @@ Paginas.acesso = (function () {
         '<h2 style="font-size:1.9rem;letter-spacing:.06em;margin:.6rem 0 .2rem">HABE SINAN</h2>' +
         '<p style="font-size:1.02rem;margin-bottom:.2rem"><strong>Fichas de notificação compulsória</strong></p>' +
         '<p style="color:var(--texto-suave);margin-bottom:1.4rem">' +
-          U.esc(config.unidade) + ' · ' + U.esc(config.setor) + '</p>' +
+          U.esc(U.unidade().nome || '') + ' · ' + U.esc(U.unidade().setor || '') + '</p>' +
 
         '<div class="qr-caixa"><canvas id="telaQr" width="300" height="300"></canvas></div>' +
 
@@ -98,8 +108,10 @@ Paginas.acesso = (function () {
         '<div style="max-width:640px;margin:1.4rem auto 0;text-align:left">' +
           '<div class="aviso aviso--urgente"><span class="aviso__icone">⏱</span><div>' +
             '<strong>Notificação IMEDIATA (24 horas)</strong>' +
-            'Comunique o Núcleo de Epidemiologia por telefone assim que houver suspeita, ' +
-            'sem aguardar confirmação laboratorial. No sistema, esses agravos aparecem em vermelho.' +
+            'Comunique o Núcleo por telefone assim que houver suspeita, sem aguardar ' +
+            'confirmação laboratorial' +
+            (U.comoChamarNucleo() ? ' — <strong>' + U.esc(U.comoChamarNucleo()) + '</strong>' : '') +
+            '. No sistema, esses agravos aparecem em vermelho.' +
           '</div></div>' +
           '<div class="aviso"><span class="aviso__icone">📅</span><div>' +
             '<strong>Notificação semanal (7 dias)</strong>' +

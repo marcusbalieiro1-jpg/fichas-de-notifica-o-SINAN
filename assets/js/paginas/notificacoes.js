@@ -1,19 +1,20 @@
 /* =========================================================================
-   HABE SINAN — solicitações recebidas (área do Núcleo de Epidemiologia)
+   HABE SINAN — notificações registradas (Núcleo de Epidemiologia)
    -------------------------------------------------------------------------
-   Aqui a chefia acompanha o que foi solicitado, anexa a ficha preenchida e
-   digitalizada (PDF ou foto) e encerra o caso.
+   Lista tudo o que o Núcleo lançou: acompanha a situação, anexa a ficha
+   preenchida e digitalizada (PDF ou foto) e encerra o caso depois do
+   lançamento no Sinan.
    ========================================================================= */
 
 var Paginas = Paginas || {};
 
-Paginas.solicitacoes = (function () {
+Paginas.notificacoes = (function () {
   'use strict';
 
   var cache = [];
   var filtros = {
     de: '', ate: '', status: 'todas', classificacao: 'todas',
-    ficha: '', medico: '', destino: '', texto: ''
+    ficha: '', medico: '', destino: '', texto: '', prazo: 'todas'
   };
 
   var STATUS = {
@@ -35,6 +36,8 @@ Paginas.solicitacoes = (function () {
       if (filtros.ficha && s.fichaId !== filtros.ficha) { return false; }
       if (filtros.medico && s.medicoId !== filtros.medico) { return false; }
       if (filtros.destino && s.destino !== filtros.destino) { return false; }
+      if (filtros.prazo === 'dentro' && s.dentroDoPrazo !== true) { return false; }
+      if (filtros.prazo === 'fora' && s.dentroDoPrazo !== false) { return false; }
       if (termo) {
         var alvo = U.normalizar([s.protocolo, s.pacienteNome, s.pacienteProntuario,
                                  s.fichaNome, s.medicoNome].join(' '));
@@ -75,21 +78,21 @@ Paginas.solicitacoes = (function () {
 
   function desenharTabela(elemento) {
     var lista = aplicarFiltros(cache);
-    var corpo = U.$('#corpoSolicitacoes', elemento);
+    var corpo = U.$('#corpoNotificacoes', elemento);
 
     if (lista.length === 0) {
       corpo.innerHTML = '<tr><td colspan="7" class="tabela__vazia">' +
         (cache.length === 0
-          ? 'Nenhuma solicitação registrada ainda.'
-          : 'Nenhuma solicitação corresponde aos filtros escolhidos.') + '</td></tr>';
+          ? 'Nenhuma notificação registrada ainda.'
+          : 'Nenhuma notificação corresponde aos filtros escolhidos.') + '</td></tr>';
     } else {
       corpo.innerHTML = lista.map(linha).join('');
     }
 
     var imediatas = lista.filter(function (s) { return s.classificacaoEfetiva === 'imediata'; }).length;
     var pendentes = lista.filter(function (s) { return (s.anexos || []).length === 0; }).length;
-    U.$('#resumoSolicitacoes', elemento).innerHTML =
-      '<strong>' + lista.length + '</strong> solicitações · ' +
+    U.$('#resumoNotificacoes', elemento).innerHTML =
+      '<strong>' + lista.length + '</strong> notificações · ' +
       '<strong style="color:var(--urgente)">' + imediatas + '</strong> de notificação imediata · ' +
       '<strong style="color:var(--atencao)">' + pendentes + '</strong> sem ficha digitalizada anexada';
   }
@@ -140,18 +143,23 @@ Paginas.solicitacoes = (function () {
         '<div><dt>Protocolo</dt><dd style="font-family:Consolas,monospace">' + U.esc(s.protocolo) + '</dd></div>' +
         '<div><dt>Registrado em</dt><dd>' + U.formatarDataHora(s.criadoEm) + '</dd></div>' +
         '<div><dt>Data do atendimento</dt><dd>' + U.formatarData(s.dataAtendimento) + '</dd></div>' +
+        '<div><dt>Recebida no Núcleo</dt><dd>' +
+          (s.dataRecebimento ? U.formatarData(s.dataRecebimento) : '—') +
+          (s.dentroDoPrazo === true ? ' <span class="selo selo--sucesso">no prazo</span>' :
+           s.dentroDoPrazo === false ? ' <span class="selo selo--atencao">fora do prazo</span>' : '') +
+        '</dd></div>' +
         '<div><dt>Semana epidemiológica</dt><dd>' + U.esc(s.semanaEpidemiologica || '—') + '</dd></div>' +
         '<div><dt>Paciente</dt><dd>' + U.esc(s.pacienteNome) + '</dd></div>' +
         '<div><dt>Prontuário</dt><dd>' + U.esc(s.pacienteProntuario) + '</dd></div>' +
         '<div><dt>Destino</dt><dd>' + U.esc(U.destinoNome(s.destino)) + '</dd></div>' +
-        '<div><dt>Médico solicitante</dt><dd>' + U.esc(s.medicoNome) + ' — CRM ' + U.esc(s.medicoCrm) + '</dd></div>' +
+        '<div><dt>Médico notificante</dt><dd>' + U.esc(s.medicoNome) + ' — CRM ' + U.esc(s.medicoCrm) + '</dd></div>' +
         '<div><dt>Setor</dt><dd>' + U.esc(s.medicoSetor || '—') + '</dd></div>' +
         '<div><dt>Agravo</dt><dd>' + U.esc(s.fichaNome) + '</dd></div>' +
       '</dl>' +
 
       (s.observacao
         ? '<div class="cartao" style="background:var(--fundo)"><h3 style="font-size:.92rem">' +
-          'Observações do médico</h3><p style="margin:0">' + U.esc(s.observacao) + '</p></div>'
+          'Observações do Núcleo</h3><p style="margin:0">' + U.esc(s.observacao) + '</p></div>'
         : '') +
 
       '<div class="cartao">' +
@@ -188,8 +196,8 @@ Paginas.solicitacoes = (function () {
       '<div style="display:grid;gap:.5rem">' +
         (ficha ? '<button class="botao botao--secundario" id="botaoRebaixarFicha">' +
                  '⬇ Baixar novamente a ficha em branco</button>' : '') +
-        '<button class="botao botao--perigo" id="botaoExcluirSolicitacao">' +
-          '🗑 Excluir esta solicitação</button>' +
+        '<button class="botao botao--perigo" id="botaoExcluirNotificacao">' +
+          '🗑 Excluir este registro</button>' +
       '</div>';
 
     U.abrirPainel(U.esc(s.protocolo) + ' — ' + U.esc(s.fichaNome), corpo, function (raiz) {
@@ -240,11 +248,11 @@ Paginas.solicitacoes = (function () {
         rebaixar.addEventListener('click', function () { U.entregarFicha(ficha, s); });
       }
 
-      U.$('#botaoExcluirSolicitacao', raiz).addEventListener('click', function () {
-        if (!window.confirm('Excluir a solicitação ' + s.protocolo + ' e todos os seus anexos?\n' +
+      U.$('#botaoExcluirNotificacao', raiz).addEventListener('click', function () {
+        if (!window.confirm('Excluir a notificação ' + s.protocolo + ' e todos os seus anexos?\n' +
                             'Esta ação não pode ser desfeita.')) { return; }
         Armazenamento.removerSolicitacao(s.id).then(function () {
-          U.torrada('Solicitação excluída.', 'sucesso');
+          U.torrada('Notificação excluída.', 'sucesso');
           U.fecharPainel();
           carregar(elemento);
         }).catch(function (erro) { U.torrada(erro.message, 'erro'); });
@@ -306,13 +314,17 @@ Paginas.solicitacoes = (function () {
   function exportarCsv() {
     var lista = aplicarFiltros(cache);
     var linhas = [[
-      'Protocolo', 'Data do atendimento', 'Semana epidemiológica', 'Agravo', 'Grupo',
+      'Protocolo', 'Data do atendimento', 'Recebida no Núcleo', 'Dentro do prazo',
+      'Semana epidemiológica', 'Agravo', 'Grupo',
       'Classificação', 'Prazo aplicado', 'Paciente', 'Prontuário', 'Destino',
-      'Médico', 'CRM', 'Setor', 'Situação', 'Anexos', 'Observações', 'Registrado em'
+      'Médico notificante', 'CRM', 'Setor', 'Situação', 'Anexos', 'Observações', 'Registrado em'
     ]];
     lista.forEach(function (s) {
       linhas.push([
-        s.protocolo, U.formatarData(s.dataAtendimento), s.semanaEpidemiologica,
+        s.protocolo, U.formatarData(s.dataAtendimento),
+        s.dataRecebimento ? U.formatarData(s.dataRecebimento) : '',
+        s.dentroDoPrazo === true ? 'sim' : s.dentroDoPrazo === false ? 'não' : '',
+        s.semanaEpidemiologica,
         s.fichaNome, s.fichaGrupo, U.rotuloDaClassificacao(s.classificacao),
         s.classificacaoEfetiva === 'imediata' ? 'Imediata (24 h)' : 'Semanal (7 dias)',
         s.pacienteNome, s.pacienteProntuario, U.destinoNome(s.destino),
@@ -321,7 +333,7 @@ Paginas.solicitacoes = (function () {
         s.observacao, U.formatarDataHora(s.criadoEm)
       ]);
     });
-    U.baixarCsv('habe-sinan-solicitacoes-' + U.hoje() + '.csv', linhas);
+    U.baixarCsv('habe-sinan-notificacoes-' + U.hoje() + '.csv', linhas);
     U.torrada('Planilha exportada.', 'sucesso');
   }
 
@@ -334,7 +346,7 @@ Paginas.solicitacoes = (function () {
       desenharTabela(elemento);
       App.atualizarContadores();
     }).catch(function (erro) {
-      U.$('#corpoSolicitacoes', elemento).innerHTML =
+      U.$('#corpoNotificacoes', elemento).innerHTML =
         '<tr><td colspan="7" class="tabela__vazia">' + U.esc(erro.message) + '</td></tr>';
     });
   }
@@ -368,11 +380,12 @@ Paginas.solicitacoes = (function () {
 
   /* ---------- página ---------- */
 
-  function render(elemento) {
+  function render(elemento, parametros) {
     elemento.innerHTML = '' +
       '<div class="pagina__cabecalho">' +
-        '<h1 id="t-solicitacoes">Solicitações recebidas</h1>' +
-        '<p>Acompanhe o que foi solicitado, anexe a ficha digitalizada e encerre o caso.</p>' +
+        '<h1 id="t-notificacoes">Notificações registradas</h1>' +
+        '<p>Tudo o que o Núcleo lançou. Anexe a ficha digitalizada e encerre o caso depois ' +
+           'do lançamento no Sinan.</p>' +
       '</div>' +
 
       '<div class="cartao nao-imprimir">' +
@@ -398,6 +411,12 @@ Paginas.solicitacoes = (function () {
             '<select id="filtroFicha"></select></div>' +
           '<div class="campo" style="margin:0"><label for="filtroMedico">Médico</label>' +
             '<select id="filtroMedico"></select></div>' +
+          '<div class="campo" style="margin:0"><label for="filtroPrazo">Cumprimento do prazo</label>' +
+            '<select id="filtroPrazo">' +
+              '<option value="todas">Todos</option>' +
+              '<option value="dentro">Dentro do prazo</option>' +
+              '<option value="fora">Fora do prazo</option>' +
+            '</select></div>' +
           '<div class="campo" style="margin:0"><label for="filtroDestino">Destino</label>' +
             '<select id="filtroDestino"><option value="">Todos</option>' +
               HABE_CATALOGO.destinos.map(function (d) {
@@ -417,7 +436,7 @@ Paginas.solicitacoes = (function () {
         '</div>' +
       '</div>' +
 
-      '<p style="font-size:.9rem;margin-bottom:.7rem" id="resumoSolicitacoes"></p>' +
+      '<p style="font-size:.9rem;margin-bottom:.7rem" id="resumoNotificacoes"></p>' +
 
       '<div class="cartao" style="padding:0;overflow:hidden">' +
         '<div class="tabela-rolagem">' +
@@ -426,7 +445,7 @@ Paginas.solicitacoes = (function () {
               '<th>Protocolo</th><th>Agravo</th><th>Paciente</th><th>Destino</th>' +
               '<th>Médico</th><th>Situação</th><th>Anexos</th>' +
             '</tr></thead>' +
-            '<tbody id="corpoSolicitacoes">' +
+            '<tbody id="corpoNotificacoes">' +
               '<tr><td colspan="7" class="tabela__vazia">Carregando…</td></tr>' +
             '</tbody>' +
           '</table>' +
@@ -436,7 +455,8 @@ Paginas.solicitacoes = (function () {
     var mapa = {
       filtroDe: 'de', filtroAte: 'ate', filtroStatus: 'status',
       filtroClassificacao: 'classificacao', filtroFicha: 'ficha',
-      filtroMedico: 'medico', filtroDestino: 'destino', filtroTexto: 'texto'
+      filtroMedico: 'medico', filtroDestino: 'destino', filtroTexto: 'texto',
+      filtroPrazo: 'prazo'
     };
     Object.keys(mapa).forEach(function (idCampo) {
       var campo = U.$('#' + idCampo, elemento);
@@ -453,19 +473,22 @@ Paginas.solicitacoes = (function () {
 
     U.$('#botaoLimparFiltros', elemento).addEventListener('click', function () {
       filtros = { de: '', ate: '', status: 'todas', classificacao: 'todas',
-                  ficha: '', medico: '', destino: '', texto: '' };
+                  ficha: '', medico: '', destino: '', texto: '', prazo: 'todas' };
       render(elemento);
       carregar(elemento);
     });
     U.$('#botaoAtualizar', elemento).addEventListener('click', function () { carregar(elemento); });
     U.$('#botaoExportarCsv', elemento).addEventListener('click', exportarCsv);
 
-    U.$('#corpoSolicitacoes', elemento).addEventListener('click', function (evento) {
+    U.$('#corpoNotificacoes', elemento).addEventListener('click', function (evento) {
       var tr = evento.target.closest('tr[data-id]');
       if (tr) { abrirDetalhe(tr.getAttribute('data-id'), elemento); }
     });
 
-    carregar(elemento);
+    /* Vindo de "Anexar a ficha digitalizada", abre direto o registro recém-criado. */
+    carregar(elemento).then(function () {
+      if (parametros && parametros.abrir) { abrirDetalhe(parametros.abrir, elemento); }
+    });
   }
 
   return { render: render };

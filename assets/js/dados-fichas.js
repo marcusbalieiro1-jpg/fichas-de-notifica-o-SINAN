@@ -48,6 +48,24 @@ var HABE_CATALOGO = {
     portalSinan: 'https://portalsinan.saude.gov.br/notificacoes'
   },
 
+  /* ---------------------------------------------------------------------
+     IDENTIFICAÇÃO DA UNIDADE
+     Fica aqui, e não nas configurações do navegador, para que as duas
+     páginas — a de consulta e a do Núcleo — mostrem o mesmo contato em
+     qualquer computador, sem precisar configurar máquina por máquina.
+     PREENCHA O RAMAL E O PLANTÃO antes de distribuir aos consultórios.
+     --------------------------------------------------------------------- */
+  unidade: {
+    nome: 'Hospital de Aeronáutica de Belém',
+    sigla: 'HABE',
+    setor: 'Núcleo Hospitalar de Epidemiologia',
+    siglaSetor: 'NHE',
+    ramal: '',                   // ex.: '4137' — aparece nos avisos de notificação imediata
+    plantao: '',                 // ex.: '(91) 90000-0000'
+    email: '',
+    horario: 'Segunda a sexta, das 8h às 17h'
+  },
+
   /* Destinos possíveis do paciente após o atendimento. */
   destinos: [
     { id: 'domicilio', nome: 'Tratamento em domicílio', sigla: 'DOM' },

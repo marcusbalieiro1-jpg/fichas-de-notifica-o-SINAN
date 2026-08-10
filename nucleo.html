@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b2f5c">
+<title>HABE SINAN — Núcleo de Epidemiologia</title>
+<link rel="icon" href="assets/img/logo-habe.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body>
+
+<!--
+  PÁGINA DO NÚCLEO HOSPITALAR DE EPIDEMIOLOGIA.
+
+  Contém dados pessoais sensíveis de saúde: nome, prontuário e agravo. Deve
+  ficar em pasta restrita, acessível apenas ao Núcleo — não divulgue este
+  endereço em cartaz, atalho de consultório nem QR Code.
+
+  Os médicos do atendimento usam index.html, que só consulta e baixa fichas.
+-->
+<script>var HABE_PERFIL = 'nucleo';</script>
+
+<a class="so-leitor-tela" href="#conteudo">Ir direto ao conteúdo</a>
+
+<header class="cabecalho">
+  <div class="cabecalho__topo">
+    <img class="cabecalho__logo" src="assets/img/logo-habe.svg" alt="Brasão do Hospital de Aeronáutica de Belém">
+    <div class="cabecalho__titulo">
+      <strong>HABE SINAN <span class="cabecalho__marca">· NÚCLEO</span></strong>
+      <span id="rodapeUnidade">Núcleo Hospitalar de Epidemiologia</span>
+    </div>
+    <div class="cabecalho__acoes">
+      <button class="botao-icone" id="botaoTema" type="button" title="Alternar tema claro/escuro" aria-label="Alternar tema">◐</button>
+      <button class="botao-icone" id="botaoImprimir" type="button" title="Imprimir a página atual" aria-label="Imprimir">🖨</button>
+    </div>
+  </div>
+
+  <nav class="navegacao" aria-label="Navegação principal">
+    <ul class="navegacao__lista">
+      <li><a href="#/painel"        data-rota="painel">Painel</a></li>
+      <li><a href="#/registrar"     data-rota="registrar">Registrar notificação</a></li>
+      <li><a href="#/notificacoes"  data-rota="notificacoes">Notificações<span class="navegacao__contador oculto" id="contadorPendentes">0</span></a></li>
+      <li><a href="#/relatorios"    data-rota="relatorios">Relatórios</a></li>
+      <li><a href="#/medicos"       data-rota="medicos">Médicos</a></li>
+      <li><a href="#/fichas"        data-rota="fichas">Fichas A–Z</a></li>
+      <li><a href="#/acesso"        data-rota="acesso">Acesso rápido</a></li>
+      <li><a href="#/config"        data-rota="config">Configurações</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main class="conteudo" id="conteudo">
+  <section class="pagina oculto" id="pagina-painel"       aria-labelledby="t-painel"></section>
+  <section class="pagina oculto" id="pagina-registrar"    aria-labelledby="t-registrar"></section>
+  <section class="pagina oculto" id="pagina-notificacoes" aria-labelledby="t-notificacoes"></section>
+  <section class="pagina oculto" id="pagina-relatorios"   aria-labelledby="t-relatorios"></section>
+  <section class="pagina oculto" id="pagina-medicos"      aria-labelledby="t-medicos"></section>
+  <section class="pagina oculto" id="pagina-fichas"       aria-labelledby="t-fichas"></section>
+  <section class="pagina oculto" id="pagina-acesso"       aria-labelledby="t-acesso"></section>
+  <section class="pagina oculto" id="pagina-config"       aria-labelledby="t-config"></section>
+</main>
+
+<footer class="rodape">
+  <p>
+    <strong>HABE SINAN · Núcleo</strong> · Registro das notificações compulsórias<br>
+    <span id="rodapeRevisao"></span>
+  </p>
+  <p class="nao-imprimir">
+    Esta página contém dados pessoais sensíveis de saúde. Mantenha-a em pasta restrita e
+    não divulgue o endereço fora do Núcleo.
+  </p>
+</footer>
+
+<div class="avisos-flutuantes" id="avisosFlutuantes" aria-live="polite"></div>
+<div id="painelDetalhe"></div>
+
+<script src="assets/js/dados-fichas.js"></script>
+<script src="assets/js/qrcode.js"></script>
+<script src="assets/js/armazenamento.js"></script>
+<script src="assets/js/util.js"></script>
+<script src="assets/js/paginas/painel.js"></script>
+<script src="assets/js/paginas/fichas.js"></script>
+<script src="assets/js/paginas/registrar.js"></script>
+<script src="assets/js/paginas/notificacoes.js"></script>
+<script src="assets/js/paginas/relatorios.js"></script>
+<script src="assets/js/paginas/medicos.js"></script>
+<script src="assets/js/paginas/acesso.js"></script>
+<script src="assets/js/paginas/config.js"></script>
+<script src="assets/js/app.js"></script>
+
+</body>
+</html>

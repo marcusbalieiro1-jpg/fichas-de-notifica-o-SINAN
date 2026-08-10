@@ -3,81 +3,69 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="HABE SINAN — diretório de fichas de notificação compulsória do SINAN do Hospital de Aeronáutica de Belém.">
+<meta name="description" content="Consulta das fichas de notificação compulsória do SINAN — prazos e download. Hospital de Aeronáutica de Belém.">
 <meta name="theme-color" content="#0b2f5c">
-<title>HABE SINAN — Fichas de Notificação | Hospital de Aeronáutica de Belém</title>
+<title>HABE SINAN — Consulta de Fichas de Notificação</title>
 <link rel="icon" href="assets/img/logo-habe.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/css/estilo.css">
 </head>
 <body>
 
+<!--
+  PÁGINA DE CONSULTA — urgência e ambulatórios.
+
+  Serve a um propósito só: descobrir o prazo de notificação de um agravo e
+  baixar a ficha correta. Não registra paciente, não guarda nada e não carrega
+  nenhum código que lide com dado pessoal — por isso pode ser distribuída à
+  vontade por QR Code e atalho.
+
+  O registro das notificações fica em nucleo.html, na pasta restrita do Núcleo.
+-->
+<script>var HABE_PERFIL = 'consulta';</script>
+
 <a class="so-leitor-tela" href="#conteudo">Ir direto ao conteúdo</a>
 
 <header class="cabecalho">
   <div class="cabecalho__topo">
-    <img class="cabecalho__logo" src="assets/img/logo-habe.svg" alt="Emblema do Hospital de Aeronáutica de Belém">
+    <img class="cabecalho__logo" src="assets/img/logo-habe.svg" alt="Brasão do Hospital de Aeronáutica de Belém">
     <div class="cabecalho__titulo">
       <strong>HABE SINAN</strong>
-      <span id="rodapeUnidade">Hospital de Aeronáutica de Belém · Núcleo de Epidemiologia</span>
+      <span id="rodapeUnidade">Consulta de fichas de notificação compulsória</span>
     </div>
     <div class="cabecalho__acoes">
       <button class="botao-icone" id="botaoTema" type="button" title="Alternar tema claro/escuro" aria-label="Alternar tema">◐</button>
-      <button class="botao-icone" id="botaoImprimir" type="button" title="Imprimir a página atual" aria-label="Imprimir">🖨</button>
+      <button class="botao-icone" id="botaoImprimir" type="button" title="Imprimir" aria-label="Imprimir">🖨</button>
     </div>
   </div>
 
   <nav class="navegacao" aria-label="Navegação principal">
     <ul class="navegacao__lista">
-      <li><a href="#/inicio"        data-rota="inicio">Início</a></li>
-      <li><a href="#/fichas"        data-rota="fichas">Sumário de fichas</a></li>
-      <li><a href="#/solicitar"     data-rota="solicitar">Solicitar ficha</a></li>
-      <li><a href="#/solicitacoes"  data-rota="solicitacoes">Solicitações<span class="navegacao__contador oculto" id="contadorPendentes">0</span></a></li>
-      <li><a href="#/relatorios"    data-rota="relatorios">Relatórios</a></li>
-      <li><a href="#/medicos"       data-rota="medicos">Médicos</a></li>
-      <li><a href="#/acesso"        data-rota="acesso">Acesso rápido</a></li>
-      <li><a href="#/config"        data-rota="config">Configurações</a></li>
+      <li><a href="#/fichas"    data-rota="fichas">Fichas A–Z</a></li>
+      <li><a href="#/notificar" data-rota="notificar">Como notificar</a></li>
     </ul>
   </nav>
 </header>
 
 <main class="conteudo" id="conteudo">
-  <section class="pagina oculto" id="pagina-inicio"       aria-labelledby="t-inicio"></section>
-  <section class="pagina oculto" id="pagina-fichas"       aria-labelledby="t-fichas"></section>
-  <section class="pagina oculto" id="pagina-solicitar"    aria-labelledby="t-solicitar"></section>
-  <section class="pagina oculto" id="pagina-solicitacoes" aria-labelledby="t-solicitacoes"></section>
-  <section class="pagina oculto" id="pagina-relatorios"   aria-labelledby="t-relatorios"></section>
-  <section class="pagina oculto" id="pagina-medicos"      aria-labelledby="t-medicos"></section>
-  <section class="pagina oculto" id="pagina-acesso"       aria-labelledby="t-acesso"></section>
-  <section class="pagina oculto" id="pagina-config"       aria-labelledby="t-config"></section>
+  <section class="pagina oculto" id="pagina-fichas"    aria-labelledby="t-fichas"></section>
+  <section class="pagina oculto" id="pagina-notificar" aria-labelledby="t-notificar"></section>
 </main>
 
 <footer class="rodape">
   <p>
-    <strong>HABE SINAN</strong> · Sistema interno de gestão de fichas de notificação compulsória<br>
+    <strong>HABE SINAN</strong> · Consulta de fichas de notificação compulsória<br>
     <span id="rodapeRevisao"></span>
   </p>
-  <p class="nao-imprimir">
-    Em caso de dúvida sobre o prazo ou o preenchimento, procure o Núcleo de Epidemiologia.
-    Notificação compulsória imediata deve ser comunicada por telefone <em>além</em> do registro da ficha.
-  </p>
+  <p class="nao-imprimir" id="rodapeContato"></p>
 </footer>
 
 <div class="avisos-flutuantes" id="avisosFlutuantes" aria-live="polite"></div>
 <div id="painelDetalhe"></div>
 
 <script src="assets/js/dados-fichas.js"></script>
-<script src="assets/js/qrcode.js"></script>
-<script src="assets/js/armazenamento.js"></script>
 <script src="assets/js/util.js"></script>
-<script src="assets/js/paginas/inicio.js"></script>
 <script src="assets/js/paginas/fichas.js"></script>
-<script src="assets/js/paginas/solicitar.js"></script>
-<script src="assets/js/paginas/solicitacoes.js"></script>
-<script src="assets/js/paginas/relatorios.js"></script>
-<script src="assets/js/paginas/medicos.js"></script>
-<script src="assets/js/paginas/acesso.js"></script>
-<script src="assets/js/paginas/config.js"></script>
-<script src="assets/js/app.js"></script>
+<script src="assets/js/consulta.js"></script>
 
 </body>
 </html>

@@ -32,9 +32,7 @@ var Armazenamento = (function () {
     modo: 'local',                 // 'local' | 'compartilhado'
     endpoint: '',                  // URL do Web App do Apps Script
     chave: '',                     // chave compartilhada exigida pelo Web App
-    unidade: 'Hospital de Aeronáutica de Belém',
-    setor: 'Núcleo de Epidemiologia',
-    enderecoPublico: '',           // URL do sistema, usada no QR Code
+    enderecoPublico: '',           // URL da página de consulta, usada no QR Code
     pinNucleo: '',                 // PIN de acesso à área do Núcleo
     tema: 'auto',              // 'auto' segue o sistema; 'claro'/'escuro' são escolhas explícitas
     tamanhoMaximoAnexoMb: 10

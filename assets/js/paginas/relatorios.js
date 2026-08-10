@@ -1,9 +1,9 @@
 /* =========================================================================
-   HABE SINAN — relatórios de fichas solicitadas
+   HABE SINAN — relatórios das notificações registradas
    -------------------------------------------------------------------------
    Levantamento quantitativo por período (mês e semana epidemiológica),
    por agravo, por prazo de notificação, por destino do paciente e por
-   médico solicitante.
+   médico notificante, com a oportunidade da notificação.
    ========================================================================= */
 
 var Paginas = Paginas || {};
@@ -88,7 +88,7 @@ Paginas.relatorios = (function () {
     return '<div class="tabela-rolagem"><table class="tabela">' +
       '<thead><tr><th>Mês de competência</th><th style="text-align:right">Total</th>' +
       '<th style="text-align:right">Imediatas</th><th style="text-align:right">Semanais</th>' +
-      '<th style="text-align:right">Fichas devolvidas</th></tr></thead>' +
+      '<th style="text-align:right">Fichas digitalizadas</th></tr></thead>' +
       '<tbody>' + linhas + '</tbody></table></div>';
   }
 
@@ -114,7 +114,7 @@ Paginas.relatorios = (function () {
     }
 
     return '<div class="tabela-rolagem"><table class="tabela">' +
-      '<thead><tr><th>Semana epidemiológica</th><th style="text-align:right">Solicitações</th>' +
+      '<thead><tr><th>Semana epidemiológica</th><th style="text-align:right">Notificações</th>' +
       '<th style="text-align:right">Imediatas</th></tr></thead><tbody>' +
       chaves.map(function (chave) {
         return '<tr><td><strong>' + U.esc(chave) + '</strong></td>' +
@@ -131,7 +131,7 @@ Paginas.relatorios = (function () {
 
   function exportarConsolidado() {
     var lista = noPeriodo();
-    var linhas = [['HABE SINAN — Consolidado de fichas solicitadas']];
+    var linhas = [['HABE SINAN — Consolidado das notificações registradas']];
     linhas.push(['Período', (periodo.de ? U.formatarData(periodo.de) : 'início'),
                  'a', (periodo.ate ? U.formatarData(periodo.ate) : 'hoje')]);
     linhas.push(['Gerado em', U.formatarDataHora(new Date().toISOString())]);
@@ -156,10 +156,16 @@ Paginas.relatorios = (function () {
       })));
     bloco('Por destino do paciente',
       ordenarPorQuantidade(agrupar(lista, function (s) { return U.destinoNome(s.destino); })));
-    bloco('Por médico solicitante',
+    bloco('Por médico notificante',
       ordenarPorQuantidade(agrupar(lista, function (s) { return s.medicoNome; })));
     bloco('Por grupo de agravos',
       ordenarPorQuantidade(agrupar(lista, function (s) { return s.fichaGrupo; })));
+    bloco('Oportunidade da notificação',
+      ordenarPorQuantidade(agrupar(lista, function (s) {
+        return s.dentroDoPrazo === true ? 'Dentro do prazo'
+             : s.dentroDoPrazo === false ? 'Fora do prazo'
+             : 'Sem data de recebimento';
+      })));
 
     U.baixarCsv('habe-sinan-relatorio-' + U.hoje() + '.csv', linhas);
     U.torrada('Relatório exportado.', 'sucesso');
@@ -173,9 +179,16 @@ Paginas.relatorios = (function () {
     var comAnexo = lista.filter(function (s) { return (s.anexos || []).length > 0; }).length;
     var devolucao = lista.length ? Math.round(comAnexo / lista.length * 100) : 0;
 
+    /* Oportunidade: proporção das notificações que chegaram ao Núcleo dentro
+       do prazo regulamentar do agravo. Só entram no cálculo os registros que
+       têm a data de recebimento preenchida. */
+    var comPrazo = lista.filter(function (s) { return s.dentroDoPrazo === true || s.dentroDoPrazo === false; });
+    var noPrazo = comPrazo.filter(function (s) { return s.dentroDoPrazo === true; }).length;
+    var oportunidade = comPrazo.length ? Math.round(noPrazo / comPrazo.length * 100) : null;
+
     U.$('#indicadoresRelatorio', elemento).innerHTML = '' +
       '<div class="indicador indicador--padrao">' +
-        '<div class="indicador__rotulo">Fichas solicitadas</div>' +
+        '<div class="indicador__rotulo">Notificações</div>' +
         '<div class="indicador__valor">' + lista.length + '</div>' +
         '<div class="indicador__nota">no período selecionado</div></div>' +
       '<div class="indicador indicador--urgente">' +
@@ -188,10 +201,24 @@ Paginas.relatorios = (function () {
         '<div class="indicador__valor">' + (lista.length - imediatas) + '</div>' +
         '<div class="indicador__nota">prazo de 7 dias</div></div>' +
       '<div class="indicador indicador--sucesso">' +
-        '<div class="indicador__rotulo">Fichas devolvidas</div>' +
+        '<div class="indicador__rotulo">Fichas digitalizadas</div>' +
         '<div class="indicador__valor">' + devolucao + '%</div>' +
         '<div class="indicador__nota">' + comAnexo + ' de ' + lista.length +
-          ' com digitalização anexada</div></div>';
+          ' com anexo no registro</div></div>';
+
+    U.$('#indicadorOportunidade', elemento).innerHTML = oportunidade === null
+      ? '<div class="aviso"><span class="aviso__icone">📈</span><div>' +
+        '<strong>Oportunidade da notificação</strong>' +
+        'O cálculo aparece quando houver registros com a data de recebimento no Núcleo ' +
+        'preenchida.</div></div>'
+      : '<div class="aviso aviso--' + (oportunidade >= 80 ? 'sucesso' : 'atencao') + '">' +
+        '<span class="aviso__icone">📈</span><div>' +
+        '<strong>Oportunidade da notificação: ' + oportunidade + '%</strong>' +
+        noPrazo + ' de ' + comPrazo.length + ' notificações chegaram ao Núcleo dentro do prazo ' +
+        'regulamentar do agravo — 24 horas nas imediatas, 7 dias nas semanais. ' +
+        (oportunidade >= 80 ? 'Indicador em nível adequado.'
+                            : 'Vale identificar os setores de origem com maior atraso.') +
+        '</div></div>';
 
     U.$('#porPeriodo', elemento).innerHTML = tabelaPeriodos(lista);
     U.$('#porSemana', elemento).innerHTML = tabelaSemanas(lista);
@@ -240,7 +267,8 @@ Paginas.relatorios = (function () {
     elemento.innerHTML = '' +
       '<div class="pagina__cabecalho">' +
         '<h1 id="t-relatorios">Relatórios</h1>' +
-        '<p>Levantamento das fichas solicitadas por período, agravo, prazo, destino e médico.</p>' +
+        '<p>Levantamento das notificações registradas por período, agravo, prazo, destino ' +
+           'e médico notificante.</p>' +
       '</div>' +
 
       '<div class="cartao nao-imprimir">' +
@@ -267,16 +295,17 @@ Paginas.relatorios = (function () {
       '<p style="font-size:.9rem;color:var(--texto-suave);margin-bottom:.8rem">' +
         'Período analisado: <strong id="rotuloPeriodo"></strong></p>' +
 
-      '<div class="grade grade--4" id="indicadoresRelatorio" style="margin-bottom:1.2rem"></div>' +
+      '<div class="grade grade--4" id="indicadoresRelatorio" style="margin-bottom:1rem"></div>' +
+      '<div id="indicadorOportunidade" style="margin-bottom:1.2rem"></div>' +
 
-      '<div class="cartao"><h2 style="font-size:1.05rem">Solicitações por mês de competência</h2>' +
+      '<div class="cartao"><h2 style="font-size:1.05rem">Notificações por mês de competência</h2>' +
         '<div id="porPeriodo"></div></div>' +
 
-      '<div class="cartao"><h2 style="font-size:1.05rem">Solicitações por semana epidemiológica</h2>' +
+      '<div class="cartao"><h2 style="font-size:1.05rem">Notificações por semana epidemiológica</h2>' +
         '<div id="porSemana"></div></div>' +
 
       '<div class="grade grade--2">' +
-        '<div class="cartao"><h2 style="font-size:1.05rem">Agravos mais solicitados</h2>' +
+        '<div class="cartao"><h2 style="font-size:1.05rem">Agravos mais notificados</h2>' +
           '<p style="font-size:.83rem;color:var(--texto-suave)">Barras em vermelho indicam ' +
             'agravos de notificação imediata.</p>' +
           '<div id="porAgravo"></div></div>' +
@@ -284,7 +313,7 @@ Paginas.relatorios = (function () {
           '<div id="porGrupo"></div></div>' +
         '<div class="cartao"><h2 style="font-size:1.05rem">Destino do paciente</h2>' +
           '<div id="porDestino"></div></div>' +
-        '<div class="cartao"><h2 style="font-size:1.05rem">Médicos solicitantes</h2>' +
+        '<div class="cartao"><h2 style="font-size:1.05rem">Médicos notificantes</h2>' +
           '<div id="porMedico"></div></div>' +
       '</div>';
 

@@ -103,16 +103,19 @@ Paginas.fichas = (function () {
         : '') +
 
       '<div style="display:grid;gap:.5rem;margin-top:1rem">' +
-        '<button class="botao botao--grande" id="botaoSolicitarDaFicha">' +
-          '📄 Solicitar esta ficha (registra o atendimento)</button>' +
-        '<button class="botao botao--secundario" id="botaoModeloBranco">' +
-          '⬇ Baixar apenas o modelo em branco</button>' +
+        '<button class="botao botao--grande" id="botaoBaixarFicha">⬇ Baixar a ficha</button>' +
+        (U.perfilNucleo()
+          ? '<button class="botao botao--secundario" id="botaoRegistrarDaFicha">' +
+              '📋 Registrar uma notificação com esta ficha</button>'
+          : '') +
         (ficha.urlOficial
           ? '<a class="botao botao--secundario" href="' + U.esc(ficha.urlOficial) + '" ' +
               'target="_blank" rel="noopener">🔗 Abrir no portal do Ministério da Saúde</a>'
           : '<a class="botao botao--secundario" href="' + U.esc(HABE_CATALOGO.revisao.portalSinan) + '" ' +
               'target="_blank" rel="noopener">🔗 Procurar no portal do Sinan</a>') +
       '</div>' +
+
+      (U.perfilNucleo() ? '' : U.blocoContato(ficha.classificacao === 'imediata')) +
 
       '<p style="font-size:.8rem;color:var(--texto-suave);margin-top:1rem">' +
         'Arquivo no acervo local: <code>' + U.esc(ficha.arquivo) + '</code>' +
@@ -122,14 +125,10 @@ Paginas.fichas = (function () {
       '</p>';
 
     U.abrirPainel(U.esc(ficha.nome), corpo, function () {
-      U.$('#botaoSolicitarDaFicha').addEventListener('click', function () {
-        U.fecharPainel();
-        window.location.hash = '#/solicitar?ficha=' + encodeURIComponent(ficha.id);
-      });
-      U.$('#botaoModeloBranco').addEventListener('click', function () {
+      U.$('#botaoBaixarFicha').addEventListener('click', function () {
         U.entregarFicha(ficha, null).then(function (desfecho) {
           if (desfecho.origem === 'local') {
-            U.torrada('Modelo em branco baixado: ' + desfecho.nome, 'sucesso');
+            U.torrada('Ficha baixada: ' + desfecho.nome, 'sucesso');
           } else if (desfecho.origem === 'local-sem-verificacao') {
             U.torrada('Download solicitado: ' + desfecho.nome +
                       '. Se nada baixar, a ficha ainda não está no acervo.');
@@ -138,6 +137,14 @@ Paginas.fichas = (function () {
           }
         });
       });
+
+      var registrar = U.$('#botaoRegistrarDaFicha');
+      if (registrar) {
+        registrar.addEventListener('click', function () {
+          U.fecharPainel();
+          window.location.hash = '#/registrar?ficha=' + encodeURIComponent(ficha.id);
+        });
+      }
     });
   }
 

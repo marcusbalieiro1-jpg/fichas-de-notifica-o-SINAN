@@ -8,14 +8,16 @@ de internet no destino.
 
 ## 1. O que levar
 
-O projeto inteiro cabe em cerca de 1 MB. Copie a pasta completa, não apenas o
-`HABE-SINAN.html`: é a pasta que permite atualizar o catálogo, guardar as
-fichas em PDF e gerar o arquivo único de novo depois de qualquer mudança.
+O projeto inteiro cabe em cerca de 1 MB. Copie a pasta completa, não apenas os
+arquivos únicos: é a pasta que permite atualizar o catálogo, guardar as fichas
+em PDF e gerar os arquivos únicos de novo depois de qualquer mudança.
 
 ```
 HABE-SINAN/
-├── HABE-SINAN.html          o sistema num arquivo só (dois cliques)
-├── index.html               a mesma coisa, servida em pedaços
+├── index.html               página de CONSULTA (médicos)
+├── nucleo.html              página do NÚCLEO (registro e relatórios)
+├── HABE-SINAN-consulta.html a de consulta, num arquivo só
+├── HABE-SINAN-nucleo.html   a do Núcleo, num arquivo só
 ├── assets/                  estilo, brasão e scripts
 ├── fichas/                  acervo de PDFs (a preencher)
 ├── backend/apps-script/     servidor opcional
@@ -54,13 +56,13 @@ Antes de desconectar o HD, confirme que nada se corrompeu no caminho.
 **Windows (PowerShell), na pasta copiada:**
 
 ```powershell
-Get-FileHash HABE-SINAN.html -Algorithm SHA256
+Get-FileHash HABE-SINAN-consulta.html -Algorithm SHA256
 ```
 
 **Linux ou macOS:**
 
 ```bash
-shasum -a 256 HABE-SINAN.html
+shasum -a 256 HABE-SINAN-consulta.html
 ```
 
 Compare com a linha correspondente do `CONFERENCIA.txt`. Se bater, a cópia
@@ -75,17 +77,18 @@ Escolha o nível conforme o que a unidade precisa.
 ### Nível A — pasta compartilhada, sem servidor
 
 O mais rápido de montar. Copie a pasta para um compartilhamento de rede e
-distribua um atalho para `HABE-SINAN.html`.
+distribua aos consultórios um atalho para `HABE-SINAN-consulta.html`. O
+arquivo do Núcleo fica em subpasta com permissão restrita — ver a seção 5.
 
 ```
 \\servidor-habe\Aplicativos\HABE-SINAN\
 ```
 
-Funciona sem servidor web e sem internet. **Limitação séria:** cada computador
-guarda os próprios dados no navegador. O médico registra a solicitação na
-máquina dele, e o Núcleo **não** enxerga esse registro de outra máquina. Serve
-para consulta das fichas e para um posto único — não para o controle
-centralizado das solicitações.
+Funciona sem servidor web e sem internet. Para a **página de consulta** isso
+basta: ela não guarda nada. Para a **página do Núcleo**, a limitação é séria —
+os registros ficam no navegador da máquina em que forem lançados. Se o Núcleo
+trabalhar sempre no mesmo computador, funciona; se for preciso lançar de mais
+de um, veja o nível C.
 
 ### Nível B — servidor web interno
 
@@ -121,8 +124,8 @@ que funciona no celular dentro da rede, e a listagem de diretório desligada.
 planilha Google e o Google Drive, e **por isso exige internet**. Numa intranet
 isolada ele não funciona.
 
-Para o Núcleo enxergar, de um computador só, tudo o que os médicos registram
-numa rede sem internet, é preciso um serviço de dados rodando dentro da própria
+Para o Núcleo lançar e consultar os registros de mais de um computador numa
+rede sem internet, é preciso um serviço de dados rodando dentro da própria
 rede. A camada de armazenamento do sistema (`assets/js/armazenamento.js`) foi
 escrita justamente para isso: trocar o destino dos dados não mexe em nenhuma
 tela. Fale com quem estiver mantendo o projeto antes de fechar o desenho da
@@ -161,20 +164,22 @@ Complementos que valem a pena:
 ## 6. Depois de instalar
 
 1. Abra o sistema pelo endereço definitivo.
-2. **Configurações** → confirme unidade e setor, cole o endereço da intranet em
-   *Endereço público* e defina o PIN do Núcleo.
-3. **Acesso rápido** → gere o QR Code com o endereço novo, imprima o cartaz e
+2. Preencha o ramal e o plantão do Núcleo em `assets/js/dados-fichas.js`,
+   bloco `unidade`, e gere os arquivos únicos de novo.
+3. Em `nucleo.html` → **Configurações** → cole o endereço da página de consulta
+   na intranet em *Endereço público* e defina o PIN do Núcleo.
+4. **Acesso rápido** → gere o QR Code com o endereço novo, imprima o cartaz e
    baixe o atalho `.url` para as máquinas de atendimento.
-4. Preencha `fichas/` com os PDFs (ver [`../fichas/README.md`](../fichas/README.md)).
-5. Faça a conferência normativa (ver [`CONFERENCIA-NORMATIVA.md`](CONFERENCIA-NORMATIVA.md)).
-6. Distribua o [`MANUAL-MEDICO.md`](MANUAL-MEDICO.md) impresso aos consultórios.
+5. Preencha `fichas/` com os PDFs (ver [`../fichas/README.md`](../fichas/README.md)).
+6. Faça a conferência normativa (ver [`CONFERENCIA-NORMATIVA.md`](CONFERENCIA-NORMATIVA.md)).
+7. Distribua o [`MANUAL-MEDICO.md`](MANUAL-MEDICO.md) impresso aos consultórios.
 
 ---
 
 ## 7. Atualizações depois da instalação
 
 **Alterou o catálogo, o estilo ou algum script?** Gere o arquivo único de novo,
-senão o `HABE-SINAN.html` continua mostrando a versão antiga:
+senão os arquivos únicos continuam mostrando a versão antiga:
 
 ```bash
 node scripts/gerar-arquivo-unico.js
@@ -195,7 +200,9 @@ acesso ao repositório.
 - [ ] Sistema abre pelo endereço da intranet, em mais de um computador
 - [ ] Permissões da pasta aplicadas, com herança desativada
 - [ ] Listagem de diretório desligada no servidor web
-- [ ] Unidade, setor, endereço público e PIN configurados
+- [ ] Ramal e plantão do Núcleo preenchidos no bloco `unidade`
+- [ ] Endereço público e PIN configurados
+- [ ] `nucleo.html` em pasta com permissão restrita, fora do alcance dos consultórios
 - [ ] QR Code impresso e testado com o celular dentro da rede
 - [ ] Atalho na área de trabalho dos computadores de atendimento
 - [ ] Acervo `fichas/` preenchido
