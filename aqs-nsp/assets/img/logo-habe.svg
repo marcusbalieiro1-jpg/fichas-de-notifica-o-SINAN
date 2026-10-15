@@ -1,0 +1,111 @@
+<!--
+  HABE SINAN — brasão do Hospital de Aeronáutica de Belém
+
+  Redesenho vetorial do brasão institucional, para que o emblema fique nítido
+  em qualquer tamanho (tela, cartaz A4, impressão do comprovante).
+
+  Para usar o ARQUIVO ORIGINAL em vez deste redesenho:
+    1. salve a imagem oficial como assets/img/logo-habe.png;
+    2. troque "logo-habe.svg" por "logo-habe.png" em index.html e nos arquivos
+       assets/js/app.js, assets/js/paginas/acesso.js e
+       assets/js/paginas/solicitar.js (uma ocorrência em cada).
+  O CSS já preserva a proporção do brasão, então nada mais precisa mudar.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1200" role="img"
+     aria-label="Brasão do Hospital de Aeronáutica de Belém">
+  <defs>
+    <linearGradient id="ouro" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#ffe920"/>
+      <stop offset="55%"  stop-color="#f2d400"/>
+      <stop offset="100%" stop-color="#c9a800"/>
+    </linearGradient>
+    <linearGradient id="ouroPeca" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#f9e88c"/>
+      <stop offset="45%"  stop-color="#e8c93a"/>
+      <stop offset="100%" stop-color="#b99b14"/>
+    </linearGradient>
+    <linearGradient id="verde" x1="0.2" y1="0" x2="0.6" y2="1">
+      <stop offset="0%"   stop-color="#1ea02f"/>
+      <stop offset="100%" stop-color="#08641a"/>
+    </linearGradient>
+
+    <clipPath id="campoInterno">
+      <path d="M95,300 H905 V690 C905,905 762,1046 500,1104 C238,1046 95,905 95,690 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- ===================== Escudo ===================== -->
+  <path d="M18,18 H982 V700 C982,952 800,1122 500,1188 C200,1122 18,952 18,700 Z"
+        fill="url(#ouro)" stroke="#a98c00" stroke-width="6"/>
+
+  <!-- ===================== Faixa branca ===================== -->
+  <rect x="95" y="92" width="810" height="180" fill="#ffffff" stroke="#7a6600" stroke-width="5"/>
+
+  <!-- Insígnia alada da Força Aérea Brasileira -->
+  <g transform="translate(212,178) scale(0.94)" fill="url(#ouroPeca)"
+     stroke="#8f7500" stroke-width="2.5" stroke-linejoin="round">
+    <path d="M-16,-30 C-54,-50 -108,-52 -146,-34 C-108,-34 -74,-25 -46,-11 L-16,-13 Z"/>
+    <path d="M-16,-8  C-52,-19 -100,-17 -132,-4  C-100,-4  -66,3   -42,13  L-16,10 Z"/>
+    <path d="M16,-30  C54,-50  108,-52  146,-34  C108,-34  74,-25  46,-11  L16,-13 Z"/>
+    <path d="M16,-8   C52,-19  100,-17  132,-4   C100,-4   66,3    42,13   L16,10 Z"/>
+    <path d="M0,-58 C17,-58 28,-45 28,-30 C28,-15 17,-4 0,-4 C-17,-4 -28,-15 -28,-30
+             C-28,-45 -17,-58 0,-58 Z
+             M0,-47 C-10,-47 -17,-39 -17,-30 C-17,-21 -10,-14 0,-14
+             C10,-14 17,-21 17,-30 C17,-39 10,-47 0,-47 Z"/>
+    <rect x="-5" y="-50" width="10" height="82"/>
+    <rect x="-31" y="24" width="62" height="14" rx="3"/>
+    <path d="M-11,40 H11 L9,80 L0,92 L-9,80 Z"/>
+    <path d="M-11,50 H11 M-11,60 H11 M-11,70 H11"
+          stroke="#8f7500" stroke-width="3.5" fill="none"/>
+  </g>
+
+  <!-- Letreiro HABE, com relevo -->
+  <text x="358" y="234" font-family="'Arial Black','Arial Bold',Arial,Helvetica,sans-serif"
+        font-weight="900" font-size="148" letter-spacing="7" fill="#8d0000">HABE</text>
+  <text x="352" y="228" font-family="'Arial Black','Arial Bold',Arial,Helvetica,sans-serif"
+        font-weight="900" font-size="148" letter-spacing="7" fill="#ee1111">HABE</text>
+
+  <!-- ===================== Campo azul ===================== -->
+  <path d="M95,300 H905 V690 C905,905 762,1046 500,1104 C238,1046 95,905 95,690 Z"
+        fill="#29aede" stroke="#7a6600" stroke-width="5"/>
+
+  <g clip-path="url(#campoInterno)">
+
+    <!-- Mapa da Amazônia Legal -->
+    <path d="M148,808 L178,730 L214,682 L256,644 L292,624 L322,584 L346,540 L392,530
+             L418,576 L436,616 L472,634 L502,604 L530,572 L560,558 L588,580 L602,620
+             L628,650 L680,666 L728,678 L778,694 L822,718 L854,760 L864,808 L846,852
+             L826,894 L806,940 L774,988 L724,1028 L662,1058 L586,1074 L506,1076
+             L432,1060 L370,1032 L316,996 L268,950 L228,902 L188,858 Z"
+          fill="url(#verde)" stroke="#054d10" stroke-width="6" stroke-linejoin="round"/>
+
+    <!-- Rio Amazonas -->
+    <path d="M190,852 C264,830 326,864 396,846 C462,828 504,796 568,788
+             C626,780 668,792 714,782"
+          fill="none" stroke="#fdfff2" stroke-width="15" stroke-linecap="round"/>
+
+    <!-- Bastão de Asclépio -->
+    <g transform="translate(200,452) scale(0.58)" stroke="#8f7500" stroke-width="4">
+      <rect x="-5" y="-176" width="10" height="300" fill="url(#ouroPeca)"/>
+      <rect x="-46" y="70" width="92" height="24" rx="5" fill="url(#ouroPeca)"/>
+      <path d="M-13,96 H13 V186 L0,200 L-13,186 Z" fill="url(#ouroPeca)"/>
+      <path d="M-13,110 H13 M-13,132 H13 M-13,154 H13"
+            stroke="#8f7500" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <path d="M30,-186 C6,-192 -20,-174 -20,-152 C-20,-128 18,-120 18,-94
+               C18,-68 -20,-62 -20,-36 C-20,-10 18,-4 18,22 C18,46 -6,58 -24,54"
+            fill="none" stroke="url(#ouroPeca)" stroke-width="19" stroke-linecap="round"/>
+      <path d="M30,-186 C6,-192 -20,-174 -20,-152 C-20,-128 18,-120 18,-94
+               C18,-68 -20,-62 -20,-36 C-20,-10 18,-4 18,22 C18,46 -6,58 -24,54"
+            fill="none" stroke="#8f7500" stroke-width="3"/>
+      <circle cx="34" cy="-188" r="11" fill="url(#ouroPeca)"/>
+    </g>
+
+    <!-- Cruz vermelha, com filete branco -->
+    <g>
+      <path d="M732,352 H792 V410 H850 V470 H792 V528 H732 V470 H674 V410 H732 Z"
+            fill="#fffdf0" stroke="#fffdf0" stroke-width="24" stroke-linejoin="round"/>
+      <path d="M732,352 H792 V410 H850 V470 H792 V528 H732 V470 H674 V410 H732 Z"
+            fill="#d61414" stroke="#8d0000" stroke-width="6" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,495 @@
+/* =========================================================================
+   HABE SINAN — folha de estilo principal
+   Hospital de Aeronáutica de Belém · Núcleo de Epidemiologia
+   ========================================================================= */
+
+/* ---------- 1. Variáveis ---------- */
+:root {
+  --azul-escuro:  #0b2f5c;
+  --azul:         #1b5aa8;
+  --azul-claro:   #eaf1fa;
+  --dourado:      #d99a1f;
+  --dourado-claro:#fdf6e6;
+
+  --urgente:      #c62828;
+  --urgente-bg:   #fdecea;
+  --urgente-borda:#f2b8b5;
+  --atencao:      #a45c00;
+  --atencao-bg:   #fff6e5;
+  --atencao-borda:#f0d09a;
+  --sucesso:      #1b7a4b;
+  --sucesso-bg:   #e8f5ee;
+
+  --texto:        #16202c;
+  --texto-suave:  #56657a;
+  --fundo:        #f4f6f9;
+  --superficie:   #ffffff;
+  --borda:        #dde3ec;
+
+  --raio:         12px;
+  --raio-p:       8px;
+  --sombra:       0 1px 2px rgba(11,47,92,.06), 0 6px 18px rgba(11,47,92,.07);
+  --sombra-forte: 0 10px 40px rgba(11,47,92,.20);
+  --fonte: "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
+}
+
+[data-tema="escuro"] {
+  --azul-claro:   #16283f;
+  --dourado-claro:#2e2412;
+  --urgente-bg:   #3a1a19;
+  --urgente-borda:#7a3330;
+  --atencao-bg:   #33260f;
+  --atencao-borda:#7a5a1f;
+  --sucesso-bg:   #12301f;
+  --texto:        #e7edf5;
+  --texto-suave:  #9fb0c6;
+  --fundo:        #0d1520;
+  --superficie:   #14202f;
+  --borda:        #26364a;
+  --sombra:       0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+}
+
+/* ---------- 2. Base ---------- */
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: var(--fonte);
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--texto);
+  background: var(--fundo);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 { line-height: 1.25; margin: 0 0 .5rem; font-weight: 700; }
+h1 { font-size: 1.6rem; }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.08rem; }
+p  { margin: 0 0 .8rem; }
+a  { color: var(--azul); }
+
+.oculto { display: none !important; }
+.so-leitor-tela {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* ---------- 3. Cabeçalho ---------- */
+.cabecalho {
+  background: linear-gradient(135deg, var(--azul-escuro) 0%, #123f77 100%);
+  color: #fff;
+  position: sticky; top: 0; z-index: 40;
+  box-shadow: 0 2px 12px rgba(0,0,0,.18);
+}
+
+.cabecalho__topo {
+  max-width: 1200px; margin: 0 auto;
+  display: flex; align-items: center; gap: .9rem;
+  padding: .7rem 1rem;
+}
+
+/* O brasão é vertical (5:6): fixa-se a altura e deixa a largura livre, para
+   que o emblema não apareça achatado — vale também se for trocado por PNG. */
+.cabecalho__logo { height: 52px; width: auto; flex: 0 0 auto; }
+.brasao--comprovante { height: 62px; width: auto; }
+.brasao--cartaz      { height: 132px; width: auto; }
+.brasao--destrava    { height: 84px; width: auto; }
+
+.cabecalho__titulo { flex: 1 1 auto; min-width: 0; }
+.cabecalho__titulo strong {
+  display: block; font-size: 1.25rem; letter-spacing: .04em; font-weight: 800;
+}
+/* Só o subtítulo (filho direto) vira bloco. Um span dentro do <strong>, como
+   o selo "· NÚCLEO", precisa continuar na mesma linha do nome do sistema. */
+.cabecalho__titulo > span {
+  display: block; font-size: .78rem; color: #bcd4f0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cabecalho__marca {
+  font-size: .62em; letter-spacing: .08em; opacity: .85; white-space: nowrap;
+}
+
+.cabecalho__acoes { display: flex; gap: .4rem; flex: 0 0 auto; }
+
+.botao-icone {
+  background: rgba(255,255,255,.12); color: #fff; border: 0;
+  width: 38px; height: 38px; border-radius: 50%;
+  font-size: 1.05rem; cursor: pointer; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.botao-icone:hover { background: rgba(255,255,255,.26); }
+.botao-icone--ativo { background: var(--dourado); color: #10233c; }
+
+/* ---------- 4. Navegação ---------- */
+.navegacao {
+  background: rgba(0,0,0,.16);
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.navegacao__lista {
+  max-width: 1200px; margin: 0 auto; padding: 0 .6rem;
+  display: flex; gap: .15rem; list-style: none;
+}
+.navegacao a {
+  display: block; padding: .62rem .85rem; white-space: nowrap;
+  color: #cfe0f5; text-decoration: none; font-size: .9rem; font-weight: 600;
+  border-bottom: 3px solid transparent; transition: color .15s, border-color .15s;
+}
+.navegacao a:hover { color: #fff; }
+.navegacao a.ativo { color: #fff; border-bottom-color: var(--dourado); }
+.navegacao__contador {
+  display: inline-block; min-width: 18px; padding: 0 5px; margin-left: .35rem;
+  background: var(--dourado); color: #10233c;
+  border-radius: 9px; font-size: .7rem; font-weight: 800; text-align: center;
+}
+
+/* ---------- 5. Layout ---------- */
+.conteudo { max-width: 1200px; margin: 0 auto; padding: 1.2rem 1rem 4rem; }
+.pagina { animation: surgir .18s ease-out; }
+@keyframes surgir { from { opacity: 0; transform: translateY(6px); } }
+
+.pagina__cabecalho { margin-bottom: 1.1rem; }
+.pagina__cabecalho p { color: var(--texto-suave); margin: 0; }
+
+.cartao {
+  background: var(--superficie); border: 1px solid var(--borda);
+  border-radius: var(--raio); box-shadow: var(--sombra);
+  padding: 1.1rem; margin-bottom: 1.1rem;
+}
+.cartao__titulo {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .6rem; margin-bottom: .8rem; flex-wrap: wrap;
+}
+.cartao__titulo h2, .cartao__titulo h3 { margin: 0; }
+
+.grade { display: grid; gap: 1rem; }
+.grade--2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.grade--3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.grade--4 { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+
+/* ---------- 6. Botões ---------- */
+.botao {
+  display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
+  padding: .62rem 1.05rem; border-radius: var(--raio-p);
+  border: 1px solid transparent; background: var(--azul); color: #fff;
+  font: inherit; font-weight: 600; font-size: .92rem;
+  cursor: pointer; text-decoration: none; transition: filter .15s, background .15s;
+}
+.botao:hover { filter: brightness(1.08); }
+.botao:disabled { opacity: .5; cursor: not-allowed; }
+.botao--secundario {
+  background: var(--superficie); color: var(--azul); border-color: var(--borda);
+}
+.botao--perigo   { background: var(--urgente); }
+.botao--sucesso  { background: var(--sucesso); }
+.botao--grande   { padding: .85rem 1.4rem; font-size: 1rem; }
+.botao--bloco    { width: 100%; }
+.botao--pequeno  { padding: .38rem .7rem; font-size: .82rem; }
+
+/* ---------- 7. Formulários ---------- */
+.campo { margin-bottom: .95rem; }
+.campo > label {
+  display: block; font-weight: 600; font-size: .87rem; margin-bottom: .3rem;
+}
+.campo__dica { display: block; font-weight: 400; color: var(--texto-suave); font-size: .8rem; }
+.campo__erro { color: var(--urgente); font-size: .82rem; margin-top: .25rem; display: none; }
+.campo--invalido .campo__erro { display: block; }
+.campo--invalido input, .campo--invalido select, .campo--invalido textarea {
+  border-color: var(--urgente);
+}
+.obrigatorio { color: var(--urgente); }
+
+input[type="text"], input[type="date"], input[type="email"], input[type="tel"],
+input[type="search"], input[type="number"], input[type="password"], select, textarea {
+  width: 100%; padding: .62rem .7rem; font: inherit; font-size: .95rem;
+  color: var(--texto); background: var(--superficie);
+  border: 1px solid var(--borda); border-radius: var(--raio-p);
+  transition: border-color .15s, box-shadow .15s;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none; border-color: var(--azul);
+  box-shadow: 0 0 0 3px rgba(27,90,168,.18);
+}
+textarea { min-height: 82px; resize: vertical; }
+
+.opcoes { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.opcao {
+  display: flex; align-items: flex-start; gap: .55rem; cursor: pointer;
+  padding: .65rem .8rem; border: 1px solid var(--borda);
+  border-radius: var(--raio-p); background: var(--superficie);
+  transition: border-color .15s, background .15s;
+}
+.opcao:hover { border-color: var(--azul); }
+.opcao input { margin: .2rem 0 0; flex: 0 0 auto; accent-color: var(--azul); }
+.opcao__texto { font-size: .9rem; line-height: 1.35; }
+.opcao__texto strong { display: block; }
+.opcao__texto small { color: var(--texto-suave); }
+.opcao:has(input:checked) { border-color: var(--azul); background: var(--azul-claro); }
+
+/* ---------- 8. Selos de classificação ---------- */
+.selo {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .17rem .55rem; border-radius: 999px;
+  font-size: .74rem; font-weight: 800; letter-spacing: .02em;
+  border: 1px solid transparent; white-space: nowrap;
+}
+.selo--urgente { background: var(--urgente-bg); color: var(--urgente); border-color: var(--urgente-borda); }
+.selo--atencao { background: var(--atencao-bg); color: var(--atencao); border-color: var(--atencao-borda); }
+.selo--padrao  { background: var(--azul-claro); color: var(--azul); border-color: var(--borda); }
+.selo--neutro  { background: var(--fundo); color: var(--texto-suave); border-color: var(--borda); }
+.selo--sucesso { background: var(--sucesso-bg); color: var(--sucesso); border-color: var(--sucesso); }
+
+.ponto {
+  width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: 0 0 auto;
+}
+.ponto--urgente { background: var(--urgente); box-shadow: 0 0 0 3px var(--urgente-bg); }
+.ponto--atencao { background: var(--atencao); box-shadow: 0 0 0 3px var(--atencao-bg); }
+.ponto--padrao  { background: var(--azul);    box-shadow: 0 0 0 3px var(--azul-claro); }
+
+/* ---------- 9. Sumário de fichas ---------- */
+.busca-fichas { position: relative; margin-bottom: .9rem; }
+.busca-fichas input { padding-left: 2.4rem; font-size: 1rem; }
+.busca-fichas::before {
+  content: "🔎"; position: absolute; left: .75rem; top: 50%;
+  transform: translateY(-50%); font-size: .95rem; opacity: .65;
+}
+
+.filtros { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
+.filtro {
+  padding: .38rem .8rem; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--borda); background: var(--superficie);
+  color: var(--texto-suave); font: inherit; font-size: .84rem; font-weight: 600;
+}
+.filtro:hover { border-color: var(--azul); color: var(--azul); }
+.filtro--ativo { background: var(--azul); border-color: var(--azul); color: #fff; }
+.filtro--ativo.filtro--urgente { background: var(--urgente); border-color: var(--urgente); }
+.filtro--ativo.filtro--atencao { background: var(--atencao); border-color: var(--atencao); }
+
+.alfabeto { display: flex; flex-wrap: wrap; gap: .25rem; margin-bottom: 1rem; }
+.alfabeto button {
+  width: 30px; height: 30px; border-radius: var(--raio-p); cursor: pointer;
+  border: 1px solid var(--borda); background: var(--superficie);
+  color: var(--texto); font: inherit; font-weight: 700; font-size: .82rem;
+}
+.alfabeto button:hover:not(:disabled) { background: var(--azul); color: #fff; border-color: var(--azul); }
+.alfabeto button:disabled { opacity: .3; cursor: default; }
+
+.grupo-letra {
+  display: flex; align-items: center; gap: .6rem;
+  margin: 1.4rem 0 .6rem; padding-bottom: .3rem;
+  border-bottom: 2px solid var(--borda);
+}
+.grupo-letra span {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: var(--raio-p);
+  background: var(--azul-escuro); color: #fff; font-weight: 800; font-size: 1.05rem;
+}
+.grupo-letra small { color: var(--texto-suave); font-weight: 600; }
+
+/* minmax(0,1fr) e min-width:0 impedem que um item de conteúdo largo — o selo
+   "Semanal com gatilho imediato" tem 211 px e não quebra — estique a coluna
+   além da largura da tela. */
+.lista-fichas { display: grid; gap: .55rem; grid-template-columns: minmax(0, 1fr); }
+
+.ficha-item {
+  display: flex; align-items: center; gap: .8rem;
+  padding: .75rem .9rem; text-align: left; width: 100%; min-width: 0;
+  background: var(--superficie); border: 1px solid var(--borda);
+  border-left: 5px solid var(--azul);
+  border-radius: var(--raio-p); cursor: pointer; font: inherit;
+  transition: transform .12s, box-shadow .12s, border-color .12s;
+}
+.ficha-item:hover { transform: translateX(3px); box-shadow: var(--sombra); }
+.ficha-item--urgente { border-left-color: var(--urgente); background: var(--urgente-bg); }
+.ficha-item--atencao { border-left-color: var(--atencao); background: var(--atencao-bg); }
+
+.ficha-item__corpo { flex: 1 1 auto; min-width: 0; }
+.ficha-item__nome { font-weight: 700; font-size: .97rem; display: block; overflow-wrap: anywhere; }
+.ficha-item__meta { font-size: .8rem; color: var(--texto-suave); overflow-wrap: anywhere; }
+.ficha-item__seta { color: var(--texto-suave); font-size: 1.2rem; flex: 0 0 auto; }
+
+/* ---------- 10. Painel lateral (detalhe da ficha) ---------- */
+.sobreposicao {
+  position: fixed; inset: 0; background: rgba(8,20,36,.55);
+  z-index: 60; display: flex; justify-content: flex-end;
+  animation: aparecer .16s ease-out;
+}
+@keyframes aparecer { from { opacity: 0; } }
+
+.painel {
+  width: min(560px, 100%); height: 100%; overflow-y: auto;
+  background: var(--superficie); box-shadow: var(--sombra-forte);
+  animation: deslizar .2s ease-out;
+}
+@keyframes deslizar { from { transform: translateX(24px); opacity: .6; } }
+
+.painel__cabecalho {
+  position: sticky; top: 0; z-index: 2;
+  padding: 1rem 1.1rem; border-bottom: 1px solid var(--borda);
+  background: var(--superficie);
+  display: flex; align-items: flex-start; gap: .8rem;
+}
+.painel__cabecalho h2 { font-size: 1.15rem; }
+.painel__fechar {
+  background: none; border: 0; font-size: 1.5rem; line-height: 1;
+  cursor: pointer; color: var(--texto-suave); padding: 0 .2rem;
+}
+.painel__corpo { padding: 1.1rem; }
+
+/* ---------- 11. Avisos ---------- */
+.aviso {
+  display: flex; gap: .7rem; padding: .85rem 1rem;
+  border-radius: var(--raio-p); border: 1px solid var(--borda);
+  background: var(--azul-claro); font-size: .9rem; margin-bottom: 1rem;
+}
+.aviso__icone { font-size: 1.15rem; flex: 0 0 auto; line-height: 1.3; }
+.aviso strong { display: block; margin-bottom: .15rem; }
+.aviso--urgente { background: var(--urgente-bg); border-color: var(--urgente-borda); }
+.aviso--atencao { background: var(--atencao-bg); border-color: var(--atencao-borda); }
+.aviso--sucesso { background: var(--sucesso-bg); border-color: var(--sucesso); }
+
+/* ---------- 12. Indicadores ---------- */
+.indicador {
+  background: var(--superficie); border: 1px solid var(--borda);
+  border-radius: var(--raio); padding: .95rem 1rem; box-shadow: var(--sombra);
+}
+.indicador__rotulo {
+  font-size: .78rem; color: var(--texto-suave); font-weight: 600;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.indicador__valor { font-size: 2rem; font-weight: 800; line-height: 1.1; }
+.indicador__nota { font-size: .8rem; color: var(--texto-suave); }
+.indicador--urgente { border-top: 4px solid var(--urgente); }
+.indicador--urgente .indicador__valor { color: var(--urgente); }
+.indicador--atencao { border-top: 4px solid var(--atencao); }
+.indicador--padrao  { border-top: 4px solid var(--azul); }
+.indicador--sucesso { border-top: 4px solid var(--sucesso); }
+
+/* ---------- 13. Tabelas ---------- */
+.tabela-rolagem { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table.tabela { width: 100%; border-collapse: collapse; font-size: .89rem; }
+table.tabela th, table.tabela td {
+  padding: .58rem .65rem; text-align: left; border-bottom: 1px solid var(--borda);
+  vertical-align: top;
+}
+table.tabela th {
+  background: var(--azul-claro); font-weight: 700; font-size: .8rem;
+  text-transform: uppercase; letter-spacing: .03em; white-space: nowrap;
+}
+table.tabela tbody tr:hover { background: var(--azul-claro); }
+.tabela__vazia { text-align: center; padding: 2rem; color: var(--texto-suave); }
+
+/* ---------- 14. Barras (relatórios) ---------- */
+.barra-linha {
+  display: grid; grid-template-columns: minmax(120px, 34%) 1fr auto;
+  gap: .7rem; align-items: center; margin-bottom: .5rem; font-size: .87rem;
+}
+.barra-linha__rotulo { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barra-linha__trilho {
+  height: 16px; background: var(--fundo); border-radius: 8px;
+  border: 1px solid var(--borda); overflow: hidden;
+}
+.barra-linha__preenchimento { height: 100%; background: var(--azul); border-radius: 8px 0 0 8px; }
+.barra-linha__preenchimento--urgente { background: var(--urgente); }
+.barra-linha__preenchimento--atencao { background: var(--atencao); }
+.barra-linha__valor { font-weight: 700; min-width: 2.4rem; text-align: right; }
+
+/* ---------- 15. Anexos ---------- */
+.zona-anexo {
+  border: 2px dashed var(--borda); border-radius: var(--raio);
+  padding: 1.4rem 1rem; text-align: center; cursor: pointer;
+  color: var(--texto-suave); background: var(--fundo); transition: border-color .15s, background .15s;
+}
+.zona-anexo:hover, .zona-anexo--sobre { border-color: var(--azul); background: var(--azul-claro); }
+.zona-anexo strong { display: block; color: var(--texto); font-size: 1rem; }
+
+.lista-anexos { list-style: none; padding: 0; margin: .8rem 0 0; display: grid; gap: .45rem; }
+.anexo-item {
+  display: flex; align-items: center; gap: .65rem;
+  padding: .55rem .7rem; border: 1px solid var(--borda);
+  border-radius: var(--raio-p); background: var(--superficie); font-size: .87rem;
+}
+.anexo-item__nome { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.anexo-item__miniatura {
+  width: 40px; height: 40px; border-radius: 6px; object-fit: cover;
+  border: 1px solid var(--borda); flex: 0 0 auto; background: var(--fundo);
+}
+
+/* ---------- 16. QR Code ---------- */
+.qr-caixa {
+  display: inline-block; padding: 14px; background: #fff;
+  border: 1px solid var(--borda); border-radius: var(--raio);
+}
+.qr-caixa canvas { display: block; image-rendering: pixelated; width: 220px; height: 220px; }
+
+/* ---------- 17. Comprovante / impressão ---------- */
+.comprovante {
+  border: 2px solid var(--azul-escuro); border-radius: var(--raio);
+  padding: 1.1rem; background: var(--superficie);
+}
+.comprovante__cabecalho {
+  display: flex; align-items: center; gap: .8rem;
+  border-bottom: 2px solid var(--azul-escuro); padding-bottom: .7rem; margin-bottom: .8rem;
+}
+.comprovante__protocolo {
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: 1.25rem; font-weight: 800; letter-spacing: .06em; color: var(--azul-escuro);
+}
+.dados-lista { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.dados-lista div { font-size: .89rem; }
+.dados-lista dt { font-size: .75rem; color: var(--texto-suave); text-transform: uppercase;
+                  letter-spacing: .03em; font-weight: 700; }
+.dados-lista dd { margin: 0; font-weight: 600; }
+
+/* ---------- 18. Rodapé ---------- */
+.rodape {
+  border-top: 1px solid var(--borda); margin-top: 2rem; padding: 1.2rem 1rem 2rem;
+  color: var(--texto-suave); font-size: .82rem; text-align: center;
+}
+.rodape a { color: var(--texto-suave); }
+
+/* ---------- 19. Notificações flutuantes ---------- */
+.avisos-flutuantes {
+  position: fixed; right: 1rem; bottom: 1rem; z-index: 90;
+  display: flex; flex-direction: column; gap: .5rem; max-width: 360px;
+}
+.torrada {
+  padding: .8rem 1rem; border-radius: var(--raio-p); color: #fff;
+  background: var(--azul-escuro); box-shadow: var(--sombra-forte);
+  font-size: .9rem; animation: surgir .18s ease-out;
+}
+.torrada--sucesso { background: var(--sucesso); }
+.torrada--erro    { background: var(--urgente); }
+.torrada--atencao { background: var(--atencao); }
+
+/* ---------- 20. Responsivo ---------- */
+/* No celular o selo de prazo desce para a própria linha, alinhado ao texto:
+   cabe inteiro e continua sendo a primeira coisa que se lê depois do nome. */
+@media (max-width: 560px) {
+  .ficha-item { flex-wrap: wrap; row-gap: .4rem; }
+  .ficha-item__corpo { flex: 1 1 calc(100% - 1.6rem); }
+  .ficha-item__seta { display: none; }
+  .ficha-item .selo { margin-left: 1.6rem; white-space: normal; }
+}
+
+@media (max-width: 620px) {
+  .cabecalho__titulo strong { font-size: 1.08rem; }
+  .conteudo { padding: 1rem .8rem 3rem; }
+  .cartao { padding: .9rem; }
+  .indicador__valor { font-size: 1.6rem; }
+}
+
+/* ---------- 21. Impressão ---------- */
+@media print {
+  .cabecalho, .navegacao, .rodape, .avisos-flutuantes,
+  .nao-imprimir, .botao, .filtros, .alfabeto, .busca-fichas { display: none !important; }
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .conteudo { max-width: none; padding: 0; }
+  .cartao, .comprovante { box-shadow: none; border: 1px solid #999; page-break-inside: avoid; }
+  .ficha-item { break-inside: avoid; }
+  .ficha-item--urgente { border-left: 5px solid #000 !important; }
+  a[href]::after { content: ""; }
+}
