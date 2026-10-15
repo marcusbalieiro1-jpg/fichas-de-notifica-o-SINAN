@@ -17,6 +17,11 @@ var AQS_CONFIG = {
      configurado no bucket "evidencias" do Supabase. */
   LIMITE_ARQUIVO_MB: 20,
 
+  /* A quem recorrer para senha e acesso — aparece na tela de login. Use o
+     contato INSTITUCIONAL da AQS (e-mail e ramal), nunca o de uma pessoa:
+     assim a orientação continua válida quando a equipe mudar. */
+  CONTATO_SUPORTE: 'Chefia do NSP ou AQS (e-mail institucional da AQS)',
+
   NOME_SISTEMA: 'HABE · AQS e NSP',
   SUBTITULO: 'Ferramenta de Gestão de Atividades',
   ORGANIZACAO: 'Hospital de Aeronáutica de Belém'

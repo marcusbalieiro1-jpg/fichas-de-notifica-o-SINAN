@@ -28,6 +28,25 @@ navegador (index.html)                         Supabase (São Paulo)
   (dados fictícios em memória/sessionStorage, sem rede). Faixa vermelha
   "MODO DEMONSTRAÇÃO" sempre visível.
 
+### Papéis e continuidade (decisão do usuário)
+
+* `adjunto` — executa e registra as suas missões.
+* `chefia` — tudo o que o adjunto faz + gestão de atividades, avisos e **usuários**.
+* `administrador` — a **conta institucional da AQS** (e-mail institucional, não pessoal). Tem todos
+  os poderes da chefia e é a âncora de continuidade: existe para que a ferramenta continue
+  administrável quando chefes, adjuntos ou o responsável técnico mudarem. Não recebe missões
+  (não aparece nas listas de responsáveis, no placar nem nos relatórios por militar).
+* **Gestor** = chefia **ou** administrador. Em todo o contrato, "gestor" é quem pode administrar.
+* Gestores **incluem, alteram (inclusive o papel), desativam e excluem** qualquer militar, inclusive
+  a chefia. Exceção: só um administrador cria, altera, desativa, exclui ou redefine a senha de uma
+  conta de administrador (a chefia não consegue derrubar a conta institucional).
+* Trava anti-bloqueio: nenhuma operação pode deixar o sistema sem **ao menos uma conta de gestor
+  ativa e com acesso** (`ativo` e `usuario_id` não nulo).
+* Excluir um militar preserva o histórico: as colunas de autoria passam a nulo e os nomes ficam
+  gravados nas colunas `*_nome` (instantâneo no momento do registro).
+* Passagem de chefia guiada (RPC `transferir_chefia`), alertas de continuidade no Início para os
+  gestores e o manual `docs/CONTINUIDADE.md` (o que fazer quando alguém sai).
+
 ### Ordem de carga dos scripts
 
 `index.html`:
@@ -77,7 +96,7 @@ inline — ele não é renderizado pela página.
 
 | Global | Arquivo | Para quê |
 |---|---|---|
-| `AQS_CONFIG` | config.js | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `INATIVIDADE_MINUTOS` (30), `LIMITE_ARQUIVO_MB` (20), `NOME_SISTEMA`, `SUBTITULO`, `ORGANIZACAO` |
+| `AQS_CONFIG` | config.js | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `INATIVIDADE_MINUTOS` (30), `LIMITE_ARQUIVO_MB` (20), `NOME_SISTEMA`, `SUBTITULO`, `ORGANIZACAO`, `CONTATO_SUPORTE` (texto exibido na tela de login: a quem recorrer para senha/acesso) |
 | `U` | util.js | DOM (`$`, `$$`), `esc`, `escMultilinha`, datas no fuso de Belém (`hojeBelem`, `paraData`, `paraTexto`, `somarDias`, `diasEntre`, `formatarData`, `formatarDataCurta`, `formatarDataHora`, `tempoRelativo`, `mesPorExtenso`, `descreverPrazo`, `MESES`, `DIAS_SEMANA`), `torrada(msg, tipo)`, `falha(erro)`, `abrirPainel(tituloHtml, corpoHtml, aoMontar(painelEl), {largo, aoFechar})`, `fecharPainel`, `painelAberto`, `confirmar`, `baixarConteudo`, `abrirBlob`, `baixarCsv`, `comprimirImagem(file)→Promise<File|null>`, `formatarTamanho`, `iconeArquivo`, `nomeSeguro`, `uuid`, `agrupar`, `ordenarTexto`, `adiar`, `anelProgresso(pct, rotulo)`, `aplicarLarguras(raiz)` |
 | `Regras` | regras.js | regras puras compartilhadas (UI e ApiDemo) — §5 |
 | `Recorrencia` | recorrencia.js | geração de datas, espelho exato da função SQL — §4 |
@@ -105,7 +124,7 @@ Função de data: `public.hoje_belem() returns date` =
 `(now() at time zone 'America/Belem')::date`.
 
 ### Enumerações (colunas `text` com `check`)
-* `papel`: `chefia` | `adjunto`
+* `papel`: `administrador` | `chefia` | `adjunto`
 * `tipo` (atividade): `recorrente` | `pontual` | `sob_demanda`
 * `periodicidade`: `diaria_util` | `semanal` | `mensal` | `trimestral` | `semestral` | `anual` (só quando `tipo = 'recorrente'`; senão `null`)
 * `prioridade`: `baixa` | `normal` | `alta` | `urgente`
@@ -123,7 +142,10 @@ Função de data: `public.hoje_belem() returns date` =
 `setor_id` → setores, `papel` default `'adjunto'`, `ativo` bool default true,
 `deve_trocar_senha` bool default true, `ultimo_acesso` timestamptz,
 `criado_em`, `atualizado_em`.
-Gatilho: impede que a última chefia ativa deixe de ser chefia ou seja desativada/excluída.
+Gatilho (BEFORE UPDATE/DELETE): impede a operação se, depois dela, não restar nenhum gestor
+(papel chefia ou administrador) `ativo` e com `usuario_id` não nulo — mensagem:
+'É preciso manter ao menos uma conta de chefia ou administrador ativa e com acesso.'
+(Na carga inicial ainda não há logins; a trava só vale quando a linha alterada era um gestor com acesso.)
 
 **atividades** — `id`, `ordem` int (nº no plano; default = max+1),
 `titulo` not null (3..200), `descricao` text default `''`, `setor_id` → setores,
@@ -132,20 +154,22 @@ Gatilho: impede que a última chefia ativa deixe de ser chefia ou seja desativad
 trimestral/semestral/anual), `prazo` date (só pontual; nulo = sem prazo),
 `antecipar_dia_util` bool default true, `prioridade` default `'normal'`,
 `exige_evidencia` bool default false, `ativa` bool default true,
-`data_inicio` date default `hoje_belem()`, `criado_por` → militares,
+`data_inicio` date default `hoje_belem()`, `criado_por` → militares on delete set null,
 `criado_em`, `atualizado_em`.
 Checks: recorrente ⇒ periodicidade não nula; semanal ⇒ dia_semana; mensal/trimestral/semestral/anual ⇒ dia_mes;
 trimestral/semestral/anual ⇒ mes_inicio; não recorrente ⇒ periodicidade nula.
 
-**atividade_responsaveis** — `atividade_id` → atividades on delete cascade, `militar_id` → militares; PK dupla.
+**atividade_responsaveis** — `atividade_id` → atividades on delete cascade, `militar_id` → militares on delete cascade; PK dupla.
+(Excluir um militar pode deixar atividades sem responsável — o Início avisa os gestores.)
 
 **ocorrencias** (cada execução/período de uma atividade) — `id`,
 `atividade_id` → atividades on delete cascade, `referencia` text nulo
 (ver §4; nulo para execuções sob demanda), `titulo_execucao` text nulo
 (ex.: "Incidente 2026/041"), `prazo` date nulo, `status` default `'pendente'`,
 `observacao` text default `''`, `justificativa` text nulo,
-`iniciada_em`, `concluida_em` timestamptz, `concluida_por` → militares,
-`criado_por` → militares nulo, `criado_em`, `atualizado_em`.
+`iniciada_em`, `concluida_em` timestamptz, `concluida_por` → militares on delete set null,
+`concluida_por_nome` text (instantâneo do nome, gravado pelo gatilho), `criado_por` → militares nulo
+on delete set null, `criado_em`, `atualizado_em`.
 `unique (atividade_id, referencia)`. Check: `nao_se_aplica` exige justificativa não vazia.
 Gatilho: carimba `iniciada_em` (ao ir para em_andamento), `concluida_em`/`concluida_por`
 (ao ir para concluida; limpa ao sair) e impede que não-chefia altere
@@ -162,24 +186,26 @@ ocorrencias + `atividade_titulo`, `atividade_tipo`, `periodicidade`, `prioridade
 **evidencias** — `id`, `atividade_id` not null → atividades on delete cascade,
 `ocorrencia_id` nulo → ocorrencias on delete cascade, `storage_path` único,
 `nome`, `mime`, `tamanho` bigint, `descricao` text default `''`,
-`enviado_por` → militares, `enviado_em`.
+`enviado_por` → militares on delete set null, `enviado_por_nome` text (instantâneo), `enviado_em`.
 
 **comentarios** — `id`, `atividade_id` not null → cascade, `ocorrencia_id` nulo → cascade,
-`autor_id` → militares, `texto` not null (1..4000), `criado_em`. Sem edição.
+`autor_id` → militares on delete set null, `autor_nome` text e `autor_papel` text (instantâneos,
+gravados pelo gatilho na inserção), `texto` not null (1..4000), `criado_em`. Sem edição.
 
 **avisos** — `id`, `titulo` not null, `mensagem` text default `''`, `nivel` default `'informativo'`,
 `para_todos` bool default true, `prazo` date nulo, `atividade_id` nulo → atividades on delete set null,
-`fixado` bool default false, `expira_em` date nulo, `criado_por` → militares, `criado_em`, `atualizado_em`.
+`fixado` bool default false, `expira_em` date nulo, `criado_por` → militares on delete set null,
+`criado_por_nome` text (instantâneo), `criado_em`, `atualizado_em`.
 
-**avisos_destinatarios** — `aviso_id` → cascade, `militar_id`; PK dupla (só usada quando `para_todos = false`).
+**avisos_destinatarios** — `aviso_id` → cascade, `militar_id` → cascade; PK dupla (só usada quando `para_todos = false`).
 
-**avisos_ciencia** — `aviso_id` → cascade, `militar_id`, `ciente_em` default now(); PK dupla.
+**avisos_ciencia** — `aviso_id` → cascade, `militar_id` → cascade, `ciente_em` default now(); PK dupla.
 
-**notificacoes** — `id`, `destinatario_id` → militares, `tipo`, `titulo`, `mensagem`,
+**notificacoes** — `id`, `destinatario_id` → militares on delete cascade, `tipo`, `titulo`, `mensagem`,
 `atividade_id`, `ocorrencia_id`, `aviso_id` (nulos), `lida` bool default false, `criado_em`.
 Preenchida só por gatilhos/funções SECURITY DEFINER:
 * inserção em atividade_responsaveis → `atribuicao` para o militar (exceto se ele mesmo fez);
-* inserção em comentarios → `comentario` para responsáveis da atividade e chefias ativas, exceto o autor;
+* inserção em comentarios → `comentario` para responsáveis da atividade e chefias ativas (não o administrador), exceto o autor;
 * inserção em avisos → `aviso` para os destinatários (ou todos os ativos), exceto o autor
   (destinatários inseridos depois do aviso também são notificados — gatilho em avisos_destinatarios);
 * `privado.notificar_prazos()` (diária + dentro de `gerar_ocorrencias`) → `prazo` para os responsáveis de
@@ -187,20 +213,29 @@ Preenchida só por gatilhos/funções SECURITY DEFINER:
 
 **feriados** — `data` date PK, `descricao`.
 
-**auditoria** — `id` bigserial, `quando` timestamptz default now(), `militar_id` uuid nulo,
+**configuracoes** — `chave` text PK, `valor` jsonb not null, `atualizado_em`, `atualizado_por` → militares
+on delete set null. Chaves usadas: `contatos` (`{ email_institucional, responsavel_tecnico, telefone,
+observacoes }`), `ultimo_backup` (`{ em, por_nome }`, gravado por `Api.exportarTudo`).
+
+**auditoria** — `id` bigserial, `quando` timestamptz default now(), `militar_id` uuid nulo (sem FK),
+`militar_nome` text (instantâneo),
 `usuario_id` uuid nulo, `tabela`, `operacao` (INSERT/UPDATE/DELETE), `registro_id` text,
 `antes` jsonb, `depois` jsonb. Gatilho genérico AFTER em: setores, militares, atividades,
-atividade_responsaveis, ocorrencias, evidencias, comentarios, avisos, feriados.
+atividade_responsaveis, ocorrencias, evidencias, comentarios, avisos, feriados, configuracoes.
 
 ### Funções auxiliares (schema `privado`, não exposto pela API REST)
 SECURITY DEFINER, STABLE, `set search_path = ''`, usadas nas políticas como
-`(select privado.eh_chefia())`:
+`(select privado.eh_gestor())`:
 * `privado.meu_militar_id() → uuid` (militar ativo ligado a `auth.uid()`; nulo se não houver)
 * `privado.eh_ativo() → bool`
-* `privado.eh_chefia() → bool` (ativo e papel chefia)
+* `privado.eh_gestor() → bool` (ativo e papel chefia ou administrador) — usada onde o contrato diz "gestor"
+* `privado.eh_administrador() → bool` (ativo e papel administrador)
 * `privado.eh_responsavel(atividade uuid) → bool`
 * `privado.datas_ocorrencia(...)` e `privado.notificar_prazos()` — §4
-* `privado.vincular_usuario(email text, militar uuid default null)` — para a implantação (ligar a 1ª chefia)
+* `privado.vincular_usuario(email text, militar uuid default null)` — implantação e **recuperação de
+  emergência** (rodada no SQL Editor pelo dono do projeto): liga o usuário do Auth com esse e-mail ao
+  militar indicado — por padrão, à conta institucional (papel administrador) — reativa-o e grava o e-mail.
+* `privado.nome_militar(id uuid) → text` (posto + nome de guerra; usado nos instantâneos)
 
 ### RPCs públicas (expostas; `grant execute ... to authenticated`, revogado de anon)
 * `meu_perfil() → militares` — registra `ultimo_acesso = now()` e devolve a linha do militar logado
@@ -209,12 +244,17 @@ SECURITY DEFINER, STABLE, `set search_path = ''`, usadas nas políticas como
 * `salvar_atividade(p jsonb) → uuid` — cria/atualiza a atividade e seus responsáveis de forma atômica.
   `p`: `{id?, ordem?, titulo, descricao, setor_id, tipo, periodicidade, dia_semana, dia_mes, mes_inicio,
   prazo, antecipar_dia_util, prioridade, exige_evidencia, ativa, data_inicio, responsaveis: [militar_id]}`.
-  Permissões: chefia tudo. Adjunto: **criar** só `pontual` ou `sob_demanda` incluindo a si mesmo
+  Permissões: gestor tudo. Adjunto: **criar** só `pontual` ou `sob_demanda` incluindo a si mesmo
   em `responsaveis`; **editar** só atividades em que é responsável e sem alterar `responsaveis`
   (lista diferente ⇒ erro). Se mudar regra de agenda/`ativa`/`data_inicio`: apaga ocorrências futuras
   (prazo >= hoje) ainda `pendente` sem evidências nem comentários e regenera. Para `pontual`, mantém a
   ocorrência única `P` com o mesmo prazo (se ainda não concluída).
 * `gerar_ocorrencias() → int` — idempotente; qualquer usuário ativo pode chamar.
+* `transferir_chefia(p_de uuid, p_para uuid, p_papel_anterior text default 'adjunto', p_transferir_atividades boolean default true) → void`
+  — só gestor. `p_para` vira `chefia` (e é reativado se preciso); `p_de` (pode ser nulo quando não há
+  chefia) passa a `p_papel_anterior` (`adjunto` ou `chefia` para manter); com `p_transferir_atividades`,
+  as responsabilidades de `p_de` em atividades ativas passam para `p_para`. Atômica; respeita a trava
+  anti-bloqueio. Desativar/excluir o antigo chefe é feito depois, pelas ações de acesso.
 * (As demais operações são INSERT/UPDATE/DELETE diretos, protegidos por RLS.)
 
 ### Regras de acesso (RLS — todas `to authenticated`; anon sem nenhum acesso)
@@ -222,24 +262,27 @@ SECURITY DEFINER, STABLE, `set search_path = ''`, usadas nas políticas como
 
 | tabela | select | insert | update | delete |
 |---|---|---|---|---|
-| setores, feriados | ativo | chefia | chefia | chefia |
-| militares | ativo | chefia | chefia | — (desativar) |
-| atividades | ativo | via RPC | via RPC | chefia |
+| setores, feriados, configuracoes | ativo | gestor | gestor | gestor |
+| militares | ativo | gestor (¹) | gestor (¹) | gestor (¹), nunca a si mesmo |
+| atividades | ativo | via RPC | via RPC | gestor |
 | atividade_responsaveis | ativo | via RPC | — | via RPC |
-| ocorrencias | ativo | chefia; ou responsável quando a atividade é `sob_demanda` | chefia ou responsável | chefia |
-| evidencias | ativo | (chefia ou responsável) e `enviado_por` = eu | — | chefia ou quem enviou |
-| comentarios | ativo | ativo e `autor_id` = eu | — | autor ou chefia |
-| avisos | chefia, `para_todos`, ou sou destinatário | chefia | chefia | chefia |
-| avisos_destinatarios | ativo | chefia | — | chefia |
-| avisos_ciencia | chefia ou a própria linha | eu, aviso visível | — | — |
+| ocorrencias | ativo | gestor; ou responsável quando a atividade é `sob_demanda` | gestor ou responsável | gestor |
+| evidencias | ativo | (gestor ou responsável) e `enviado_por` = eu | — | gestor ou quem enviou |
+| comentarios | ativo | ativo e `autor_id` = eu | — | autor ou gestor |
+| avisos | gestor, `para_todos`, ou sou destinatário | gestor | gestor | gestor |
+| avisos_destinatarios | ativo | gestor | — | gestor |
+| avisos_ciencia | gestor ou a própria linha | eu, aviso visível | — | — |
 | notificacoes | as minhas | (gatilhos) | as minhas (`lida`) | as minhas |
-| auditoria | chefia | (gatilhos) | — | — |
+| auditoria | gestor | (gatilhos) | — | — |
+
+(¹) Linhas com `papel = 'administrador'` (antes ou depois da mudança) só por administrador.
+Todas as mudanças passam pela trava anti-bloqueio.
 
 **Storage**: bucket privado `evidencias`, limite 20 MB, tipos permitidos:
 pdf, doc, docx, xls, xlsx, ppt, pptx, odt, ods, odp, jpg/jpeg, png, txt, csv.
 Caminho: `{atividade_id}/{ocorrencia_id ou 'geral'}/{uuid}-{nome-seguro}`.
-Políticas em `storage.objects` (bucket `evidencias`): SELECT ativo; INSERT ativo e (chefia ou
-responsável pela atividade da 1ª pasta); DELETE chefia ou dono (`owner_id = auth.uid()::text`);
+Políticas em `storage.objects` (bucket `evidencias`): SELECT ativo; INSERT ativo e (gestor ou
+responsável pela atividade da 1ª pasta); DELETE gestor ou dono (`owner_id = auth.uid()::text`);
 UPDATE nenhum.
 
 ---
@@ -282,14 +325,26 @@ Agendada pelo pg_cron às 00:05 de Belém (`5 3 * * *` UTC) e chamada também pe
 
 ## 5. `Regras` (regras.js) — funções puras
 
-* `Regras.ROTULOS` — `{ papel, tipo, periodicidade, prioridade, status, nivel, notificacao }`, cada um
+* `Regras.ROTULOS` — `{ papel, tipo, periodicidade, prioridade, status, nivel, notificacao }` (papel:
+  administrador → 'Administrador (conta institucional AQS)', chefia → 'Chefia', adjunto → 'Adjunto'), cada um
   `{ valor: 'Rótulo' }`. Status efetivo inclui `atrasada: 'Atrasada'`.
 * `Regras.TIPOS_ARQUIVO` — `{ extensao: mime }` permitido; `Regras.ACCEPT` (string para `<input accept>`).
 * `Regras.validarArquivo(file, limiteMb?) → null | 'mensagem'`.
 * `Regras.validarSenha(s) → null | 'mensagem'` (mín. 10 caracteres, ao menos 1 letra e 1 número).
 * `Regras.nomeMilitar(m) → '1º Ten Balieiro'` (posto + nome de guerra, sem espaços sobrando).
 * `Regras.nomesResponsaveis(ids, mapaMilitares) → 'Ten Letícia, Ten Balieiro'`.
-* `Regras.eChefia(m)`, `Regras.eResponsavel(m, atividadeOuOcorrencia)` (usa `.responsaveis`).
+* `Regras.eChefia(m)` (papel chefia), `Regras.eAdministrador(m)` (papel administrador),
+  `Regras.eGestor(m)` (chefia ou administrador, e ativo), `Regras.eResponsavel(m, atividadeOuOcorrencia)`
+  (usa `.responsaveis`). **Todas as permissões "de chefia" usam `eGestor`.**
+* `Regras.podeGerenciarUsuarios(m)`; `Regras.podeGerenciarMilitar(m, alvo, novoPapel?)` (gestor; se o alvo
+  for ou passar a ser administrador, só administrador); `Regras.podeExcluirMilitar(m, alvo)` (idem e nunca a si mesmo).
+* `Regras.militaresAtribuiveis(militares) → militares ativos com papel ≠ administrador` (listas de responsáveis, placar, relatórios por militar).
+* `Regras.alertasContinuidade({ militares, atividades, feriados (lista), configuracoes, hoje }) → [{ nivel: 'urgente'|'atencao'|'info', titulo, texto, link }]`
+  — só para gestores, mostrados no Início: (a) nenhuma conta de administrador ativa com acesso;
+  (b) só um gestor ativo com acesso ("cadastre um segundo"); (c) atividades ativas sem responsável;
+  (d) a partir de 1º de novembro, nenhum feriado cadastrado para o ano seguinte; (e) último backup
+  (`configuracoes.ultimo_backup.em`) há mais de 35 dias ou nunca; (f) contatos institucionais não
+  preenchidos; (g) militar com acesso que não entra há mais de 90 dias (revisar/desativar).
 * `Regras.podeEditarAtividade(m, atividade)`, `Regras.podeCriarAtividade(m, tipo)`,
   `Regras.podeAlterarResponsaveis(m)`, `Regras.podeAtualizarOcorrencia(m, oc)`,
   `Regras.podeRegistrarExecucao(m, atividade)`, `Regras.podeEnviarEvidencia(m, atividade)`,
@@ -335,9 +390,16 @@ Objetos com os mesmos nomes de campos do banco.
 * `invalidarReferencias()` (síncrona)
 * `listarSetores()` · `salvarSetor(s)` · `excluirSetor(id)`
 * `listarMilitares() → [Militar]` (todos, inclusive inativos)
-* `salvarMilitar(m) → Militar` (campos: id?, posto, nome_guerra, nome_completo, email, setor_id, papel, ativo)
+* `salvarMilitar(m) → Militar` (campos: id?, posto, nome_guerra, nome_completo, email, setor_id, papel, ativo;
+  com acesso já criado, o e-mail só muda por `adminUsuario('alterar_email', …)`)
+* `excluirMilitar(id)` — via Edge Function (`adminUsuario('excluir', id)`): apaga o cadastro e o usuário de acesso
+* `transferirChefia({ de, para, papel_anterior, transferir_atividades })` (RPC `transferir_chefia`)
+* `obterConfiguracoes() → { chave: valor }` · `salvarConfiguracao(chave, valor)` (gestor)
 * `adminUsuario(acao, militar_id, extra?) → { senha_temporaria? }` — acao: `criar` | `redefinir_senha` |
-  `desativar` | `reativar` | `remover_mfa` (Edge Function `admin-usuarios`)
+  `desativar` | `reativar` | `remover_mfa` | `alterar_email` (extra.email) | `excluir` (Edge Function
+  `admin-usuarios`). Chamador: gestor ativo; contas de administrador só por administrador; ninguém
+  desativa/exclui a si mesmo; a trava anti-bloqueio do banco vale (erro 409 com a mensagem do banco).
+  `excluir` apaga primeiro a linha de militares (se a trava recusar, nada muda) e depois o usuário do Auth.
 * `listarFeriados() → [{data, descricao}]` · `salvarFeriado(f)` · `excluirFeriado(data)`
 
 **Atividades**
@@ -377,7 +439,8 @@ Objetos com os mesmos nomes de campos do banco.
 
 **Chefia**
 * `listarAuditoria({ limite? = 200, tabela? }) → [RegistroAuditoria]`
-* `exportarTudo() → objeto JSON com todas as tabelas (sem conteúdo de arquivos)`
+* `exportarTudo() → objeto JSON com todas as tabelas (sem conteúdo de arquivos)`; grava
+  `configuracoes.ultimo_backup = { em, por_nome }`
 
 **Tempo real**
 * `assinarMudancas(cb({ tabela, evento })) → cancelar()` (demo: nunca dispara)
@@ -410,6 +473,10 @@ adaptador presente implementa todos e falha alto se faltar algum. `Api.modo` é 
   `App.aoAtualizarPainel(fn ou null)` — `fn` recarrega o conteúdo do painel quando chegam mudanças
   (detalhe); formulários passam `null` para não serem apagados enquanto o usuário digita.
   `App.recarregar` só chama a função registrada se `U.painelAberto()`.
+* Equipe (gestores): abas Militares | Passagem de chefia | Setores | Feriados | Continuidade | Auditoria.
+  "Continuidade" mostra e edita `configuracoes.contatos`, o último backup (com o botão Exportar tudo),
+  a lista de gestores com acesso e o resumo do plano de continuidade (docs/CONTINUIDADE.md).
+* Comentários e avisos mostram o selo do papel do autor: 'CHEFIA' (chefia) ou 'AQS' (administrador).
 * Demonstração: `ApiDemo.usuariosDemo() → [{email, nome, papel}]` (fora do contrato `METODOS`) alimenta
   os botões "Entrar como …" da tela de login do `demo.html`; qualquer senha não vazia é aceita.
 * `Sessao`: inatividade (`AQS_CONFIG.INATIVIDADE_MINUTOS`) ⇒ sai e avisa; "lembrar neste dispositivo"

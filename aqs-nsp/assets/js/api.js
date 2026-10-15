@@ -17,8 +17,9 @@ var Api = (function () {
     'mfaFatores', 'mfaIniciarCadastro', 'mfaConfirmarCadastro', 'mfaRemover',
     /* referências */
     'listarSetores', 'salvarSetor', 'excluirSetor',
-    'listarMilitares', 'salvarMilitar', 'adminUsuario',
+    'listarMilitares', 'salvarMilitar', 'excluirMilitar', 'adminUsuario', 'transferirChefia',
     'listarFeriados', 'salvarFeriado', 'excluirFeriado',
+    'obterConfiguracoes', 'salvarConfiguracao',
     /* atividades */
     'listarAtividades', 'salvarAtividade', 'excluirAtividade', 'gerarOcorrencias',
     /* ocorrências */
@@ -69,8 +70,8 @@ var Api = (function () {
   });
 
   /* Toda gravação que mexe nas tabelas de referência derruba o cache. */
-  ['salvarSetor', 'excluirSetor', 'salvarMilitar', 'adminUsuario',
-   'salvarFeriado', 'excluirFeriado'].forEach(function (nome) {
+  ['salvarSetor', 'excluirSetor', 'salvarMilitar', 'excluirMilitar', 'adminUsuario',
+   'transferirChefia', 'salvarFeriado', 'excluirFeriado'].forEach(function (nome) {
     var original = api[nome];
     api[nome] = function () {
       return original.apply(null, arguments).then(function (resultado) {
