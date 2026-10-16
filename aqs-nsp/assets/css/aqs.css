@@ -1,0 +1,866 @@
+/* =========================================================================
+   HABE – AQS e NSP — casca do aplicativo e componentes comuns
+   Carregada depois de base.css (cópia do HABE SINAN): reaproveita as
+   variáveis de lá e acrescenta a tela de acesso, o cabeçalho com sino e
+   usuário, a barra inferior do celular, os menus suspensos, os selos de
+   status/prioridade/nível/tipo e os utilitários usados pelas páginas
+   (ARQUITETURA §8).
+
+   Regras da casa:
+   * Cores sempre por variável — o tema escuro ([data-tema="escuro"]) só
+     troca as variáveis; nada aqui fixa cor de texto sobre fundo variável.
+   * Sem @import e sem fontes externas (a CSP só permite 'self').
+   * Nada de style="" no HTML: tudo que é visual mora numa classe daqui.
+   * Celular = abaixo de 720 px (o mesmo corte usado em app.js).
+   ========================================================================= */
+
+/* ---------- 1. Variáveis próprias ---------- */
+/* base.css usa o mesmo azul (#1b5aa8) para fundo e texto. No tema escuro
+   esse azul fica ilegível sobre a superfície escura, então os TEXTOS
+   coloridos usam as variáveis *-texto abaixo, que clareiam no escuro. */
+:root {
+  --azul-marinho-2: #123f77;
+  --azul-texto:     #1b5aa8;
+  --urgente-texto:  #c62828;
+  --atencao-texto:  #a45c00;
+  --sucesso-texto:  #1b7a4b;
+  --dourado-texto:  #8a5d00;
+  --sobre-azul:     #bcd4f0;
+  --foco:           #d99a1f;
+  --sombra-menu:    0 14px 36px rgba(11,47,92,.24);
+  --altura-faixa:   0px;
+  --altura-barra-inferior: 62px;
+  color-scheme: light;
+}
+
+[data-tema="escuro"] {
+  --azul-texto:     #8fb8ec;
+  --urgente-texto:  #ff8a80;
+  --atencao-texto:  #f2b45a;
+  --sucesso-texto:  #6fd19c;
+  --dourado-texto:  #f0c062;
+  --sombra-menu:    0 14px 36px rgba(0,0,0,.55);
+  color-scheme: dark;
+}
+
+/* Antes de app.js aplicar a preferência (o <html> ainda não tem
+   data-tema), acompanha o sistema operacional: evita o "clarão" branco ao
+   abrir a página à noite com o tema automático. Repete as variáveis
+   escuras de base.css de propósito. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema]) {
+    --azul-claro:   #16283f;
+    --dourado-claro:#2e2412;
+    --urgente-bg:   #3a1a19;
+    --urgente-borda:#7a3330;
+    --atencao-bg:   #33260f;
+    --atencao-borda:#7a5a1f;
+    --sucesso-bg:   #12301f;
+    --texto:        #e7edf5;
+    --texto-suave:  #9fb0c6;
+    --fundo:        #0d1520;
+    --superficie:   #14202f;
+    --borda:        #26364a;
+    --sombra:       0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+    --azul-texto:     #8fb8ec;
+    --urgente-texto:  #ff8a80;
+    --atencao-texto:  #f2b45a;
+    --sucesso-texto:  #6fd19c;
+    --dourado-texto:  #f0c062;
+    --sombra-menu:    0 14px 36px rgba(0,0,0,.55);
+    color-scheme: dark;
+  }
+}
+
+/* A faixa do modo demonstração ocupa o topo; tudo que é fixo/grudado
+   desce essa altura (ver seção 4). */
+.com-faixa-demo { --altura-faixa: 36px; }
+
+/* ---------- 2. Ajustes de base ---------- */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { overflow-x: hidden; }
+img, svg { max-width: 100%; }
+
+/* Foco sempre visível para quem navega pelo teclado (dourado, o mesmo em
+   ambos os temas). Campos de formulário já têm o realce de base.css. */
+:focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; }
+.botao:focus-visible, .botao-icone:focus-visible { outline-offset: 3px; }
+
+/* Texto colorido legível no tema escuro (sobrepõe base.css). */
+a { color: var(--azul-texto); }
+.botao--secundario { color: var(--azul-texto); }
+.botao--secundario:hover { background: var(--azul-claro); filter: none; }
+.filtro:hover { color: var(--azul-texto); }
+/* No filtro ativo (fundo azul) o texto continua branco também no hover —
+   no celular o hover "gruda" depois do toque e o chip ficava ilegível. */
+.filtro--ativo, .filtro--ativo:hover { color: #fff; }
+.selo--padrao  { color: var(--azul-texto); }
+.selo--urgente { color: var(--urgente-texto); }
+.selo--atencao { color: var(--atencao-texto); }
+.selo--sucesso { color: var(--sucesso-texto); }
+.campo__erro   { color: var(--urgente-texto); }
+.obrigatorio   { color: var(--urgente-texto); }
+.indicador--urgente .indicador__valor { color: var(--urgente-texto); }
+
+code, .mono {
+  font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+  font-size: .88em;
+}
+code {
+  background: var(--fundo); border: 1px solid var(--borda); border-radius: 4px;
+  padding: .05em .35em; overflow-wrap: anywhere;
+}
+
+/* "Ir direto ao conteúdo": invisível até receber o foco do teclado. */
+.pular-conteudo:focus {
+  position: fixed; top: calc(var(--altura-faixa) + .5rem); left: .5rem; z-index: 200;
+  width: auto; height: auto; clip: auto; white-space: normal;
+  padding: .6rem 1rem; border-radius: var(--raio-p);
+  background: var(--dourado); color: #10233c; font-weight: 800; text-decoration: none;
+}
+
+/* Botões extras */
+.botao--texto {
+  background: none; border-color: transparent; color: var(--azul-texto); padding-left: .5rem; padding-right: .5rem;
+}
+.botao--texto:hover { background: var(--azul-claro); filter: none; }
+.botao--perigo-secundario {
+  background: var(--superficie); color: var(--urgente-texto); border-color: var(--urgente-borda);
+}
+.botao--perigo-secundario:hover { background: var(--urgente-bg); filter: none; }
+.botao[aria-busy="true"] { cursor: progress; }
+.botao--bloco { text-align: center; }
+
+/* Grade de cartões largos (até 2 colunas no computador, 1 no celular). */
+.grade--largas { grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); align-items: start; }
+
+/* Ícones em SVG de linha (cor = cor do texto). Os desenhos ficam num
+   <svg class="sprite-icones"> no início do index.html/demo.html, com um
+   <symbol id="i-…"> cada; usa-se <svg class="icone"><use href="#i-…"></use></svg>. */
+.sprite-icones { position: absolute; width: 0; height: 0; overflow: hidden; }
+.icone {
+  width: 1.25em; height: 1.25em; flex: 0 0 auto; vertical-align: -.22em;
+  fill: none; stroke: currentColor; stroke-width: 1.9;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.icone--cheio { fill: currentColor; stroke: none; }
+
+/* ---------- 3. Tela de acesso (login, código, troca de senha) ---------- */
+/* Fundo azul-marinho com uma trama diagonal discreta (losangos) e um brilho
+   dourado no alto — tudo em CSS, sem imagem. */
+.tela-acesso {
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+  padding: calc(1.5rem + var(--altura-faixa) + env(safe-area-inset-top)) 1rem
+           calc(1.5rem + env(safe-area-inset-bottom));
+  background-color: var(--azul-escuro);
+  background-image:
+    radial-gradient(ellipse 90% 55% at 50% -12%, rgba(217,154,31,.22), transparent 62%),
+    radial-gradient(ellipse 70% 50% at 50% 115%, rgba(27,90,168,.35), transparent 70%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 1px, transparent 1px 26px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,.035) 0 1px, transparent 1px 26px),
+    linear-gradient(165deg, #0d3567 0%, #0b2f5c 45%, #071a33 100%);
+}
+
+.cartao-acesso {
+  position: relative; width: 100%; max-width: 430px;
+  background: var(--superficie); color: var(--texto);
+  border-radius: 18px; border-top: 5px solid var(--dourado);
+  box-shadow: 0 28px 70px rgba(0,0,0,.38), 0 2px 6px rgba(0,0,0,.18);
+  padding: 1.9rem 1.6rem 1.3rem;
+  animation: surgir .22s ease-out;
+}
+.cartao-acesso--largo { max-width: 580px; }
+
+.cartao-acesso__marca { text-align: center; margin-bottom: 1.25rem; }
+.cartao-acesso__brasao {
+  display: block; height: 116px; width: auto; margin: 0 auto .75rem;
+  filter: drop-shadow(0 6px 12px rgba(11,47,92,.28));
+}
+.cartao-acesso__titulo {
+  margin: 0; font-size: 1.4rem; font-weight: 800; letter-spacing: .03em; color: var(--azul-escuro);
+}
+[data-tema="escuro"] .cartao-acesso__titulo { color: var(--texto); }
+.cartao-acesso__subtitulo { margin: .15rem 0 0; color: var(--texto-suave); font-weight: 600; font-size: .95rem; }
+.cartao-acesso__organizacao {
+  display: inline-flex; align-items: center; gap: .55rem;
+  margin: .65rem 0 0; font-size: .68rem; font-weight: 800; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--dourado-texto);
+}
+.cartao-acesso__organizacao::before, .cartao-acesso__organizacao::after {
+  content: ""; width: 22px; height: 1px; background: var(--dourado); opacity: .7;
+}
+
+.cartao-acesso__etapa {
+  font-size: 1.08rem; margin: 0 0 .35rem; display: flex; align-items: center; gap: .5rem;
+}
+.cartao-acesso__texto { color: var(--texto-suave); font-size: .9rem; margin-bottom: 1rem; }
+.cartao-acesso__rodape {
+  margin: 1.2rem 0 0; padding-top: .9rem; border-top: 1px solid var(--borda);
+  font-size: .78rem; color: var(--texto-suave); text-align: center; line-height: 1.45;
+}
+.cartao-acesso__rodape .icone { margin-right: .3rem; color: var(--dourado-texto); }
+
+.formulario-acesso .aviso { margin-bottom: .9rem; }
+.formulario-acesso__ajuda { margin: .9rem 0 0; font-size: .84rem; color: var(--texto-suave); text-align: center; }
+.formulario-acesso__ajuda strong { color: var(--texto); }
+.formulario-acesso .botao + .botao { margin-top: .55rem; }
+
+.tela-acesso__carregando { text-align: center; color: var(--texto-suave); }
+
+/* Lista de pendências da tela "Configuração pendente". */
+.lista-passos { margin: .2rem 0 1rem; padding-left: 1.2rem; font-size: .9rem; }
+.lista-passos li { margin-bottom: .45rem; }
+
+/* Grupo de opções (rádios) dentro de <fieldset class="opcoes">. */
+fieldset.opcoes { border: 0; margin: 0; padding: 0; min-width: 0; }
+
+/* "Lembrar neste dispositivo" e similares: a .opcao de base.css, mais justa. */
+.opcao--compacta { padding: .55rem .7rem; margin-bottom: .95rem; }
+.opcao--compacta .opcao__texto small { display: block; line-height: 1.35; margin-top: .1rem; }
+
+/* Botões "Entrar como …" (só no demo.html). */
+.entrar-como { margin-bottom: 1.1rem; }
+.entrar-como__titulo {
+  margin: 0 0 .55rem; text-align: center; font-size: .72rem; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--texto-suave);
+}
+.entrar-como__lista { display: grid; gap: .45rem; }
+.entrar-como__botao {
+  display: flex; align-items: center; gap: .7rem; width: 100%; min-height: 52px;
+  padding: .5rem .75rem; text-align: left; cursor: pointer;
+  font: inherit; color: var(--texto); background: var(--fundo);
+  border: 1px solid var(--borda); border-radius: var(--raio-p);
+  transition: border-color .15s, background .15s, transform .12s;
+}
+.entrar-como__botao:hover { border-color: var(--azul); background: var(--azul-claro); transform: translateX(2px); }
+.entrar-como__botao:disabled { opacity: .55; cursor: progress; transform: none; }
+.entrar-como__texto { flex: 1 1 auto; min-width: 0; line-height: 1.3; }
+.entrar-como__texto strong { display: block; font-size: .92rem; }
+.entrar-como__texto small { display: block; color: var(--texto-suave); font-size: .76rem; }
+.separador-texto {
+  display: flex; align-items: center; gap: .7rem; margin: 1rem 0;
+  font-size: .76rem; color: var(--texto-suave); font-weight: 700;
+}
+.separador-texto::before, .separador-texto::after { content: ""; flex: 1 1 auto; height: 1px; background: var(--borda); }
+
+/* ---------- 4. Faixa do modo demonstração ---------- */
+.faixa-demo {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--altura-faixa); padding: 0 .75rem;
+  display: flex; align-items: center; justify-content: center; gap: .75rem;
+  background: repeating-linear-gradient(-45deg, #b71c1c 0 14px, #c62828 14px 28px);
+  color: #fff; font-size: .76rem; font-weight: 800; letter-spacing: .04em;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.faixa-demo__texto { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.faixa-demo__botao {
+  flex: 0 0 auto; padding: .2rem .75rem; border-radius: 999px; cursor: pointer;
+  font: inherit; font-size: .72rem; font-weight: 700; letter-spacing: 0;
+  color: #fff; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.6);
+}
+.faixa-demo__botao:hover { background: rgba(255,255,255,.28); }
+.faixa-demo__botao:disabled { opacity: .6; cursor: progress; }
+#telaApp { padding-top: var(--altura-faixa); }
+
+/* ---------- 5. Cabeçalho do aplicativo ---------- */
+.cabecalho {
+  top: var(--altura-faixa);
+  background: linear-gradient(135deg, var(--azul-escuro) 0%, var(--azul-marinho-2) 100%);
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
+}
+.cabecalho__topo { gap: .75rem; padding: .6rem 1rem; }
+.cabecalho__logo { height: 48px; }
+.cabecalho__titulo strong { font-size: 1.15rem; }
+.cabecalho__acoes { align-items: center; gap: .35rem; }
+.cabecalho .botao-icone { width: 40px; height: 40px; }
+.cabecalho .botao-icone .icone { width: 21px; height: 21px; }
+.navegacao { border-top: 1px solid rgba(217,154,31,.28); }
+.navegacao a { display: flex; align-items: center; }
+.navegacao a.ativo { background: rgba(255,255,255,.06); }
+
+.usuario-chip {
+  display: inline-flex; align-items: center; gap: .55rem; min-width: 0; max-width: 270px;
+  padding: .22rem .85rem .22rem .22rem; border-radius: 999px;
+  background: rgba(255,255,255,.1); color: #fff; text-decoration: none;
+  border: 1px solid rgba(255,255,255,.12); transition: background .15s, border-color .15s;
+}
+.usuario-chip:hover { background: rgba(255,255,255,.2); border-color: rgba(217,154,31,.6); }
+.usuario-chip__texto { min-width: 0; line-height: 1.2; }
+.usuario-chip__nome {
+  display: block; font-weight: 700; font-size: .86rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.usuario-chip__papel {
+  display: block; font-size: .66rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--sobre-azul); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Avatar com iniciais (cabeçalho, menu Mais, Minha conta, entrar como). */
+.avatar {
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, #f1c35a, var(--dourado)); color: #10233c;
+  font-size: .78rem; font-weight: 800; letter-spacing: .02em; line-height: 1;
+}
+.avatar--administrador { background: #fff; color: var(--azul-escuro); box-shadow: inset 0 0 0 2px var(--dourado); }
+.avatar--grande { width: 64px; height: 64px; font-size: 1.25rem; }
+.avatar--adjunto { background: linear-gradient(135deg, #5f8fd0, var(--azul)); color: #fff; }
+
+/* Sino de notificações */
+.sino-envoltorio { position: relative; }
+.sino { position: relative; }
+.sino[aria-expanded="true"] { background: rgba(255,255,255,.26); }
+.sino__contador {
+  position: absolute; top: -4px; right: -4px;
+  min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px;
+  background: var(--urgente); color: #fff; font-size: .66rem; font-weight: 800;
+  line-height: 19px; text-align: center; box-shadow: 0 0 0 2px var(--azul-escuro);
+  pointer-events: none;
+}
+
+.menu-notificacoes {
+  position: absolute; right: 0; top: calc(100% + 10px); z-index: 70;
+  width: 390px; max-width: calc(100vw - 1rem); max-height: min(72vh, 580px);
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--superficie); color: var(--texto);
+  border: 1px solid var(--borda); border-radius: var(--raio); box-shadow: var(--sombra-menu);
+  animation: surgir .14s ease-out;
+}
+.menu-notificacoes::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--dourado);
+}
+.menu-notificacoes__cabecalho {
+  display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+  padding: .75rem .6rem .65rem .95rem; border-bottom: 1px solid var(--borda); flex: 0 0 auto;
+}
+.menu-notificacoes__cabecalho h2 { margin: 0; font-size: .98rem; display: flex; align-items: center; gap: .4rem; white-space: nowrap; }
+/* "Marcar todas como lidas" é um texto só: um único item do flex do botão
+   (sem isso o pedaço "como lidas" vira outra coluna). */
+.sem-quebra { white-space: nowrap; }
+.menu-notificacoes__lista { list-style: none; margin: 0; padding: .25rem 0; overflow-y: auto; overscroll-behavior: contain; }
+.menu-notificacoes__lista li + li { border-top: 1px solid var(--borda); }
+.menu-notificacoes__estado { padding: 1.6rem 1rem; text-align: center; color: var(--texto-suave); font-size: .9rem; }
+.menu-notificacoes__estado strong { display: block; color: var(--texto); margin-bottom: .2rem; }
+.menu-notificacoes__estado p { margin: 0 auto; max-width: 300px; font-size: .84rem; }
+.menu-notificacoes__estado .aviso { text-align: left; }
+.menu-notificacoes__rodape {
+  flex: 0 0 auto; padding: .5rem .95rem; border-top: 1px solid var(--borda);
+  font-size: .76rem; color: var(--texto-suave); text-align: center;
+}
+
+.notificacao-item {
+  display: flex; align-items: flex-start; gap: .7rem; width: 100%;
+  padding: .7rem .95rem .7rem .8rem; text-align: left; cursor: pointer;
+  font: inherit; color: inherit; background: none; border: 0; border-left: 3px solid transparent;
+  transition: background .12s;
+}
+.notificacao-item:hover { background: var(--azul-claro); }
+.notificacao-item--nao-lida { background: var(--dourado-claro); border-left-color: var(--dourado); }
+.notificacao-item--nao-lida:hover { background: var(--azul-claro); }
+.notificacao-item__icone {
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--azul-claro); color: var(--azul-texto);
+}
+.notificacao-item__icone--prazo      { background: var(--atencao-bg); color: var(--atencao-texto); }
+.notificacao-item__icone--aviso      { background: var(--dourado-claro); color: var(--dourado-texto); box-shadow: inset 0 0 0 1px var(--atencao-borda); }
+.notificacao-item__icone--comentario { background: var(--sucesso-bg); color: var(--sucesso-texto); }
+.notificacao-item__corpo { flex: 1 1 auto; min-width: 0; }
+.notificacao-item__titulo { display: block; font-weight: 700; font-size: .88rem; line-height: 1.3; overflow-wrap: anywhere; }
+.notificacao-item--nao-lida .notificacao-item__titulo::before {
+  content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--urgente); margin-right: .4rem; vertical-align: .08em;
+}
+.notificacao-item__mensagem {
+  display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  margin-top: .1rem; font-size: .82rem; color: var(--texto-suave); overflow-wrap: anywhere; line-height: 1.4;
+}
+.notificacao-item__tempo { display: block; margin-top: .2rem; font-size: .72rem; color: var(--texto-suave); font-weight: 600; }
+
+/* ---------- 6. Conteúdo, páginas e rodapé ---------- */
+.conteudo:focus { outline: none; }
+.conteudo { padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right)); }
+
+.pagina__cabecalho h1 { font-size: 1.5rem; color: var(--azul-escuro); margin-bottom: .3rem; }
+[data-tema="escuro"] .pagina__cabecalho h1 { color: var(--texto); }
+.pagina__cabecalho h1::after {
+  content: ""; display: block; width: 46px; height: 3px; margin-top: .45rem;
+  border-radius: 2px; background: var(--dourado);
+}
+.pagina__cabecalho--acoes { display: flex; align-items: flex-end; justify-content: space-between; gap: .8rem; flex-wrap: wrap; }
+
+/* Título de seção discreto, em maiúsculas, com um fio até o fim da linha. */
+.titulo-secao {
+  display: flex; align-items: center; gap: .65rem; margin: 1.5rem 0 .7rem;
+  font-size: .76rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--texto-suave);
+}
+.titulo-secao::after { content: ""; flex: 1 1 auto; height: 1px; background: var(--borda); }
+.titulo-secao:first-child { margin-top: 0; }
+
+.cartao__titulo h2, .cartao__titulo h3 { display: flex; align-items: center; gap: .5rem; }
+.cartao__titulo h2 { font-size: 1.08rem; }
+.cartao__titulo .icone { color: var(--dourado-texto); }
+.cartao--destaque { border-top: 4px solid var(--dourado); }
+
+.rodape { line-height: 1.5; }
+.rodape__marca { color: var(--texto); font-weight: 700; }
+.rodape__modo { display: inline-block; margin-top: .3rem; font-size: .76rem; }
+.rodape__modo--demo { color: var(--urgente-texto); font-weight: 700; }
+
+/* Mensagem de falha ao montar uma página. */
+.pagina-erro { max-width: 640px; margin: 2rem auto; }
+
+/* ---------- 7. Barra inferior e menu "Mais" (celular) ---------- */
+.barra-inferior, .menu-mais, .menu-mais__fundo { display: none; }
+
+.barra-inferior__item {
+  flex: 1 1 0; min-width: 0; min-height: var(--altura-barra-inferior);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .18rem;
+  position: relative; padding: .35rem .1rem .3rem;
+  color: var(--sobre-azul); text-decoration: none; background: none; border: 0; cursor: pointer;
+  font: inherit; font-size: .67rem; font-weight: 700; letter-spacing: .01em;
+  -webkit-tap-highlight-color: transparent;
+}
+.barra-inferior__item .icone { width: 24px; height: 24px; }
+.barra-inferior__item:active { background: rgba(255,255,255,.06); }
+.barra-inferior__item--ativo { color: #fff; }
+.barra-inferior__item--ativo::before {
+  content: ""; position: absolute; top: 0; left: 26%; right: 26%; height: 3px;
+  border-radius: 0 0 3px 3px; background: var(--dourado);
+}
+.barra-inferior__item--ativo .icone { color: var(--dourado); }
+.barra-inferior__icone { position: relative; display: inline-flex; }
+.barra-inferior__icone .contador { position: absolute; top: -7px; left: 15px; box-shadow: 0 0 0 2px var(--azul-escuro); }
+.barra-inferior__rotulo { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.menu-mais {
+  position: fixed; left: .5rem; right: .5rem; z-index: 47;
+  bottom: calc(var(--altura-barra-inferior) + env(safe-area-inset-bottom) + .5rem);
+  max-height: calc(100vh - var(--altura-barra-inferior) - var(--altura-faixa) - 2rem);
+  overflow-y: auto; padding: .4rem;
+  background: var(--superficie); color: var(--texto);
+  border: 1px solid var(--borda); border-radius: 16px; box-shadow: var(--sombra-menu);
+  animation: subirMenu .16s ease-out;
+}
+@keyframes subirMenu { from { opacity: 0; transform: translateY(10px); } }
+.menu-mais__fundo { position: fixed; inset: 0; z-index: 44; background: rgba(8,20,36,.4); animation: aparecer .16s ease-out; }
+.menu-mais__identidade {
+  display: flex; align-items: center; gap: .65rem; padding: .6rem .7rem .75rem;
+  margin-bottom: .3rem; border-bottom: 1px solid var(--borda);
+}
+.menu-mais__identidade strong { display: block; font-size: .95rem; line-height: 1.25; overflow-wrap: anywhere; }
+.menu-mais__identidade small { display: block; color: var(--texto-suave); font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.menu-mais__lista { list-style: none; margin: 0; padding: 0; }
+.menu-mais__item {
+  display: flex; align-items: center; gap: .85rem; width: 100%; min-height: 50px;
+  padding: .55rem .8rem; border-radius: 10px; cursor: pointer; text-align: left;
+  font: inherit; font-weight: 600; color: var(--texto); text-decoration: none; background: none; border: 0;
+}
+.menu-mais__item .icone { width: 22px; height: 22px; color: var(--azul-texto); }
+.menu-mais__item:hover, .menu-mais__item--ativo { background: var(--azul-claro); color: var(--azul-texto); }
+.menu-mais__item--sair, .menu-mais__item--sair .icone { color: var(--urgente-texto); }
+.menu-mais__item--sair:hover { background: var(--urgente-bg); color: var(--urgente-texto); }
+.menu-mais__divisor { height: 1px; margin: .3rem .5rem; background: var(--borda); }
+
+/* ---------- 8. Painel lateral (complementa base.css) ---------- */
+.sem-rolagem { overflow: hidden; }
+.sobreposicao { top: var(--altura-faixa); }
+.painel { overscroll-behavior: contain; }
+.painel--largo { width: min(940px, 100%); }
+.painel__cabecalho { align-items: center; }
+.painel__titulo { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 1.15rem; overflow-wrap: anywhere; }
+.painel__fechar {
+  flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.painel__fechar:hover { background: var(--fundo); color: var(--texto); }
+
+/* Notificações flutuantes: no tema escuro a "torrada" padrão fica clara. */
+[data-tema="escuro"] .torrada:not([class*="torrada--"]) { background: #24364d; }
+.torrada { overflow-wrap: anywhere; }
+
+/* ---------- 9. Componentes comuns ---------- */
+
+/* Anel de progresso (U.anelProgresso): SVG 80×80 com o número no centro. */
+.anel {
+  position: relative; display: inline-flex; flex-direction: column; align-items: center;
+  width: 92px; flex: 0 0 auto; vertical-align: top;
+}
+.anel svg { display: block; width: 80px; height: 80px; }
+.anel__trilho { stroke: var(--borda); }
+.anel__valor  { stroke: var(--azul); transition: stroke-dasharray .5s ease; }
+.anel--completo .anel__valor { stroke: var(--sucesso); }
+.anel--bom      .anel__valor { stroke: #2e8b57; }
+.anel--medio    .anel__valor { stroke: var(--dourado); }
+.anel--baixo    .anel__valor { stroke: var(--urgente); }
+[data-tema="escuro"] .anel--bom .anel__valor { stroke: #4fb87e; }
+.anel__numero {
+  position: absolute; top: 40px; left: 0; right: 0; transform: translateY(-50%);
+  text-align: center; font-size: 1.1rem; font-weight: 800; color: var(--texto); line-height: 1;
+}
+.anel__rotulo {
+  margin-top: .35rem; max-width: 100%; text-align: center;
+  font-size: .74rem; font-weight: 700; color: var(--texto-suave); line-height: 1.25; overflow-wrap: anywhere;
+}
+.anel--grande { width: 124px; }
+.anel--grande svg { width: 112px; height: 112px; }
+.anel--grande .anel__numero { top: 56px; font-size: 1.45rem; }
+
+/* Abas (Equipe: Militares | Passagem de chefia | …) */
+.abas {
+  display: flex; gap: .2rem; margin-bottom: 1.1rem;
+  border-bottom: 2px solid var(--borda);
+  overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.abas::-webkit-scrollbar { display: none; }
+.aba {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: .4rem;
+  padding: .6rem .95rem; margin-bottom: -2px; white-space: nowrap; cursor: pointer;
+  font: inherit; font-size: .9rem; font-weight: 700; color: var(--texto-suave); text-decoration: none;
+  background: none; border: 0; border-bottom: 3px solid transparent; border-radius: 6px 6px 0 0;
+  transition: color .15s, background .15s, border-color .15s;
+}
+.aba:hover { color: var(--azul-texto); background: var(--azul-claro); }
+.aba--ativa { color: var(--azul-texto); border-bottom-color: var(--dourado); }
+.aba .contador { margin-left: .1rem; }
+
+/* Estado vazio: <div class="vazio"><span class="vazio__icone">…</span><strong>…</strong><p>…</p></div> */
+.vazio {
+  text-align: center; padding: 2.2rem 1rem; color: var(--texto-suave);
+  border: 1px dashed var(--borda); border-radius: var(--raio); background: var(--superficie);
+}
+.cartao .vazio, .painel .vazio { border: 0; background: none; padding: 1.6rem .5rem; }
+.vazio__icone {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 56px; height: 56px; margin-bottom: .6rem; border-radius: 50%;
+  background: var(--azul-claro); color: var(--azul-texto); font-size: 1.6rem; line-height: 1;
+}
+.vazio__icone .icone { width: 28px; height: 28px; }
+.vazio strong { display: block; margin-bottom: .2rem; color: var(--texto); font-size: 1rem; }
+.vazio p { max-width: 440px; margin: 0 auto; font-size: .9rem; }
+.vazio .botao { margin-top: .9rem; }
+
+/* Carregando: um giro dourado e o texto. */
+.carregando {
+  display: flex; align-items: center; justify-content: center; gap: .65rem;
+  padding: 2rem 1rem; color: var(--texto-suave); font-size: .92rem;
+}
+.carregando::before {
+  content: ""; width: 20px; height: 20px; flex: 0 0 auto; border-radius: 50%;
+  border: 3px solid var(--borda); border-top-color: var(--dourado);
+  animation: girar .8s linear infinite;
+}
+.carregando--inline { display: inline-flex; padding: 0; }
+@keyframes girar { to { transform: rotate(360deg); } }
+
+/* Linha de botões */
+.acoes { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: 1rem; }
+.acoes--direita { justify-content: flex-end; }
+.acoes--topo { margin-top: 0; }
+
+/* Chip de responsável */
+.chip {
+  display: inline-flex; align-items: center; gap: .3rem; max-width: 100%;
+  padding: .12rem .55rem; border-radius: 999px;
+  background: var(--azul-claro); color: var(--azul-texto); border: 1px solid var(--borda);
+  font-size: .78rem; font-weight: 700; line-height: 1.45;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;
+}
+.chip--eu { background: var(--dourado-claro); color: var(--dourado-texto); border-color: var(--atencao-borda); }
+.chip--vazio { background: none; color: var(--texto-suave); border-style: dashed; }
+.chips { display: flex; flex-wrap: wrap; gap: .3rem; }
+
+/* Medalha do placar (1º, 2º, 3º) */
+.medalha {
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 30px; height: 30px; border-radius: 50%; font-size: .82rem; font-weight: 800; line-height: 1;
+  background: linear-gradient(135deg, #f7da7f, var(--dourado)); color: #3d2a00;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.55), 0 1px 3px rgba(0,0,0,.18);
+}
+.medalha--ouro, .medalha--1   { background: linear-gradient(135deg, #f7da7f, #d99a1f); color: #3d2a00; }
+.medalha--prata, .medalha--2  { background: linear-gradient(135deg, #eef1f5, #a9b4c2); color: #263445; }
+.medalha--bronze, .medalha--3 { background: linear-gradient(135deg, #f0c39b, #b0703c); color: #3a1f08; }
+.medalha--neutra { background: var(--fundo); color: var(--texto-suave); box-shadow: inset 0 0 0 1px var(--borda); }
+
+/* Contador numérico (badge) */
+.contador {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px;
+  background: var(--dourado); color: #10233c; font-size: .7rem; font-weight: 800; line-height: 1;
+}
+.contador--urgente { background: var(--urgente); color: #fff; }
+.contador--neutro { background: var(--borda); color: var(--texto); }
+
+/* Barra de progresso (largura via data-largura + U.aplicarLarguras) */
+.barra-progresso {
+  height: 8px; overflow: hidden; border-radius: 999px;
+  background: var(--fundo); border: 1px solid var(--borda);
+}
+.barra-progresso__preenchimento {
+  width: 0; height: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, var(--azul), #3b82d6); transition: width .45s ease;
+}
+.barra-progresso__preenchimento--sucesso { background: var(--sucesso); }
+.barra-progresso__preenchimento--atencao { background: var(--dourado); }
+.barra-progresso__preenchimento--urgente { background: var(--urgente); }
+.barra-progresso--grossa { height: 12px; }
+
+/* Utilitários */
+.texto-suave   { color: var(--texto-suave); }
+.texto-pequeno { font-size: .84rem; }
+.texto-forte   { font-weight: 700; }
+.mt-0 { margin-top: 0 !important; }
+.mt-1 { margin-top: .5rem !important; }
+.mt-2 { margin-top: 1rem !important; }
+.mb-0 { margin-bottom: 0 !important; }
+.mb-1 { margin-bottom: .5rem !important; }
+.alinhar-direita { text-align: right; }
+.flex { display: flex; align-items: center; flex-wrap: wrap; }
+.flex--entre  { justify-content: space-between; }
+.flex--centro { justify-content: center; align-items: center; }
+.flex--topo   { align-items: flex-start; }
+.flex--sem-quebra { flex-wrap: nowrap; }
+.gap-1 { gap: .5rem; }
+.gap-2 { gap: 1rem; }
+.cresce { flex: 1 1 auto; min-width: 0; }
+.quebra-palavra { overflow-wrap: anywhere; }
+
+/* Visível só para gestores (chefia ou administrador): o App marca o <body>
+   com .e-gestor. É só aparência — quem barra de verdade é o banco (RLS). */
+body:not(.e-gestor) .so-gestor { display: none !important; }
+
+/* ---------- 10. Selos de status, prioridade, nível e tipo ---------- */
+/* Gerados por Regras.seloStatus/seloPrioridade/seloNivel/seloTipo
+   (classes "selo selo--<valor>"). */
+.selo--pendente      { background: var(--fundo); color: var(--texto-suave); border-color: var(--borda); }
+.selo--em_andamento  { background: var(--azul-claro); color: var(--azul-texto); border-color: var(--azul); }
+.selo--concluida     { background: var(--sucesso-bg); color: var(--sucesso-texto); border-color: var(--sucesso); }
+.selo--nao_se_aplica { background: transparent; color: var(--texto-suave); border: 1px dashed var(--texto-suave); font-style: italic; }
+.selo--atrasada      { background: var(--urgente-bg); color: var(--urgente-texto); border-color: var(--urgente-borda); }
+.selo--em_andamento::before, .selo--atrasada::before {
+  content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: 0 0 auto;
+}
+
+.selo--prio-baixa   { background: var(--fundo); color: var(--texto-suave); border-color: var(--borda); }
+.selo--prio-normal  { background: var(--azul-claro); color: var(--azul-texto); border-color: var(--borda); }
+.selo--prio-alta    { background: var(--atencao-bg); color: var(--atencao-texto); border-color: var(--atencao-borda); }
+.selo--prio-urgente { background: var(--urgente); color: #fff; border-color: var(--urgente); }
+
+.selo--nivel-informativo { background: var(--azul-claro); color: var(--azul-texto); border-color: var(--borda); }
+.selo--nivel-importante  { background: var(--atencao-bg); color: var(--atencao-texto); border-color: var(--atencao-borda); }
+.selo--nivel-urgente     { background: var(--urgente); color: #fff; border-color: var(--urgente); }
+
+.selo--tipo-recorrente  { background: var(--azul-claro); color: var(--azul-texto); border-color: var(--borda); }
+.selo--tipo-pontual     { background: var(--dourado-claro); color: var(--dourado-texto); border-color: var(--atencao-borda); }
+.selo--tipo-sob_demanda { background: var(--superficie); color: var(--texto-suave); border-color: var(--texto-suave); border-style: dashed; }
+
+/* Selo do papel do autor em comentários e avisos ('CHEFIA' / 'AQS') e do
+   papel na lista da equipe. */
+.selo--chefia, .selo--papel-chefia { background: var(--azul-escuro); color: #fff; border-color: var(--azul-escuro); }
+.selo--aqs, .selo--papel-administrador { background: var(--dourado); color: #10233c; border-color: var(--dourado); }
+.selo--papel-adjunto { background: var(--azul-claro); color: var(--azul-texto); border-color: var(--borda); }
+[data-tema="escuro"] .selo--chefia, [data-tema="escuro"] .selo--papel-chefia { background: #2a5a95; border-color: #2a5a95; }
+.selo--pequeno { padding: .05rem .4rem; font-size: .66rem; }
+
+/* ---------- 11. Senha, código e verificação em duas etapas ---------- */
+/* Usados na tela de acesso (sessao.js) e em Minha conta (conta.js). */
+.campo-senha { position: relative; }
+.campo-senha input { padding-right: 5.4rem; }
+.campo-senha__alternar {
+  position: absolute; right: .3rem; top: 50%; transform: translateY(-50%);
+  min-height: 34px; padding: .3rem .6rem; border-radius: 6px; cursor: pointer;
+  font: inherit; font-size: .78rem; font-weight: 700; color: var(--azul-texto);
+  background: none; border: 0;
+}
+.campo-senha__alternar:hover { background: var(--azul-claro); }
+
+.lista-requisitos {
+  list-style: none; margin: -.45rem 0 .95rem; padding: 0;
+  display: grid; gap: .1rem .9rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  font-size: .8rem; color: var(--texto-suave);
+}
+.lista-requisitos li { display: flex; align-items: baseline; gap: .35rem; }
+.lista-requisitos li::before { content: "○"; flex: 0 0 1em; text-align: center; font-weight: 800; }
+.lista-requisitos .requisito--ok { color: var(--sucesso-texto); }
+.lista-requisitos .requisito--ok::before { content: "✓"; }
+
+.lista-dicas { margin: 0 0 1rem; padding-left: 1.1rem; font-size: .82rem; color: var(--texto-suave); }
+.lista-dicas li { margin-bottom: .2rem; }
+
+input.campo-codigo {
+  text-align: center; font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+  font-size: 1.55rem; font-weight: 700; letter-spacing: .45em; padding-left: .9em;
+}
+input.campo-codigo::placeholder { letter-spacing: .3em; color: var(--borda); }
+
+.perfil-cartao__topo { display: flex; align-items: center; gap: .9rem; margin-bottom: 1rem; }
+.perfil-cartao__topo h2 { margin: 0 0 .25rem; overflow-wrap: anywhere; }
+
+.passos-mfa { margin: 0 0 1rem; padding-left: 1.2rem; font-size: .88rem; }
+.passos-mfa li { margin-bottom: .45rem; }
+.mfa-cadastro {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-bottom: 1rem;
+  padding: .9rem; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--fundo);
+}
+.qr-mfa {
+  flex: 0 0 auto; display: inline-flex; padding: 10px; background: #fff;
+  border: 1px solid var(--borda); border-radius: var(--raio-p);
+}
+.qr-mfa img { display: block; width: 184px; height: 184px; image-rendering: pixelated; }
+.mfa-cadastro__chave { flex: 1 1 200px; min-width: 0; font-size: .84rem; }
+.segredo-mfa {
+  display: block; margin: .35rem 0 .5rem; padding: .55rem .65rem;
+  font-family: Consolas, "Cascadia Mono", "Courier New", monospace; font-size: .95rem; font-weight: 700;
+  letter-spacing: .06em; word-spacing: .2em; overflow-wrap: anywhere; user-select: all;
+  background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio-p);
+}
+.fator-item {
+  display: flex; align-items: center; gap: .7rem; flex-wrap: wrap;
+  padding: .6rem .7rem; margin-bottom: .5rem;
+  border: 1px solid var(--borda); border-radius: var(--raio-p); background: var(--fundo); font-size: .87rem;
+}
+.situacao-mfa { display: flex; align-items: center; gap: .55rem; flex-wrap: wrap; margin-bottom: .7rem; }
+
+/* ---------- 12. Celular (< 720 px) ---------- */
+@media (max-width: 719px) {
+  .faixa-demo__extra { display: none; }
+
+  .cabecalho { border-bottom: 2px solid var(--dourado); }
+  .cabecalho__topo { padding: .5rem .75rem; gap: .6rem; }
+  .cabecalho__logo { height: 40px; }
+  .cabecalho__titulo strong { font-size: 1rem; letter-spacing: .02em; }
+  .cabecalho__titulo > span { font-size: .7rem; }
+  .cabecalho .botao-icone { width: 44px; height: 44px; }
+  .navegacao, .usuario-chip, .so-computador { display: none !important; }
+
+  /* O menu do sino vira uma folha sob o cabeçalho (o "top" exato é
+     calculado em app.js a partir da altura real do cabeçalho). */
+  .menu-notificacoes {
+    position: fixed; left: .5rem; right: .5rem; width: auto; max-width: none;
+    top: calc(var(--altura-faixa) + 64px);
+    max-height: calc(100vh - var(--altura-faixa) - var(--altura-barra-inferior) - 84px);
+    max-height: calc(100dvh - var(--altura-faixa) - var(--altura-barra-inferior) - 84px);
+  }
+  .notificacao-item { min-height: 56px; }
+
+  .barra-inferior {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
+    padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    background: linear-gradient(180deg, #0f3768 0%, var(--azul-escuro) 100%);
+    border-top: 2px solid var(--dourado);
+    box-shadow: 0 -6px 18px rgba(0,0,0,.2);
+  }
+  .menu-mais { display: block; }
+  .menu-mais__fundo { display: block; }
+  .menu-mais.oculto, .menu-mais__fundo.oculto { display: none; }
+
+  /* O rodapé (último bloco) ganha o espaço da barra fixa. */
+  #telaApp .rodape { padding-bottom: calc(var(--altura-barra-inferior) + env(safe-area-inset-bottom) + 1.5rem); }
+  .conteudo { padding-top: 1rem; padding-bottom: 1.5rem; }
+  .avisos-flutuantes {
+    left: .75rem; right: .75rem; max-width: none;
+    bottom: calc(var(--altura-barra-inferior) + env(safe-area-inset-bottom) + .75rem);
+  }
+  .em-acesso .avisos-flutuantes { bottom: calc(.75rem + env(safe-area-inset-bottom)); }
+
+  /* Painel lateral ocupa a tela inteira. */
+  .painel { width: 100%; animation: subirPainel .2s ease-out; }
+  .painel--largo { width: 100%; }
+  .painel__cabecalho { padding: .65rem .75rem .65rem 1rem; }
+  .painel__corpo { padding: 1rem 1rem calc(1.5rem + env(safe-area-inset-bottom)); }
+
+  .pagina__cabecalho h1 { font-size: 1.3rem; }
+  .cartao-acesso { padding: 1.5rem 1.15rem 1.1rem; border-radius: 16px; }
+  .cartao-acesso__brasao { height: 96px; }
+  .cartao-acesso__titulo { font-size: 1.25rem; }
+  .cartao-acesso__organizacao { letter-spacing: .06em; gap: .4rem; white-space: nowrap; }
+  .cartao-acesso__organizacao::before, .cartao-acesso__organizacao::after { width: 14px; }
+
+  /* Alvos de toque de pelo menos 44 px. */
+  .botao, .botao--pequeno { min-height: 44px; }
+  .filtro { min-height: 40px; }
+  .aba { min-height: 44px; }
+  .campo-senha__alternar { min-height: 40px; }
+  input[type="text"], input[type="date"], input[type="email"], input[type="tel"],
+  input[type="search"], input[type="number"], input[type="password"], select { min-height: 44px; font-size: 16px; }
+  textarea { font-size: 16px; }
+  input.campo-codigo { font-size: 1.45rem; }
+  .acoes > .botao { flex: 1 1 auto; }
+  .acoes--direita > .botao { flex: 0 1 auto; }
+}
+@keyframes subirPainel { from { transform: translateY(18px); opacity: .6; } }
+
+@media (min-width: 720px) {
+  .so-celular { display: none !important; }
+}
+
+/* Telas largas: o chip do usuário pode mostrar mais. */
+@media (min-width: 1100px) {
+  .usuario-chip { max-width: 330px; }
+}
+
+/* Telas muito estreitas (≤ 360 px): o título encolhe para caber o sino. */
+@media (max-width: 360px) {
+  .cabecalho__titulo > span { display: none; }
+  .barra-inferior__item { font-size: .62rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- 13. Impressão ---------- */
+.cabecalho-impressao, .rodape-impressao { display: none; }
+
+@media print {
+  /* Papel é sempre claro, qualquer que seja o tema da tela. */
+  :root, [data-tema="escuro"] {
+    --texto: #000; --texto-suave: #444; --fundo: #fff; --superficie: #fff; --borda: #bbb;
+    --azul-claro: #eef3fa; --dourado-claro: #fdf6e6; --urgente-bg: #fdecea; --atencao-bg: #fff6e5;
+    --sucesso-bg: #e8f5ee; --azul-texto: #0b2f5c; --urgente-texto: #a01818; --atencao-texto: #7a4400;
+    --sucesso-texto: #12573a; --dourado-texto: #6b4800; --altura-faixa: 0px;
+    color-scheme: light;
+  }
+  .faixa-demo, .barra-inferior, .menu-mais, .menu-mais__fundo, .menu-notificacoes,
+  .tela-acesso, .pular-conteudo, .abas, .acoes, .painel__fechar { display: none !important; }
+  #telaApp { padding-top: 0; }
+  #telaApp .rodape { padding-bottom: 0; }
+
+  .cabecalho-impressao {
+    display: flex !important; align-items: center; gap: 12pt;
+    margin-bottom: 12pt; padding-bottom: 8pt; border-bottom: 2pt solid #0b2f5c;
+  }
+  .cabecalho-impressao img { height: 54pt; width: auto; }
+  .cabecalho-impressao strong { display: block; font-size: 13pt; color: #0b2f5c; }
+  .cabecalho-impressao span { display: block; font-size: 9.5pt; color: #333; }
+  .rodape-impressao {
+    display: block !important; margin-top: 14pt; padding-top: 6pt;
+    border-top: 1pt solid #999; font-size: 8.5pt; color: #444;
+  }
+  /* Página que traz o próprio cabeçalho/rodapé de impressão (relatórios)
+     dispensa os genéricos da casca. */
+  #telaApp:has(.pagina .cabecalho-impressao) > .cabecalho-impressao--casca,
+  #telaApp:has(.pagina .rodape-impressao) > .rodape-impressao--casca { display: none !important; }
+  .pagina__cabecalho h1::after { background: #0b2f5c; }
+  .selo, .chip, .contador, .medalha, .anel svg, .barra-progresso, .barra-progresso__preenchimento {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .barra-progresso, .vazio { border-color: #999; }
+  .notificacao-item, .cartao, .indicador, .anel { break-inside: avoid; }
+
+  /* Com o painel de detalhe aberto, imprime-se o painel (e não a página
+     por trás): é o "imprimir esta atividade". */
+  body.sem-rolagem #telaApp { display: none !important; }
+  .sobreposicao { position: static !important; display: block; background: none; animation: none; }
+  .painel { width: auto !important; height: auto; overflow: visible; box-shadow: none; animation: none; }
+  .painel__cabecalho { position: static; border-bottom: 2pt solid #0b2f5c; }
+
+  @page { margin: 14mm 12mm; }
+}

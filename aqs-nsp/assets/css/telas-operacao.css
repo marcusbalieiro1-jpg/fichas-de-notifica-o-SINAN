@@ -1,0 +1,708 @@
+/* =========================================================================
+   HABE – AQS e NSP — telas de operação: Início, Quadro (quadro e
+   calendário) e o painel de detalhe da missão/atividade
+   Carregada depois de base.css e aqs.css: usa as mesmas variáveis (o tema
+   escuro só troca variáveis) e o mesmo corte do celular (< 720 px).
+
+   Regras da casa (iguais às de aqs.css):
+   * cor sempre por variável; nada de cor de texto fixa sobre fundo que
+     muda com o tema (exceto sobre o azul-marinho e o dourado, que não mudam);
+   * nada de style="" no HTML — larguras dinâmicas via data-largura;
+   * alvos de toque de pelo menos 44 px no celular;
+   * nenhuma rolagem horizontal da página em 390 px.
+   ========================================================================= */
+
+/* ---------- 1. Peças comuns: alternância segmentada, interruptor ---------- */
+
+/* Alternância em pílula: Minhas | Equipe, Quadro | Calendário, abas das
+   colunas no celular. Os botões usam aria-pressed. */
+.segmentado {
+  display: inline-flex; align-items: stretch; gap: 2px; padding: 3px; max-width: 100%;
+  border-radius: 999px; background: var(--fundo); border: 1px solid var(--borda);
+}
+.segmentado__opcao {
+  display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
+  padding: .42rem .95rem; border: 0; border-radius: 999px; background: none; cursor: pointer;
+  font: inherit; font-size: .86rem; font-weight: 700; color: var(--texto-suave); white-space: nowrap;
+  transition: background .15s, color .15s, box-shadow .15s;
+}
+.segmentado__opcao:hover { color: var(--azul-texto); }
+.segmentado__opcao--ativa,
+.segmentado__opcao--ativa:hover { background: var(--azul); color: #fff; box-shadow: 0 1px 3px rgba(11,47,92,.28); }
+.segmentado__opcao .icone { width: 1.1em; height: 1.1em; }
+.segmentado--pequeno .segmentado__opcao { padding: .34rem .8rem; font-size: .82rem; }
+.segmentado--bloco { display: flex; width: 100%; }
+.segmentado--bloco .segmentado__opcao { flex: 1 1 0; min-width: 0; }
+
+/* Sobre o azul-marinho da saudação. */
+.segmentado--escuro { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); }
+.segmentado--escuro .segmentado__opcao { color: var(--sobre-azul); }
+.segmentado--escuro .segmentado__opcao:hover { color: #fff; }
+.segmentado--escuro .segmentado__opcao--ativa,
+.segmentado--escuro .segmentado__opcao--ativa:hover { background: var(--dourado); color: #10233c; }
+
+/* Interruptor (checkbox de verdade, acessível pelo teclado). */
+.interruptor {
+  position: relative; display: inline-flex; align-items: center; gap: .55rem;
+  cursor: pointer; font-size: .88rem; font-weight: 600; min-height: 36px;
+}
+.interruptor input { position: absolute; width: 1px; height: 1px; opacity: 0; margin: 0; }
+.interruptor__trilho {
+  position: relative; flex: 0 0 auto; width: 40px; height: 22px; border-radius: 999px;
+  background: var(--borda); transition: background .15s;
+}
+.interruptor__trilho::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform .15s;
+}
+.interruptor input:checked + .interruptor__trilho { background: var(--azul); }
+.interruptor input:checked + .interruptor__trilho::after { transform: translateX(18px); }
+.interruptor input:focus-visible + .interruptor__trilho { outline: 3px solid var(--foco); outline-offset: 2px; }
+
+/* Texto colorido de situação (legível nos dois temas). */
+.texto-urgente { color: var(--urgente-texto); font-weight: 700; }
+.texto-atencao { color: var(--atencao-texto); font-weight: 700; }
+.texto-sucesso { color: var(--sucesso-texto); font-weight: 700; }
+.texto-urgente .icone, .texto-atencao .icone { vertical-align: -.25em; }
+
+.link-botao {
+  padding: 0; border: 0; background: none; cursor: pointer;
+  font: inherit; color: var(--azul-texto); text-decoration: underline; text-underline-offset: 2px;
+}
+
+kbd {
+  display: inline-block; padding: 0 .3rem; font-family: inherit; font-size: .72rem; font-weight: 700; line-height: 1.5;
+  border: 1px solid var(--borda); border-bottom-width: 2px; border-radius: 4px; background: var(--superficie); color: var(--texto);
+}
+
+.barra-linha__preenchimento--sucesso { background: var(--sucesso); }
+
+/* Anel sem universo (nada vencido ainda): traço em vez de "0%". */
+.anel--vazio .anel__valor { stroke: transparent; }
+.anel--vazio .anel__numero { font-size: 0; }
+.anel--vazio .anel__numero::after { content: "—"; font-size: 1.1rem; color: var(--texto-suave); }
+
+/* ---------- 2. Cartão de missão (Início, Quadro, Calendário) ---------- */
+
+.lista-missoes { display: grid; gap: .55rem; grid-template-columns: minmax(0, 1fr); }
+.lista-missoes--grade { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+
+/* O título é um botão que "estica" (::after) sobre o cartão inteiro: o
+   cartão todo abre o detalhe, mas os botões rápidos continuam clicáveis
+   por cima — e cada controle é um elemento de verdade para o teclado. */
+.missao {
+  position: relative; display: flex; flex-direction: column; gap: .35rem; min-width: 0;
+  padding: .7rem .8rem .7rem .9rem;
+  background: var(--superficie); border: 1px solid var(--borda); border-left: 4px solid var(--azul);
+  border-radius: var(--raio-p); box-shadow: 0 1px 2px rgba(11,47,92,.06);
+  transition: box-shadow .12s, transform .12s, border-color .12s;
+}
+.missao:hover { box-shadow: var(--sombra); transform: translateY(-1px); }
+.missao--compacta { padding: .55rem .7rem .6rem .8rem; gap: .28rem; }
+
+.missao--pendente     { border-left-color: var(--azul); }
+.missao--em_andamento { border-left-color: var(--dourado); }
+.missao--hoje         { border-left-color: var(--dourado); background: var(--dourado-claro); }
+.missao--atrasada     { border-left-color: var(--urgente); border-color: var(--urgente-borda); background: var(--urgente-bg); }
+.missao--concluida    { border-left-color: var(--sucesso); }
+.missao--concluida .missao__abrir { color: var(--texto-suave); }
+.missao--nao_se_aplica { border-left-style: dashed; border-left-color: var(--texto-suave); opacity: .78; }
+.missao--nao_se_aplica .missao__abrir { color: var(--texto-suave); font-style: italic; }
+
+/* Em cartão estreito os selos descem de linha em vez de espremer o título. */
+.missao__topo { display: flex; flex-wrap: wrap; align-items: flex-start; gap: .3rem .5rem; }
+.missao__abrir {
+  flex: 1 1 13rem; min-width: 0; margin: 0; padding: 0; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: .94rem; font-weight: 700; line-height: 1.3; text-align: left;
+  color: var(--texto); overflow-wrap: anywhere;
+}
+.missao__abrir::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.missao__abrir:hover { color: var(--azul-texto); }
+.missao__abrir:focus-visible { outline: none; }
+.missao__abrir:focus-visible::after { outline: 3px solid var(--foco); outline-offset: 2px; }
+.missao__selos { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: .25rem; flex: 0 1 auto; margin-left: auto; }
+.missao__execucao { font-size: .85rem; font-weight: 600; color: var(--azul-texto); overflow-wrap: anywhere; line-height: 1.3; }
+.missao__meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .5rem;
+  font-size: .8rem; color: var(--texto-suave);
+}
+.missao__referencia { font-weight: 600; }
+.missao__setor {
+  padding: 0 .35rem; border: 1px solid var(--borda); border-radius: 4px;
+  font-size: .7rem; font-weight: 800; letter-spacing: .04em;
+}
+.missao__rodape { display: flex; align-items: center; justify-content: space-between; gap: .35rem .5rem; flex-wrap: wrap; }
+.missao__rodape .chips { min-width: 0; }
+.missao__contagens { display: inline-flex; gap: .55rem; font-size: .8rem; font-weight: 700; color: var(--texto-suave); white-space: nowrap; }
+.missao__contagem--falta { color: var(--atencao-texto); }
+.missao__acoes { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .15rem; }
+.missao__acoes .botao { padding: .34rem .7rem; }
+
+/* Chips de responsáveis */
+.chip--sem-responsavel { background: var(--urgente-bg); color: var(--urgente-texto); border-color: var(--urgente-borda); border-style: dashed; }
+.chip--inativo { opacity: .7; font-style: italic; }
+
+/* ---------- 3. Início ---------- */
+
+/* Saudação: faixa azul-marinho com fio dourado e um avião discreto ao fundo. */
+.saudacao {
+  position: relative; overflow: hidden; isolation: isolate;
+  display: flex; align-items: flex-end; justify-content: space-between; gap: .9rem 1.2rem; flex-wrap: wrap;
+  margin-bottom: 1.1rem; padding: 1.3rem 1.4rem 1.2rem;
+  border-radius: var(--raio); border-bottom: 3px solid var(--dourado); color: #fff;
+  background-color: var(--azul-escuro);
+  background-image:
+    radial-gradient(ellipse 55% 130% at 100% 0%, rgba(217,154,31,.26), transparent 62%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 1px, transparent 1px 24px),
+    linear-gradient(135deg, #0d3567 0%, #0b2f5c 55%, #081f3d 100%);
+  box-shadow: var(--sombra);
+}
+.saudacao::after {
+  content: "✈"; position: absolute; z-index: -1; right: 1.2rem; top: -1.1rem;
+  font-size: 7rem; line-height: 1; color: #fff; opacity: .06; transform: rotate(-18deg);
+  pointer-events: none;
+}
+.saudacao__texto { min-width: 0; flex: 1 1 320px; }
+.saudacao__data {
+  margin: 0; font-size: .74rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #f0c062;
+}
+.saudacao__titulo { margin: .2rem 0 .25rem; font-size: 1.65rem; font-weight: 800; color: #fff; overflow-wrap: anywhere; }
+.saudacao__resumo { margin: 0; font-size: .95rem; color: var(--sobre-azul); }
+.saudacao__papel {
+  display: inline-flex; align-items: center; gap: .4rem; margin: 0;
+  padding: .35rem .8rem; border-radius: 999px; background: rgba(255,255,255,.1);
+  font-size: .8rem; font-weight: 700; color: #f0c062;
+}
+
+/* Alertas de continuidade (gestores) */
+.continuidade { margin-bottom: 1.1rem; }
+.continuidade .titulo-secao { margin: 0 0 .55rem; }
+.continuidade .titulo-secao .icone { color: var(--dourado-texto); width: 1.15rem; height: 1.15rem; }
+.continuidade__lista { display: grid; gap: .5rem; }
+.alerta-continuidade { margin-bottom: 0; align-items: flex-start; }
+.alerta-continuidade--urgente { border-left: 4px solid var(--urgente); }
+.alerta-continuidade--atencao { border-left: 4px solid var(--atencao); }
+.alerta-continuidade--info    { border-left: 4px solid var(--azul); }
+.alerta-continuidade .aviso__icone .icone { width: 1.2rem; height: 1.2rem; }
+.alerta-continuidade--urgente .aviso__icone { color: var(--urgente-texto); }
+.alerta-continuidade--atencao .aviso__icone { color: var(--atencao-texto); }
+.alerta-continuidade--info .aviso__icone { color: var(--azul-texto); }
+.alerta-continuidade__texto { display: block; overflow-wrap: anywhere; }
+.alerta-continuidade__link { display: inline-block; margin-top: .3rem; font-weight: 800; text-decoration: none; }
+.alerta-continuidade__link:hover { text-decoration: underline; }
+
+/* Avisos sem a minha ciência */
+.avisos-inicio { margin-bottom: 1.1rem; }
+.avisos-inicio__cabecalho { display: flex; align-items: center; gap: .5rem; margin-bottom: .55rem; }
+.avisos-inicio__cabecalho .titulo-secao { flex: 1 1 auto; margin: 0; }
+.avisos-inicio__cabecalho .titulo-secao .icone { color: var(--dourado-texto); width: 1.15rem; height: 1.15rem; }
+.aviso-inicio { margin-bottom: .6rem; align-items: flex-start; border-left-width: 4px; }
+.aviso-inicio--urgente { border-left-color: var(--urgente); }
+.aviso-inicio--importante { border-left-color: var(--atencao); }
+.aviso-inicio--informativo { border-left-color: var(--azul); }
+.aviso-inicio .aviso__icone .icone { width: 1.2rem; height: 1.2rem; }
+.aviso-inicio__topo { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem; }
+.aviso-inicio__titulo { margin: 0; font-size: 1rem; overflow-wrap: anywhere; flex: 1 1 200px; }
+.aviso-inicio__fixado { font-size: .95rem; line-height: 1; }
+.aviso-inicio__mensagem {
+  margin-top: .35rem; font-size: .9rem; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 5; line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
+}
+.aviso-inicio__meta { margin-top: .35rem; font-size: .78rem; color: var(--texto-suave); }
+.aviso .aviso-inicio__prazo { display: inline; margin: 0; color: var(--atencao-texto); }
+
+/* Indicadores (são links para o quadro já filtrado) */
+.inicio__indicadores { margin-bottom: 1.1rem; }
+.indicador--link {
+  display: block; color: inherit; text-decoration: none;
+  transition: transform .12s, box-shadow .12s, border-color .12s;
+}
+.indicador--link:hover { transform: translateY(-2px); box-shadow: var(--sombra-menu); }
+.indicador--sucesso .indicador__valor { color: var(--sucesso-texto); }
+.indicador--atencao .indicador__valor { color: var(--atencao-texto); }
+.indicador--padrao .indicador__valor { color: var(--azul-texto); }
+
+/* Duas colunas no computador; uma no celular e no tablet em pé. */
+.inicio__colunas {
+  display: grid; gap: 0 1.1rem; align-items: start;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+}
+.inicio__principal, .inicio__lateral { min-width: 0; }
+
+.vazio--festa .vazio__icone { background: var(--sucesso-bg); color: var(--sucesso-texto); font-size: 1.7rem; }
+
+/* Próximos 7 dias: "folhinha" com o dia + título */
+.agenda-curta { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.agenda-curta__item {
+  display: flex; align-items: center; gap: .75rem; width: 100%; min-width: 0;
+  padding: .5rem .65rem; text-align: left; cursor: pointer;
+  font: inherit; color: var(--texto); background: var(--superficie);
+  border: 1px solid var(--borda); border-radius: var(--raio-p);
+  transition: border-color .12s, background .12s;
+}
+.agenda-curta__item:hover { border-color: var(--azul); background: var(--azul-claro); }
+.agenda-curta__data {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 44px; height: 46px; border-radius: 10px; line-height: 1;
+  background: var(--azul-escuro); color: #fff; border-bottom: 3px solid var(--dourado);
+}
+.agenda-curta__data strong { font-size: 1.1rem; }
+.agenda-curta__data small { margin-top: .18rem; font-size: .6rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #f0c062; }
+.agenda-curta__corpo { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .18rem; }
+.agenda-curta__titulo { font-weight: 700; font-size: .9rem; line-height: 1.3; overflow-wrap: anywhere; }
+.agenda-curta__meta { font-size: .78rem; color: var(--texto-suave); }
+
+/* Sequências das diárias */
+.sequencias { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.sequencia {
+  display: flex; align-items: center; gap: .65rem; padding: .55rem .75rem;
+  border: 1px solid var(--borda); border-radius: var(--raio-p); background: var(--superficie);
+}
+.sequencia--ativa { border-color: var(--atencao-borda); background: linear-gradient(90deg, var(--dourado-claro), var(--superficie) 75%); }
+.sequencia__marcador { flex: 0 0 auto; width: 1.8rem; font-size: 1.45rem; line-height: 1; text-align: center; color: var(--texto-suave); }
+.sequencia--ativa .sequencia__marcador { animation: chama 1.6s ease-in-out infinite alternate; }
+@keyframes chama { from { transform: scale(1) rotate(-4deg); } to { transform: scale(1.12) rotate(4deg); } }
+.sequencia__numero { flex: 0 0 auto; min-width: 2.2ch; font-size: 1.55rem; font-weight: 800; line-height: 1; text-align: right; color: var(--dourado-texto); }
+.sequencia--zerada .sequencia__numero { color: var(--texto-suave); }
+.sequencia--zerada .sequencia__marcador { filter: grayscale(1); opacity: .35; }
+.sequencia__texto { display: flex; flex-direction: column; gap: .2rem; min-width: 0; }
+.sequencia__texto strong { font-size: .9rem; line-height: 1.3; overflow-wrap: anywhere; }
+.sequencia__texto small { font-size: .78rem; color: var(--texto-suave); }
+
+/* Pendências da equipe (gestores) */
+.pendencias { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; }
+.pendencia {
+  display: flex; align-items: center; justify-content: space-between; gap: .5rem; min-height: 44px;
+  padding: .4rem .65rem; border-radius: var(--raio-p); background: var(--fundo); font-size: .9rem;
+}
+.pendencia--atrasada { background: var(--urgente-bg); }
+.pendencia--sem-responsavel .pendencia__nome { font-style: italic; }
+.pendencia__nome { min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
+.pendencia__link {
+  display: inline-flex; align-items: center; gap: .3rem; flex: 0 0 auto; white-space: nowrap;
+  font-size: .84rem; font-weight: 700; color: var(--urgente-texto); text-decoration: none;
+}
+.pendencia__link:hover { text-decoration: underline; }
+.pendencia__ok { flex: 0 0 auto; font-size: .82rem; font-weight: 700; color: var(--sucesso-texto); }
+
+/* Placar do mês */
+.placar {
+  list-style: none; margin: 0 0 .6rem; padding: 0;
+  display: grid; gap: .6rem .4rem; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+}
+.placar__item {
+  display: flex; flex-direction: column; align-items: center; gap: .3rem; min-width: 0;
+  padding: .6rem .3rem .7rem; border-radius: var(--raio); text-align: center; border: 1px solid transparent;
+}
+.placar__item .anel { width: 100%; max-width: 120px; }
+.placar__item--eu { background: var(--azul-claro); border-color: var(--borda); }
+.placar__item--completo { background: linear-gradient(180deg, var(--dourado-claro), transparent 85%); border-color: var(--atencao-borda); }
+.placar__detalhe { font-size: .74rem; font-weight: 600; color: var(--texto-suave); }
+.placar__medalha {
+  display: inline-flex; align-items: center; gap: .25rem; padding: .16rem .55rem; border-radius: 999px;
+  background: linear-gradient(135deg, #f7da7f, var(--dourado)); color: #3d2a00;
+  font-size: .72rem; font-weight: 800; white-space: nowrap;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.5), 0 1px 3px rgba(0,0,0,.2);
+  animation: medalha .5s ease-out;
+}
+@keyframes medalha { from { transform: scale(.6); opacity: 0; } }
+.placar__subtitulo {
+  margin: .5rem 0 .6rem; font-size: .74rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--texto-suave);
+}
+.placar__barra { grid-template-columns: 3.6rem minmax(0, 1fr) auto; }
+.placar__barra .barra-linha__trilho, .placar__barra .barra-linha__preenchimento { display: block; }
+.placar__barra .barra-linha__rotulo { font-weight: 700; }
+
+/* ---------- 4. Quadro ---------- */
+
+.quadro-pagina .pagina__cabecalho--acoes { align-items: center; }
+.quadro-pagina--atualizando #quadroConteudo { opacity: .65; transition: opacity .2s; }
+
+.filtros-quadro { display: grid; gap: .7rem; padding: .85rem 1rem; }
+.filtros-quadro__linha { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .6rem .9rem; min-width: 0; }
+.filtros-quadro__campo { display: flex; flex-direction: column; gap: .2rem; flex: 1 1 200px; min-width: 0; max-width: 340px; }
+.filtros-quadro__campo label {
+  font-size: .7rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--texto-suave);
+}
+.filtros-quadro__campo select { padding: .45rem .6rem; font-size: .9rem; }
+.filtros-quadro__linha--rodape {
+  align-items: center; justify-content: space-between; padding-top: .6rem; border-top: 1px solid var(--borda);
+}
+.filtros-quadro__resumo { margin-left: auto; font-size: .84rem; font-weight: 700; color: var(--texto-suave); }
+.filtros-quadro__resumo--alerta { color: var(--urgente-texto); }
+/* Botão "Filtros": só existe no celular (ver o bloco de até 719 px). */
+.filtros-quadro__alternar { display: none; }
+.filtros-quadro__alternar .contador { margin-left: .1rem; }
+
+.quadro { display: grid; gap: 1rem; align-items: start; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.quadro__coluna {
+  min-width: 0; padding: .7rem; border: 1px solid var(--borda); border-radius: var(--raio);
+  background: rgba(11,47,92,.035);
+}
+[data-tema="escuro"] .quadro__coluna { background: rgba(255,255,255,.025); }
+.quadro__cabecalho {
+  display: flex; align-items: center; gap: .5rem;
+  margin-bottom: .65rem; padding: .1rem .2rem .55rem; border-bottom: 3px solid var(--azul);
+}
+.quadro__coluna--andamento .quadro__cabecalho { border-bottom-color: var(--dourado); }
+.quadro__coluna--concluidas .quadro__cabecalho { border-bottom-color: var(--sucesso); }
+.quadro__cabecalho h2 { flex: 1 1 auto; display: flex; align-items: center; gap: .4rem; margin: 0; font-size: .98rem; }
+.quadro__cabecalho h2 .icone { color: var(--dourado-texto); }
+.quadro__alerta { font-size: .74rem; font-weight: 800; color: var(--urgente-texto); white-space: nowrap; }
+.quadro__lista { display: grid; gap: .55rem; grid-template-columns: minmax(0, 1fr); }
+.quadro__coluna--concluidas .missao { box-shadow: none; }
+.quadro__vazio {
+  margin: 0; padding: 1.4rem .6rem; text-align: center; font-size: .88rem; color: var(--texto-suave);
+  border: 1px dashed var(--borda); border-radius: var(--raio-p);
+}
+.quadro-abas { margin-bottom: .75rem; }
+
+/* ---------- 5. Calendário e agenda ---------- */
+
+.calendario-barra { display: flex; align-items: center; gap: .5rem; margin-bottom: .75rem; }
+.calendario-barra__titulo { margin: 0; min-width: 12ch; font-size: 1.2rem; text-align: center; }
+.calendario-barra__hoje { margin-left: auto; }
+.botao-navegacao {
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+  font: inherit; font-size: 1.45rem; line-height: 1; color: var(--azul-texto);
+  background: var(--superficie); border: 1px solid var(--borda);
+}
+.botao-navegacao:hover { background: var(--azul-claro); border-color: var(--azul); }
+
+.calendario {
+  overflow: hidden; background: var(--superficie);
+  border: 1px solid var(--borda); border-radius: var(--raio); box-shadow: var(--sombra);
+}
+.calendario__grade { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.calendario__cabecalho {
+  padding: .45rem .3rem; text-align: center;
+  font-size: .72rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--texto-suave); background: var(--azul-claro); border-bottom: 1px solid var(--borda);
+}
+.calendario__cabecalho--fim { color: var(--dourado-texto); }
+.calendario__dia {
+  position: relative; display: flex; flex-direction: column; gap: .2rem; min-width: 0; min-height: 110px;
+  padding: .3rem .35rem .4rem; cursor: pointer;
+  border-right: 1px solid var(--borda); border-bottom: 1px solid var(--borda);
+  transition: background .12s;
+}
+.calendario__grade > :nth-child(7n) { border-right: 0; }
+.calendario__dia:hover { background: var(--azul-claro); }
+.calendario__dia--fim { background: var(--fundo); }
+.calendario__dia--feriado { background: var(--dourado-claro); }
+.calendario__dia--fora { opacity: .48; }
+.calendario__dia--selecionado { box-shadow: inset 0 0 0 2px var(--dourado); }
+.calendario__numero {
+  align-self: flex-start; display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; background: none;
+  font: inherit; font-size: .85rem; font-weight: 800; color: var(--texto);
+}
+.calendario__numero:hover { background: var(--azul-claro); }
+.calendario__dia--hoje .calendario__numero { background: var(--azul); color: #fff; }
+.calendario__feriado {
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-size: .66rem; font-weight: 700; color: var(--dourado-texto);
+}
+/* minmax(0, 1fr) e min-width: 0: sem isso o item cresce até o tamanho do
+   título e invade as células vizinhas. */
+.calendario__itens { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.calendario__itens > li { min-width: 0; }
+.calendario__item {
+  display: block; width: 100%; min-width: 0; padding: .14rem .35rem; cursor: pointer; text-align: left;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font: inherit; font-size: .72rem; font-weight: 600; line-height: 1.3; color: var(--texto);
+  background: var(--azul-claro); border: 0; border-left: 3px solid var(--azul); border-radius: 4px;
+}
+.calendario__item:hover { filter: brightness(.96); }
+[data-tema="escuro"] .calendario__item:hover { filter: brightness(1.2); }
+.calendario__item--em_andamento { border-left-color: var(--dourado); }
+.calendario__item--atrasada { background: var(--urgente-bg); border-left-color: var(--urgente); color: var(--urgente-texto); }
+.calendario__item--concluida { background: var(--sucesso-bg); border-left-color: var(--sucesso); color: var(--texto-suave); }
+.calendario__item--nao_se_aplica {
+  background: transparent; border-left: 3px dashed var(--texto-suave); color: var(--texto-suave); font-style: italic;
+}
+.calendario__mais {
+  align-self: flex-start; padding: .05rem .3rem; border: 0; border-radius: 4px; background: none; cursor: pointer;
+  font: inherit; font-size: .72rem; font-weight: 800; color: var(--azul-texto);
+}
+.calendario__mais:hover { background: var(--azul-claro); }
+
+.calendario-dia { margin-top: 1rem; }
+.calendario-dia--dica { text-align: center; font-size: .9rem; }
+.calendario-dia__cabecalho { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem .6rem; margin-bottom: .65rem; }
+.calendario-dia__cabecalho h3 { margin: 0; font-size: 1.05rem; }
+
+/* Agenda (celular) */
+.agenda { display: grid; gap: 1rem; }
+.agenda__data { display: flex; align-items: center; gap: .65rem; margin: 0 0 .5rem; font-size: .95rem; }
+.agenda__numero {
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 40px; height: 40px; border-radius: 10px; font-weight: 800;
+  background: var(--azul-escuro); color: #fff; border-bottom: 3px solid var(--dourado);
+}
+.agenda__dia--hoje .agenda__numero { background: var(--dourado); color: #10233c; border-bottom-color: var(--azul-escuro); }
+.agenda__dia--feriado .agenda__numero { background: var(--dourado-claro); color: var(--dourado-texto); border: 1px solid var(--atencao-borda); }
+.agenda__semana { display: flex; flex-direction: column; min-width: 0; }
+.agenda__semana .selo { align-self: flex-start; }
+.agenda__semana small { font-size: .74rem; font-weight: 700; color: var(--dourado-texto); }
+.agenda__vazio {
+  margin: 0; padding: .55rem .8rem; font-size: .85rem; color: var(--texto-suave);
+  border: 1px dashed var(--borda); border-radius: var(--raio-p);
+}
+
+/* ---------- 6. Painel de detalhe ---------- */
+
+.detalhe__titulo-execucao { font-weight: 600; color: var(--texto-suave); }
+.detalhe__topo {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem .8rem;
+  margin-bottom: .9rem;
+}
+.detalhe__referencia { display: inline-flex; align-items: center; gap: .4rem; font-size: .92rem; font-weight: 700; color: var(--azul-texto); }
+.detalhe__referencia .icone { color: var(--dourado-texto); }
+.detalhe__selos { display: inline-flex; flex-wrap: wrap; gap: .3rem; }
+.detalhe__dados {
+  margin: 0 0 1rem; padding: .8rem .9rem; gap: .65rem .9rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  background: var(--fundo); border: 1px solid var(--borda); border-radius: var(--raio-p);
+}
+.detalhe__dados dd { overflow-wrap: anywhere; }
+.detalhe__dado-largo { grid-column: 1 / -1; }
+.detalhe__descricao {
+  margin-bottom: 1rem; padding: .15rem 0 .15rem .85rem; border-left: 3px solid var(--dourado);
+  font-size: .93rem; overflow-wrap: anywhere;
+}
+.detalhe__acoes { margin: 0 0 .4rem; }
+.detalhe__rodape { margin-top: 1.4rem; padding-top: 1rem; border-top: 1px solid var(--borda); }
+.detalhe__observacao {
+  padding: .6rem .75rem; border-radius: var(--raio-p); background: var(--fundo);
+  font-size: .92rem; overflow-wrap: anywhere;
+}
+
+.detalhe-secao { margin-top: 1.3rem; padding-top: 1rem; border-top: 1px solid var(--borda); }
+.detalhe-secao__cabecalho { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.detalhe-secao__titulo { display: flex; align-items: center; gap: .45rem; margin: 0 0 .7rem; font-size: 1rem; }
+.detalhe-secao__titulo .icone { color: var(--dourado-texto); }
+
+/* Situação: quatro botões grandes, a atual "acesa" na cor do status. */
+.situacao { display: grid; gap: .4rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.situacao__botao {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .25rem;
+  min-height: 64px; padding: .5rem .3rem; cursor: pointer; text-align: center;
+  font: inherit; font-size: .8rem; font-weight: 700; line-height: 1.2; color: var(--texto-suave);
+  background: var(--superficie); border: 1.5px solid var(--borda); border-radius: var(--raio-p);
+  transition: background .15s, border-color .15s, color .15s;
+}
+.situacao__botao .icone { width: 20px; height: 20px; }
+.situacao__botao:hover { border-color: var(--azul); color: var(--azul-texto); }
+.situacao__botao:disabled { opacity: .6; cursor: progress; }
+.situacao__botao--ativa.situacao__botao--pendente { background: var(--fundo); border-color: var(--texto-suave); color: var(--texto); }
+.situacao__botao--ativa.situacao__botao--em_andamento { background: var(--azul); border-color: var(--azul); color: #fff; }
+.situacao__botao--ativa.situacao__botao--concluida { background: var(--sucesso); border-color: var(--sucesso); color: #fff; }
+.situacao__botao--ativa.situacao__botao--nao_se_aplica {
+  background: var(--fundo); border-style: dashed; border-color: var(--texto-suave); color: var(--texto); font-style: italic;
+}
+.justificativa {
+  margin-top: .75rem; padding: .8rem .85rem; border: 1px dashed var(--texto-suave);
+  border-radius: var(--raio-p); background: var(--fundo);
+}
+.justificativa .acoes { margin-top: .6rem; }
+
+/* Evidências */
+.aviso--lgpd { margin-bottom: .8rem; }
+.aviso--lgpd .aviso__icone { color: var(--atencao-texto); }
+.zona-anexo { display: flex; flex-direction: column; align-items: center; gap: .3rem; }
+.zona-anexo__icone { font-size: 1.6rem; line-height: 1; }
+.zona-anexo__dica { font-size: .78rem; }
+.zona-anexo:has(+ input:focus-visible) { outline: 3px solid var(--foco); outline-offset: 2px; }
+.zona-anexo--ocupada { opacity: .6; pointer-events: none; }
+.envio-progresso { display: grid; gap: .3rem; margin-top: .6rem; font-size: .82rem; color: var(--texto-suave); overflow-wrap: anywhere; }
+
+.lista-evidencias { margin-top: .8rem; }
+.evidencia { align-items: flex-start; }
+.evidencia__icone { flex: 0 0 auto; margin-top: .1rem; font-size: 1.4rem; line-height: 1; }
+.evidencia__info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .1rem; }
+.evidencia__nome { font-weight: 700; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.evidencia__meta { font-size: .76rem; color: var(--texto-suave); overflow-wrap: anywhere; }
+.evidencia__descricao { font-size: .8rem; overflow-wrap: anywhere; }
+.evidencia__acoes { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .35rem; flex: 0 0 auto; }
+.evidencia-vazia {
+  display: flex; align-items: center; gap: .5rem; padding: .7rem .8rem;
+  font-size: .86rem; color: var(--texto-suave); border: 1px dashed var(--borda); border-radius: var(--raio-p);
+}
+
+/* Comentários: os da chefia/AQS em destaque dourado. */
+.comentarios { display: grid; gap: .6rem; margin-bottom: .8rem; }
+.comentarios__vazio { display: flex; align-items: center; gap: .5rem; margin: 0; font-size: .88rem; color: var(--texto-suave); }
+.comentario {
+  padding: .6rem .75rem; background: var(--superficie);
+  border: 1px solid var(--borda); border-radius: 4px var(--raio) var(--raio) var(--raio);
+}
+.comentario--meu { background: var(--azul-claro); }
+.comentario--chefia { background: var(--dourado-claro); border-color: var(--atencao-borda); border-left: 4px solid var(--dourado); }
+.comentario__cabecalho { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem; margin-bottom: .25rem; }
+.comentario__autor { font-size: .86rem; font-weight: 800; overflow-wrap: anywhere; }
+.comentario__tempo { font-size: .74rem; color: var(--texto-suave); }
+.comentario__excluir {
+  display: inline-flex; align-items: center; justify-content: center; margin-left: auto;
+  width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  background: none; color: var(--texto-suave);
+}
+.comentario__excluir:hover { background: var(--urgente-bg); color: var(--urgente-texto); }
+.comentario__excluir .icone { width: 16px; height: 16px; }
+.comentario__texto { font-size: .92rem; overflow-wrap: anywhere; }
+.comentario-novo textarea { min-height: 76px; }
+.comentario-novo__rodape { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin-top: .45rem; }
+
+/* Atividade: registrar execução, cumprimento, próximos prazos, histórico */
+.execucao-form {
+  margin: .4rem 0 1rem; padding: .9rem 1rem;
+  background: var(--fundo); border: 1px solid var(--borda); border-top: 3px solid var(--dourado); border-radius: var(--raio-p);
+}
+.execucao-form__titulo { display: flex; align-items: center; gap: .4rem; margin: 0 0 .7rem; font-size: 1rem; }
+.execucao-form__titulo .icone { color: var(--dourado-texto); }
+.execucao-form__situacao { grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); margin-bottom: .8rem; }
+.execucao-form__situacao .opcao--compacta { margin-bottom: 0; }
+
+.cumprimento {
+  display: flex; align-items: center; gap: 1rem; margin-top: .9rem; padding: .7rem .9rem;
+  background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio-p);
+}
+.cumprimento__texto { display: flex; flex-direction: column; gap: .15rem; min-width: 0; font-size: .88rem; }
+
+.proximos-prazos { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; }
+.proximos-prazos__item {
+  display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto; align-items: center; gap: .5rem;
+  width: 100%; padding: .5rem .7rem; text-align: left;
+  font: inherit; font-size: .86rem; color: var(--texto);
+  background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio-p);
+}
+button.proximos-prazos__item { cursor: pointer; }
+button.proximos-prazos__item:hover { border-color: var(--azul); background: var(--azul-claro); }
+.proximos-prazos__item--futuro { border-style: dashed; color: var(--texto-suave); }
+.proximos-prazos__data { font-weight: 700; }
+.proximos-prazos__referencia { color: var(--texto-suave); }
+.proximos-prazos__falta { font-size: .78rem; color: var(--texto-suave); text-align: right; }
+
+.historico { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; }
+.historico__item {
+  display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+  width: 100%; padding: .5rem .7rem; cursor: pointer; text-align: left;
+  font: inherit; font-size: .87rem; color: var(--texto);
+  background: var(--superficie); border: 1px solid var(--borda); border-left: 4px solid var(--azul); border-radius: var(--raio-p);
+  transition: box-shadow .12s;
+}
+.historico__item:hover { box-shadow: var(--sombra); }
+.historico__item--em_andamento { border-left-color: var(--dourado); }
+.historico__item--concluida { border-left-color: var(--sucesso); }
+.historico__item--atrasada { border-left-color: var(--urgente); background: var(--urgente-bg); }
+.historico__item--nao_se_aplica { border-left-style: dashed; border-left-color: var(--texto-suave); }
+.historico__referencia { min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
+.historico__referencia small { display: block; font-weight: 500; color: var(--texto-suave); }
+.historico__info { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: .4rem; flex: 0 0 auto; }
+.historico__contagem { font-size: .76rem; font-weight: 700; color: var(--texto-suave); }
+
+/* ---------- 7. Telas médias ---------- */
+
+@media (max-width: 1023px) {
+  .inicio__colunas { grid-template-columns: minmax(0, 1fr); }
+  .calendario__dia { min-height: 96px; }
+  .calendario__item { font-size: .68rem; }
+}
+
+@media (max-width: 899px) and (min-width: 720px) {
+  .quadro { gap: .6rem; }
+  .quadro__coluna { padding: .5rem; }
+}
+
+/* ---------- 8. Celular (< 720 px) ---------- */
+
+@media (max-width: 719px) {
+  .saudacao { padding: 1.05rem 1rem 1rem; }
+  .saudacao::after { font-size: 5rem; right: .4rem; top: -.6rem; }
+  .saudacao__titulo { font-size: 1.32rem; }
+  .saudacao__resumo { font-size: .9rem; }
+  .saudacao .segmentado { width: 100%; }
+  .saudacao .segmentado__opcao { flex: 1 1 0; min-height: 40px; }
+
+  .indicador--link { padding: .75rem .8rem; }
+  .indicador__rotulo { font-size: .7rem; }
+
+  .missao__acoes .botao { flex: 1 1 0; min-height: 44px; }
+  .missao__abrir { font-size: .95rem; }
+
+  .agenda-curta__item { min-height: 56px; }
+
+  /* Quadro: as colunas viram abas (uma coluna por vez). */
+  .pagina__cabecalho--acoes .segmentado { width: 100%; }
+  .pagina__cabecalho--acoes .segmentado__opcao { flex: 1 1 0; min-height: 42px; }
+  .filtros-quadro { padding: .75rem; gap: .6rem; }
+  .filtros-quadro__linha { gap: .55rem; }
+  .filtros-quadro__linha > .segmentado { width: 100%; }
+  .filtros-quadro__linha > .segmentado .segmentado__opcao { flex: 1 1 0; min-height: 40px; }
+  .filtros-quadro__campo { flex: 1 1 140px; max-width: none; }
+  .filtros-quadro .filtros { flex-wrap: wrap; }
+  .filtros-quadro__resumo { margin-left: 0; width: 100%; }
+  .filtros-quadro__linha--rodape { flex-direction: column; align-items: flex-start; }
+  /* Filtros recolhidos: fica à vista só Minhas/Todas, o botão "Filtros" e o
+     resumo; o resto abre no botão. */
+  .filtros-quadro__linha--topo { align-items: center; }
+  .filtros-quadro__linha--topo > .segmentado { width: auto; flex: 1 1 190px; }
+  .filtros-quadro__alternar { display: inline-flex; flex: 0 0 auto; min-height: 44px; margin-left: auto; }
+  .filtros-quadro__linha--topo > .filtros-quadro__campo { order: 2; }
+  .filtros-quadro--recolhido .filtros-quadro__recolhivel { display: none; }
+  .filtros-quadro--recolhido .filtros-quadro__linha--rodape { padding-top: 0; border-top: 0; }
+
+  .quadro { grid-template-columns: minmax(0, 1fr); }
+  .quadro__coluna { display: none; padding: 0; border: 0; background: none; }
+  [data-tema="escuro"] .quadro__coluna { background: none; }
+  .quadro__coluna--ativa { display: block; }
+  .quadro__cabecalho { display: none; }
+  .quadro-abas { border-radius: 14px; }
+  .quadro-abas .segmentado__opcao {
+    flex-direction: column; gap: .2rem; min-height: 52px; padding: .35rem .2rem;
+    border-radius: 11px; font-size: .78rem; line-height: 1.15; white-space: normal;
+  }
+
+  /* Calendário vira agenda (a grade e a lista do dia têm .so-computador). */
+  .calendario-barra__titulo { flex: 1 1 auto; min-width: 0; font-size: 1.08rem; }
+  .botao-navegacao { width: 44px; height: 44px; }
+
+  /* Detalhe */
+  .detalhe__dados { padding: .7rem .75rem; }
+  .situacao__botao { min-height: 60px; font-size: .76rem; }
+  .evidencia { flex-wrap: wrap; }
+  .evidencia__acoes { width: 100%; justify-content: flex-start; padding-left: 2.05rem; }
+  .evidencia__acoes .botao { min-height: 40px; }
+  .comentario__excluir { width: 40px; height: 40px; }
+  .historico__item { flex-wrap: wrap; min-height: 48px; }
+  .historico__info { justify-content: flex-start; }
+  .proximos-prazos__item { grid-template-columns: minmax(0, 1fr) auto; min-height: 48px; }
+  .proximos-prazos__referencia { grid-row: 2; grid-column: 1 / -1; font-size: .78rem; }
+  .cumprimento { gap: .7rem; }
+  .cumprimento .anel { width: 80px; }
+}
+
+/* Telas muito estreitas: a situação em 2 × 2. */
+@media (max-width: 340px) {
+  .situacao { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .placar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- 9. Impressão ---------- */
+
+@media print {
+  .saudacao { background: none !important; color: #000; border: 0; border-bottom: 2pt solid #0b2f5c; box-shadow: none; padding: 0 0 8pt; }
+  .saudacao::after, .saudacao .segmentado, .saudacao__papel { display: none !important; }
+  .saudacao__titulo, .saudacao__resumo, .saudacao__data { color: #000; }
+  .segmentado, .missao__acoes, .filtros-quadro, .quadro-abas, .calendario-barra button,
+  .comentario-novo, #detAnexar, .comentario__excluir, .evidencia__acoes, .execucao-form, .interruptor { display: none !important; }
+  .quadro { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .quadro__coluna { display: block !important; background: none; }
+  .quadro__cabecalho { display: flex !important; }
+  .so-celular.agenda { display: none !important; }
+  .missao, .comentario, .historico__item, .placar__item { break-inside: avoid; box-shadow: none; }
+  .missao:hover { transform: none; }
+  .sequencia--ativa .sequencia__marcador, .placar__medalha { animation: none; }
+}

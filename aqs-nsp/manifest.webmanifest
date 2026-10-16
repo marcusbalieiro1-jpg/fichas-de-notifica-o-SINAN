@@ -1,0 +1,22 @@
+{
+  "name": "HABE · AQS e NSP — Gestão de Atividades",
+  "short_name": "AQS e NSP",
+  "description": "Ferramenta de Gestão de Atividades da Assessoria de Qualidade e Segurança e do Núcleo de Segurança do Paciente do Hospital de Aeronáutica de Belém. Uso interno.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "id": "./index.html",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b2f5c",
+  "theme_color": "#0b2f5c",
+  "categories": ["productivity", "medical"],
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "assets/img/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/img/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "assets/img/apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "assets/img/logo-habe.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
