@@ -145,15 +145,15 @@ var Recorrencia = (function () {
       }
 
     } else if (periodicidade === 'semanal') {
-      var diaSemana = inteiroEntre(atividade.dia_semana, 1, 7);
-      if (diaSemana === null) { return []; }
+      var diaDaSemana = inteiroEntre(atividade.dia_semana, 1, 7);
+      if (diaDaSemana === null) { return []; }
       /* Uma semana antes de 'de' até uma depois de 'ate': o alvo da semana
          seguinte a 'ate' pode ser antecipado para dentro do intervalo
          (ex.: sexta 01/01/2027 vira 31/12/2026). */
       var primeiraSegunda = (inicio - 7) - diaSemanaDe(inicio - 7) + 1;
       var ultimaSegunda = (fim + 7) - diaSemanaDe(fim + 7) + 1;
       for (var segunda = primeiraSegunda; segunda <= ultimaSegunda; segunda += 7) {
-        var alvo = segunda + diaSemana - 1;
+        var alvo = segunda + diaDaSemana - 1;
         var semana = semanaIsoDe(segunda);
         incluir('S' + semana.ano + '-W' + doisDigitos(semana.semana),
                 antecipa ? anteciparDia(alvo, mapa) : alvo);
