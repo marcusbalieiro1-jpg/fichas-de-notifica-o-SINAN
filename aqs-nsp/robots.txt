@@ -1,0 +1,3 @@
+# HABE · AQS e NSP — ferramenta interna: nada aqui deve ser indexado.
+User-agent: *
+Disallow: /

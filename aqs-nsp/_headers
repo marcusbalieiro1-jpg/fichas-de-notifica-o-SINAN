@@ -1,0 +1,32 @@
+# HABE · AQS e NSP — cabeçalhos HTTP (formato Netlify / Cloudflare Pages).
+# A CSP é a mesma do <meta> do index.html, mais frame-ancestors 'none'
+# (só vale em cabeçalho): ninguém pode embutir o sistema num <iframe>.
+# Se publicar em outro servidor (nginx, Apache, IIS), reproduza estes
+# cabeçalhos na configuração dele — ver docs/IMPLANTACAO.md.
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'none'; manifest-src 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=(), usb=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Cross-Origin-Opener-Policy: same-origin
+  X-Robots-Tag: noindex, nofollow
+
+# Páginas: nunca em cache (uma versão nova vale no próximo acesso, e nada
+# fica guardado no disco de um computador compartilhado).
+/
+  Cache-Control: no-store
+
+/index.html
+  Cache-Control: no-store
+
+/demo.html
+  Cache-Control: no-store
+
+# Scripts e estilos não têm hash no nome: o navegador confere com o servidor
+# a cada acesso (resposta 304 quando nada mudou), para uma correção ou um
+# config.js novo chegarem a todos sem "limpar o cache".
+/assets/*
+  Cache-Control: no-cache

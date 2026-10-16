@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'none'; manifest-src 'self'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b2f5c">
+<meta name="color-scheme" content="light dark">
+<meta name="format-detection" content="telephone=no">
+<meta name="application-name" content="AQS e NSP">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AQS e NSP">
+<meta name="description" content="HABE · AQS e NSP — Ferramenta de Gestão de Atividades (uso interno).">
+<title>HABE · AQS e NSP — Gestão de Atividades</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/img/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="assets/img/logo-habe.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/aqs.css">
+<link rel="stylesheet" href="assets/css/telas-operacao.css">
+<link rel="stylesheet" href="assets/css/telas-gestao.css">
+</head>
+<body>
+
+<!--
+  HABE · AQS e NSP — Ferramenta de Gestão de Atividades (sistema OFICIAL).
+  Hospital de Aeronáutica de Belém · Assessoria de Qualidade e Segurança e
+  Núcleo de Segurança do Paciente.
+
+  Esta página não tem dado nenhum: tudo vem do banco (Supabase) depois do
+  login, e só o que as regras de acesso (RLS) permitem a cada militar.
+  A ligação com o banco fica em assets/js/config.js. Implantação, cópia de
+  segurança e o que fazer quando alguém sai do HABE: pasta docs/.
+  Arquitetura (contrato entre banco, API e telas): docs/ARQUITETURA.md.
+
+  CSP rígida: nenhum script inline, nenhum on*="" e nenhum style="" —
+  nem aqui, nem no HTML montado pelos scripts.
+-->
+
+<a class="so-leitor-tela pular-conteudo" href="#conteudo">Ir direto ao conteúdo</a>
+
+<!-- Ícones (SVG de linha), usados com <svg class="icone"><use href="#i-…"></use></svg>. -->
+<svg class="sprite-icones" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-inicio" viewBox="0 0 24 24"><path d="M3.5 11 12 4l8.5 7"/><path d="M5.5 9.5V20h4.5v-5.5h4V20h4.5V9.5"/></symbol>
+  <symbol id="i-quadro" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M9.5 4v16M14.5 4v16"/></symbol>
+  <symbol id="i-atividades" viewBox="0 0 24 24"><path d="m4 6.5 1.6 1.6L8.5 5.2"/><path d="m4 12.5 1.6 1.6 2.9-2.9"/><path d="m4 18.5 1.6 1.6 2.9-2.9"/><path d="M11.5 7h8.5M11.5 13h8.5M11.5 19h8.5"/></symbol>
+  <symbol id="i-avisos" viewBox="0 0 24 24"><path d="M4 10.2v3.6a1 1 0 0 0 1 1h2.3L14 19V5L7.3 9.2H5a1 1 0 0 0-1 1z"/><path d="M17.2 9a4.2 4.2 0 0 1 0 6"/><path d="M8 15v3.6a1.4 1.4 0 0 0 2.8 0v-2"/></symbol>
+  <symbol id="i-relatorios" viewBox="0 0 24 24"><path d="M4 20h16"/><rect x="5.5" y="11" width="3" height="6" rx=".6"/><rect x="10.5" y="6" width="3" height="11" rx=".6"/><rect x="15.5" y="9" width="3" height="8" rx=".6"/></symbol>
+  <symbol id="i-plano" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M7.5 14h2M11 14h2M14.5 14h2M7.5 17h2M11 17h2"/></symbol>
+  <symbol id="i-equipe" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.3"/><path d="M3 19.5a6 6 0 0 1 12 0"/><path d="M15.5 5.4a3.2 3.2 0 0 1 0 6.2"/><path d="M17.5 14.2a5.8 5.8 0 0 1 3.5 5.3"/></symbol>
+  <symbol id="i-conta" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></symbol>
+  <symbol id="i-sino" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.6 2H4.4z"/><path d="M10 20.5a2.1 2.1 0 0 0 4 0"/></symbol>
+  <symbol id="i-sair" viewBox="0 0 24 24"><path d="M14.5 4.5H18a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-3.5"/><path d="m9.5 8-4 4 4 4"/><path d="M5.7 12H15"/></symbol>
+  <symbol id="i-tema" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></symbol>
+  <symbol id="i-mais" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="18.5" cy="12" r="1.7" fill="currentColor"/></symbol>
+  <symbol id="i-cadeado" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5v-3a4 4 0 0 1 8 0v3"/><path d="M12 14.5v2"/></symbol>
+  <symbol id="i-escudo" viewBox="0 0 24 24"><path d="M12 3.2 19 6v5.6c0 4.3-2.9 7.6-7 9.2-4.1-1.6-7-4.9-7-9.2V6z"/><path d="m8.8 12.2 2.2 2.2 4.2-4.4"/></symbol>
+  <symbol id="i-chave" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m10.9 12.1 8.6-8.6"/><path d="m16.5 6.5 2.5 2.5"/><path d="m14.5 8.5 1.8 1.8"/></symbol>
+  <symbol id="i-relogio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-comentario" viewBox="0 0 24 24"><path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H11l-4.5 3.5v-3.5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-missao" viewBox="0 0 24 24"><path d="M5.5 21V4.5"/><path d="M5.5 5h11l-2.2 3.7 2.2 3.8h-11"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-alerta" viewBox="0 0 24 24"><path d="M12 4 21 19.5H3z"/><path d="M12 10v4.2"/><path d="M12 17.1v.1"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M12 11v5"/><path d="M12 8v.1"/></symbol>
+  <symbol id="i-fechar" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-copiar" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5"/></symbol>
+  <symbol id="i-dispositivos" viewBox="0 0 24 24"><rect x="2.5" y="4.5" width="14" height="10" rx="1.5"/><path d="M6 18.5h7M9.5 14.5v4"/><rect x="16.5" y="9" width="5" height="10.5" rx="1.2"/></symbol>
+  <symbol id="i-recarregar" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4h-4"/></symbol>
+  <symbol id="i-caixa" viewBox="0 0 24 24"><path d="M3.5 13.5 6 5.5h12l2.5 8v5a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5z"/><path d="M3.5 13.5h5l1.5 2.5h4l1.5-2.5h5"/></symbol>
+</svg>
+
+<!-- Tela de acesso: login, código do segundo fator, troca obrigatória de
+     senha e "configuração pendente" — montadas por assets/js/sessao.js. -->
+<div class="tela-acesso" id="telaAcesso">
+  <div class="cartao-acesso">
+    <div class="cartao-acesso__marca">
+      <img class="cartao-acesso__brasao" src="assets/img/logo-habe.svg" alt="Brasão do Hospital de Aeronáutica de Belém" width="100" height="120">
+      <h1 class="cartao-acesso__titulo">HABE · AQS e NSP</h1>
+      <p class="cartao-acesso__subtitulo">Ferramenta de Gestão de Atividades</p>
+    </div>
+    <div class="carregando" role="status">Carregando…</div>
+    <noscript>
+      <div class="aviso aviso--urgente"><div><strong>JavaScript desativado</strong>
+        Este sistema precisa do JavaScript para funcionar. Ative-o no navegador e recarregue a página.</div></div>
+    </noscript>
+  </div>
+</div>
+
+<!-- Aplicativo: fica oculto (e vazio) até o login. Ao sair, app.js esvazia
+     páginas, cabeçalho e menus: nenhum dado fica no DOM. -->
+<div id="telaApp" class="oculto">
+  <header class="cabecalho">
+    <div class="cabecalho__topo">
+      <img class="cabecalho__logo" src="assets/img/logo-habe.svg" alt="Brasão do Hospital de Aeronáutica de Belém" width="40" height="48">
+      <div class="cabecalho__titulo">
+        <strong id="cabecalhoNome">HABE · AQS e NSP</strong>
+        <span id="cabecalhoSubtitulo">Ferramenta de Gestão de Atividades</span>
+      </div>
+      <a class="usuario-chip" id="usuarioChip" href="#/conta" title="Minha conta"></a>
+      <div class="cabecalho__acoes">
+        <div class="sino-envoltorio">
+          <button class="botao-icone sino" id="botaoSino" type="button" aria-expanded="false" aria-controls="menuNotificacoes" aria-label="Notificações" title="Notificações">
+            <svg class="icone" aria-hidden="true" focusable="false"><use href="#i-sino"></use></svg>
+            <span class="sino__contador oculto" id="contadorSino" aria-hidden="true">0</span>
+          </button>
+          <div class="menu-notificacoes oculto" id="menuNotificacoes" role="region" aria-label="Notificações"></div>
+        </div>
+        <button class="botao-icone" id="botaoTema" type="button" aria-label="Alternar tema claro/escuro" title="Alternar tema claro/escuro">
+          <svg class="icone" aria-hidden="true" focusable="false"><use href="#i-tema"></use></svg>
+        </button>
+        <button class="botao-icone so-computador" id="botaoSair" type="button" aria-label="Sair do sistema" title="Sair do sistema">
+          <svg class="icone" aria-hidden="true" focusable="false"><use href="#i-sair"></use></svg>
+        </button>
+      </div>
+    </div>
+
+    <nav class="navegacao" aria-label="Navegação principal">
+      <ul class="navegacao__lista">
+        <li><a href="#/inicio" data-rota="inicio">Início</a></li>
+        <li><a href="#/quadro" data-rota="quadro">Quadro</a></li>
+        <li><a href="#/atividades" data-rota="atividades">Atividades</a></li>
+        <li><a href="#/avisos" data-rota="avisos">Avisos<span class="navegacao__contador oculto" data-contador="avisos">0</span></a></li>
+        <li><a href="#/relatorios" data-rota="relatorios">Relatórios</a></li>
+        <li><a href="#/plano" data-rota="plano">Plano</a></li>
+        <li><a href="#/equipe" data-rota="equipe">Equipe</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="cabecalho-impressao cabecalho-impressao--casca">
+    <img src="assets/img/logo-habe.svg" alt="" width="45" height="54">
+    <div>
+      <strong>Hospital de Aeronáutica de Belém</strong>
+      <span>Assessoria de Qualidade e Segurança · Núcleo de Segurança do Paciente</span>
+      <span>Ferramenta de Gestão de Atividades</span>
+    </div>
+  </div>
+
+  <main class="conteudo" id="conteudo" tabindex="-1">
+    <section class="pagina oculto" id="pagina-inicio" aria-label="Início"></section>
+    <section class="pagina oculto" id="pagina-quadro" aria-label="Quadro"></section>
+    <section class="pagina oculto" id="pagina-atividades" aria-label="Atividades"></section>
+    <section class="pagina oculto" id="pagina-avisos" aria-label="Avisos"></section>
+    <section class="pagina oculto" id="pagina-relatorios" aria-label="Relatórios"></section>
+    <section class="pagina oculto" id="pagina-plano" aria-label="Plano de Atividades"></section>
+    <section class="pagina oculto" id="pagina-equipe" aria-label="Equipe"></section>
+    <section class="pagina oculto" id="pagina-conta" aria-label="Minha conta"></section>
+  </main>
+
+  <div class="rodape-impressao rodape-impressao--casca" id="rodapeImpressao"></div>
+
+  <footer class="rodape">
+    <p class="mb-0"><span class="rodape__marca">HABE · AQS e NSP</span> · uso interno — informações protegidas pela LGPD; os acessos são registrados.</p>
+    <span class="rodape__modo" id="rodapeModo"></span>
+  </footer>
+
+  <nav class="barra-inferior" aria-label="Navegação principal (celular)">
+    <a class="barra-inferior__item" href="#/inicio" data-rota="inicio">
+      <span class="barra-inferior__icone"><svg class="icone" aria-hidden="true" focusable="false"><use href="#i-inicio"></use></svg></span>
+      <span class="barra-inferior__rotulo">Início</span>
+    </a>
+    <a class="barra-inferior__item" href="#/quadro" data-rota="quadro">
+      <span class="barra-inferior__icone"><svg class="icone" aria-hidden="true" focusable="false"><use href="#i-quadro"></use></svg></span>
+      <span class="barra-inferior__rotulo">Quadro</span>
+    </a>
+    <a class="barra-inferior__item" href="#/avisos" data-rota="avisos">
+      <span class="barra-inferior__icone"><svg class="icone" aria-hidden="true" focusable="false"><use href="#i-avisos"></use></svg><span class="contador contador--urgente oculto" data-contador="avisos">0</span></span>
+      <span class="barra-inferior__rotulo">Avisos</span>
+    </a>
+    <a class="barra-inferior__item" href="#/atividades" data-rota="atividades">
+      <span class="barra-inferior__icone"><svg class="icone" aria-hidden="true" focusable="false"><use href="#i-atividades"></use></svg></span>
+      <span class="barra-inferior__rotulo">Atividades</span>
+    </a>
+    <button class="barra-inferior__item" id="botaoMais" type="button" aria-expanded="false" aria-controls="menuMais">
+      <span class="barra-inferior__icone"><svg class="icone" aria-hidden="true" focusable="false"><use href="#i-mais"></use></svg></span>
+      <span class="barra-inferior__rotulo">Mais</span>
+    </button>
+  </nav>
+
+  <div class="menu-mais__fundo oculto" id="menuMaisFundo"></div>
+  <div class="menu-mais oculto" id="menuMais" role="region" aria-label="Mais opções">
+    <div class="menu-mais__identidade" id="menuMaisIdentidade"></div>
+    <ul class="menu-mais__lista">
+      <li><a class="menu-mais__item" href="#/relatorios" data-rota="relatorios"><svg class="icone" aria-hidden="true" focusable="false"><use href="#i-relatorios"></use></svg>Relatórios</a></li>
+      <li><a class="menu-mais__item" href="#/plano" data-rota="plano"><svg class="icone" aria-hidden="true" focusable="false"><use href="#i-plano"></use></svg>Plano de Atividades</a></li>
+      <li><a class="menu-mais__item" href="#/equipe" data-rota="equipe"><svg class="icone" aria-hidden="true" focusable="false"><use href="#i-equipe"></use></svg>Equipe</a></li>
+      <li><a class="menu-mais__item" href="#/conta" data-rota="conta"><svg class="icone" aria-hidden="true" focusable="false"><use href="#i-conta"></use></svg>Minha conta</a></li>
+      <li class="menu-mais__divisor" aria-hidden="true"></li>
+      <li><button class="menu-mais__item menu-mais__item--sair" type="button" id="botaoSairMais"><svg class="icone" aria-hidden="true" focusable="false"><use href="#i-sair"></use></svg>Sair</button></li>
+    </ul>
+  </div>
+</div>
+
+<div id="painelDetalhe"></div>
+<div class="avisos-flutuantes" id="avisosFlutuantes" aria-live="polite"></div>
+
+<script src="assets/vendor/supabase.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/util.js"></script>
+<script src="assets/js/regras.js"></script>
+<script src="assets/js/recorrencia.js"></script>
+<script src="assets/js/api-supabase.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/sessao.js"></script>
+<script src="assets/js/tempo-real.js"></script>
+<script src="assets/js/paginas/detalhe.js"></script>
+<script src="assets/js/paginas/inicio.js"></script>
+<script src="assets/js/paginas/quadro.js"></script>
+<script src="assets/js/paginas/atividades.js"></script>
+<script src="assets/js/paginas/avisos.js"></script>
+<script src="assets/js/paginas/relatorios.js"></script>
+<script src="assets/js/paginas/plano.js"></script>
+<script src="assets/js/paginas/equipe.js"></script>
+<script src="assets/js/paginas/conta.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

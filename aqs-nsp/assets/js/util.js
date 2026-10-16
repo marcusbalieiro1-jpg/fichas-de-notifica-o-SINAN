@@ -159,6 +159,17 @@ var U = (function () {
     item.setAttribute('role', tipo === 'erro' ? 'alert' : 'status');
     item.textContent = mensagem;
     caixa.appendChild(item);
+    /* No máximo 3 à vista: uma sequência de ações (iniciar, concluir,
+       anexar, comentar) não pode cobrir metade da tela do celular. Sai a
+       mais antiga — os erros por último, porque precisam ser lidos. */
+    var visiveis = Array.prototype.slice.call(caixa.children);
+    while (visiveis.length > 3) {
+      var sair = null;
+      visiveis.forEach(function (t) { if (!sair && t !== item && !t.classList.contains('torrada--erro')) { sair = t; } });
+      sair = sair || visiveis[0];
+      sair.remove();
+      visiveis = Array.prototype.slice.call(caixa.children);
+    }
     window.setTimeout(function () {
       item.style.transition = 'opacity .3s';
       item.style.opacity = '0';
@@ -249,9 +260,12 @@ var U = (function () {
     window.setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
   }
 
-  /* Abre um Blob numa aba nova (PDF e imagens); os demais tipos são baixados. */
+  /* Abre um Blob numa aba nova (PDF, JPG, PNG e texto); os demais tipos são
+     baixados. Lista fechada de propósito: um blob: aberto em aba roda na
+     origem do sistema, então nada que possa conter script (HTML, SVG, XML)
+     é aberto — mesmo que algum dia chegue ao armazenamento. */
   function abrirBlob(nomeArquivo, blob) {
-    var visualizavel = /^(application\/pdf|image\/|text\/plain)/.test(blob.type || '');
+    var visualizavel = /^(application\/pdf|image\/(png|jpeg)|text\/plain)(;|$)/.test(blob.type || '');
     if (!visualizavel) { return baixarConteudo(nomeArquivo, blob); }
     var url = URL.createObjectURL(blob);
     /* Sem 'noopener' nos parâmetros: com ele window.open sempre devolve null
