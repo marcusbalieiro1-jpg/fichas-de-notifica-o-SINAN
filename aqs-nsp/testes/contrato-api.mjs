@@ -266,7 +266,7 @@ await etapa('estado inicial da demonstração: determinístico e com os dados pe
 await etapa('usuariosDemo e sessão inicial vazia', async () => {
   const usuarios = json(ApiDemo.usuariosDemo());
   assert.deepEqual(usuarios.map((u) => u.email).sort(),
-    ['aqs@demo.local', 'balieiro@demo.local', 'chefia@demo.local', 'leticia@demo.local', 'wallace@demo.local']);
+    ['aqs@demo.local', 'chefia@demo.local', 'costa@demo.local', 'lima@demo.local', 'souza@demo.local']);
   for (const u of usuarios) { temCampos(u, ['email', 'nome', 'papel'], 'usuariosDemo'); }
   assert.equal(usuarios.find((u) => u.email === 'aqs@demo.local').papel, 'administrador');
   assert.equal(usuarios.find((u) => u.email === 'chefia@demo.local').nome, 'Maj Chefia NSP');
@@ -275,7 +275,7 @@ await etapa('usuariosDemo e sessão inicial vazia', async () => {
   const cancelar = Api.aoMudarSessao((evento) => eventosSessao.push(evento));
   assert.equal(typeof cancelar, 'function');
   await rejeita(Api.listarOcorrencias({}), /sessão terminou/i, 'sem sessão não lê nada');
-  await rejeita(Api.entrar('leticia@demo.local', ''), /Informe/);
+  await rejeita(Api.entrar('souza@demo.local', ''), /Informe/);
   await rejeita(Api.entrar('ninguem@demo.local', 'x'), /incorretos/);
 });
 
@@ -287,18 +287,18 @@ async function entrarComo(email) {
   return json(await Api.meuPerfil());
 }
 
-let leticia, chefia, ref, ocsLeticia;
+let souza, chefia, ref, ocsSouza;
 
-await etapa('Ten Letícia entra; perfil, referências e configurações no formato', async () => {
-  leticia = await entrarComo('leticia@demo.local');
-  temCampos(leticia, CAMPOS.militar, 'meuPerfil');
-  assert.equal(Regras.nomeMilitar(leticia), 'Ten Letícia');
-  assert.equal(leticia.papel, 'adjunto');
+await etapa('Ten Souza entra; perfil, referências e configurações no formato', async () => {
+  souza = await entrarComo('souza@demo.local');
+  temCampos(souza, CAMPOS.militar, 'meuPerfil');
+  assert.equal(Regras.nomeMilitar(souza), 'Ten Souza');
+  assert.equal(souza.papel, 'adjunto');
   await pausa(5);
   assert.ok(eventosSessao.includes('entrou'), 'aoMudarSessao recebeu "entrou"');
   const sessao = json(await Api.sessaoAtual());
   assert.deepEqual(Object.keys(sessao).sort(), ['email', 'usuario_id']);
-  assert.equal(sessao.email, 'leticia@demo.local');
+  assert.equal(sessao.email, 'souza@demo.local');
 
   assert.equal(typeof await Api.gerarOcorrencias(), 'number');
   ref = await Api.referencias();
@@ -327,7 +327,7 @@ await etapa('atividades: as 16 da carga, com responsáveis, ordenadas', async ()
   const a14 = atividades[13];
   assert.equal(a14.titulo, 'Apresentar os indicadores mensais');
   assert.deepEqual(a14.responsaveis, [ids.chefia]);
-  assert.deepEqual(atividades[11].responsaveis.sort(), [ids.balieiro, ids.leticia].sort());
+  assert.deepEqual(atividades[11].responsaveis.sort(), [ids.lima, ids.souza].sort());
   assert.ok(atividades.every((a) => a.antecipar_dia_util === true));
   assert.equal(atividades[12].prioridade, 'alta');
   assert.equal(atividades[14].prioridade, 'alta');
@@ -340,7 +340,7 @@ await etapa('ocorrências (v_ocorrencias): campos, ordenação, atrasadas de cad
   for (let i = 1; i < todas.length; i += 1) { assert.ok(todas[i - 1].data_ref <= todas[i].data_ref, 'ordenadas por data_ref'); }
   const atrasadas = todas.filter((o) => o.atrasada);
   assert.ok(atrasadas.length >= 3 && atrasadas.length <= 4, 'três ou quatro atrasadas: ' + atrasadas.length);
-  for (const quem of ['leticia', 'wallace', 'balieiro']) {
+  for (const quem of ['souza', 'costa', 'lima']) {
     assert.ok(atrasadas.some((o) => o.responsaveis.includes(ids[quem])), 'atrasada de ' + quem);
   }
   const abertas = json(await Api.listarOcorrencias({ somenteAbertas: true }));
@@ -351,19 +351,19 @@ await etapa('ocorrências (v_ocorrencias): campos, ordenação, atrasadas de cad
   assert.ok(conf.percentual >= 80 && conf.percentual < 100, 'conformidade realista: ' + conf.percentual);
   const umaAtividade = json(await Api.listarOcorrencias({ atividade_id: atividades[0].id }));
   assert.ok(umaAtividade.length > 30 && umaAtividade.every((o) => o.atividade_id === atividades[0].id));
-  ocsLeticia = abertas.filter((o) => o.responsaveis.includes(leticia.id));
-  assert.ok(ocsLeticia.length > 0);
+  ocsSouza = abertas.filter((o) => o.responsaveis.includes(souza.id));
+  assert.ok(ocsSouza.length > 0);
 });
 
 let ocConcluida, evidenciaEnviada, comentario;
 
-await etapa('Letícia conclui uma ocorrência; carimbos do gatilho', async () => {
-  const alvo = ocsLeticia.find((o) => o.status === 'pendente');
+await etapa('Souza conclui uma ocorrência; carimbos do gatilho', async () => {
+  const alvo = ocsSouza.find((o) => o.status === 'pendente');
   const r = json(await Api.atualizarOcorrencia(alvo.id, { status: 'concluida', observacao: 'Feito pelo teste.' }));
   temCampos(r, CAMPOS.vocorrencia, 'atualizarOcorrencia');
   assert.equal(r.status, 'concluida');
-  assert.equal(r.concluida_por, leticia.id);
-  assert.equal(r.concluida_por_nome, 'Ten Letícia');
+  assert.equal(r.concluida_por, souza.id);
+  assert.equal(r.concluida_por_nome, 'Ten Souza');
   assert.ok(r.concluida_em && Date.now() - Date.parse(r.concluida_em) < 60000);
   assert.equal(r.atrasada, false);
   ocConcluida = r;
@@ -373,7 +373,7 @@ await etapa('Letícia conclui uma ocorrência; carimbos do gatilho', async () =>
   assert.equal(reaberta.concluida_por, null);
   assert.ok(reaberta.iniciada_em);
   ocConcluida = json(await Api.atualizarOcorrencia(alvo.id, { status: 'concluida' }));
-  assert.equal(ocConcluida.concluida_por, leticia.id);
+  assert.equal(ocConcluida.concluida_por, souza.id);
   await rejeita(Api.atualizarOcorrencia(alvo.id, { prazo: '2030-01-01' }), /Apenas a chefia pode alterar o prazo/, 'adjunto não muda prazo');
   /* voltar para pendente limpa o início (gatilho) */
   const iniciada = json(await Api.atualizarOcorrencia(alvo.id, { status: 'em_andamento' }));
@@ -381,20 +381,20 @@ await etapa('Letícia conclui uma ocorrência; carimbos do gatilho', async () =>
   assert.equal(json(await Api.atualizarOcorrencia(alvo.id, { status: 'pendente' })).iniciada_em, null);
   ocConcluida = json(await Api.atualizarOcorrencia(alvo.id, { status: 'concluida' }));
   await rejeita(Api.atualizarOcorrencia(alvo.id, { status: 'nao_se_aplica', justificativa: ' ' }), /justificativa/);
-  const deWallace = (await Api.listarOcorrencias({ somenteAbertas: true })).find((o) => !o.responsaveis.includes(leticia.id));
-  await rejeita(Api.atualizarOcorrencia(deWallace.id, { status: 'concluida' }), /permissão/);
+  const deCosta = (await Api.listarOcorrencias({ somenteAbertas: true })).find((o) => !o.responsaveis.includes(souza.id));
+  await rejeita(Api.atualizarOcorrencia(deCosta.id, { status: 'concluida' }), /permissão/);
   await rejeita(Api.excluirOcorrencia(alvo.id), /permissão/);
 });
 
-await etapa('Letícia envia, baixa e não consegue enviar arquivo proibido', async () => {
+await etapa('Souza envia, baixa e não consegue enviar arquivo proibido', async () => {
   const arquivo = new File(['conteúdo do relatório'], 'Relatório final.pdf', { type: '' });
   evidenciaEnviada = json(await Api.enviarEvidencia({
     atividade_id: ocConcluida.atividade_id, ocorrencia_id: ocConcluida.id, arquivo, descricao: 'Teste'
   }));
   temCampos(evidenciaEnviada, CAMPOS.evidencia, 'evidencia');
   assert.equal(evidenciaEnviada.mime, 'application/pdf');
-  assert.equal(evidenciaEnviada.enviado_por, leticia.id);
-  assert.equal(evidenciaEnviada.enviado_por_nome, 'Ten Letícia');
+  assert.equal(evidenciaEnviada.enviado_por, souza.id);
+  assert.equal(evidenciaEnviada.enviado_por_nome, 'Ten Souza');
   assert.match(evidenciaEnviada.storage_path,
     new RegExp('^' + ocConcluida.atividade_id + '/' + ocConcluida.id + '/[0-9a-f-]{36}-relatorio-final\\.pdf$'));
   const blob = await Api.baixarEvidencia(evidenciaEnviada);
@@ -405,7 +405,7 @@ await etapa('Letícia envia, baixa e não consegue enviar arquivo proibido', asy
   assert.equal(json(await Api.obterOcorrencia(ocConcluida.id)).qtd_evidencias, 1);
   await rejeita(Api.enviarEvidencia({ atividade_id: ocConcluida.atividade_id, ocorrencia_id: ocConcluida.id,
     arquivo: new File(['x'], 'virus.exe'), descricao: '' }), /não permitido/);
-  const atividadeAlheia = atividades.find((a) => a.responsaveis.length === 1 && a.responsaveis[0] === ids.wallace);
+  const atividadeAlheia = atividades.find((a) => a.responsaveis.length === 1 && a.responsaveis[0] === ids.costa);
   await rejeita(Api.enviarEvidencia({ atividade_id: atividadeAlheia.id, ocorrencia_id: null,
     arquivo: new File(['x'], 'a.pdf'), descricao: '' }), /permissão/);
   /* evidência fictícia: devolve um texto explicando a demonstração */
@@ -417,12 +417,12 @@ await etapa('Letícia envia, baixa e não consegue enviar arquivo proibido', asy
   for (let i = 1; i < todas.length; i += 1) { assert.ok(todas[i - 1].enviado_em >= todas[i].enviado_em, 'mais recentes primeiro'); }
 });
 
-await etapa('Letícia comenta; ordem e filtro dos comentários', async () => {
+await etapa('Souza comenta; ordem e filtro dos comentários', async () => {
   comentario = json(await Api.comentar({ atividade_id: ocConcluida.atividade_id, ocorrencia_id: ocConcluida.id,
     texto: '  Concluído, chefe.  ' }));
   temCampos(comentario, CAMPOS.comentario, 'comentario');
   assert.equal(comentario.texto, 'Concluído, chefe.');
-  assert.equal(comentario.autor_nome, 'Ten Letícia');
+  assert.equal(comentario.autor_nome, 'Ten Souza');
   assert.equal(comentario.autor_papel, 'adjunto');
   await rejeita(Api.comentar({ atividade_id: ocConcluida.atividade_id, texto: '   ' }), /Escreva/);
   const lista = json(await Api.listarComentarios({ atividade_id: ocConcluida.atividade_id, ocorrencia_id: ocConcluida.id }));
@@ -435,10 +435,10 @@ await etapa('adjunto: não publica aviso, vê só os avisos dele, ciência só a
     /Você não tem permissão para esta ação\./);
   const avisos = json(await Api.listarAvisos({}));
   avisos.forEach((a) => temCampos(a, CAMPOS.aviso, 'aviso'));
-  assert.equal(avisos.length, 2, 'o importante é só para Balieiro e Wallace');
+  assert.equal(avisos.length, 2, 'o importante é só para Lima e Costa');
   assert.equal(avisos[0].fixado, true, 'fixados primeiro');
   assert.equal(avisos[0].nivel, 'urgente');
-  assert.ok(avisos.every((a) => a.ciencias.every((c) => c.militar_id === leticia.id)), 'RLS da ciência');
+  assert.ok(avisos.every((a) => a.ciencias.every((c) => c.militar_id === souza.id)), 'RLS da ciência');
   assert.equal(avisos.find((a) => a.fixado).ciente_por_mim, true, 'ciente do aviso fixado');
   assert.equal(avisos.find((a) => !a.fixado).ciente_por_mim, false, 'boas-vindas ainda sem a ciência dela');
 });
@@ -447,33 +447,33 @@ await etapa('adjunto: cria só pontual/sob demanda incluindo a si; não muda res
   const base = { titulo: 'Atividade de teste', descricao: '', setor_id: ref.setores[0].id, prioridade: 'normal',
     antecipar_dia_util: true, exige_evidencia: false, ativa: true };
   await rejeita(Api.salvarAtividade({ ...base, tipo: 'recorrente', periodicidade: 'mensal', dia_mes: 5,
-    responsaveis: [leticia.id] }), /Apenas a chefia pode criar atividades recorrentes/);
-  await rejeita(Api.salvarAtividade({ ...base, tipo: 'pontual', responsaveis: [ids.wallace] }), /Inclua você mesmo/);
+    responsaveis: [souza.id] }), /Apenas a chefia pode criar atividades recorrentes/);
+  await rejeita(Api.salvarAtividade({ ...base, tipo: 'pontual', responsaveis: [ids.costa] }), /Inclua você mesmo/);
   await rejeita(Api.salvarAtividade({ ...base, tipo: 'pontual', responsaveis: [] }), /ao menos um responsável/);
   await rejeita(Api.salvarAtividade({ ...base, tipo: 'pontual' }), /ao menos um responsável/);
-  const id = await Api.salvarAtividade({ ...base, tipo: 'pontual', prazo: '2030-01-10', responsaveis: [leticia.id] });
+  const id = await Api.salvarAtividade({ ...base, tipo: 'pontual', prazo: '2030-01-10', responsaveis: [souza.id] });
   assert.equal(typeof id, 'string');
   const criada = json(await Api.listarAtividades()).find((a) => a.id === id);
   assert.equal(criada.ordem, 17);
-  assert.equal(criada.criado_por, leticia.id);
+  assert.equal(criada.criado_por, souza.id);
   const unica = json(await Api.listarOcorrencias({ atividade_id: id }));
   assert.equal(unica.length, 1, 'pontual cria a ocorrência P');
   assert.equal(unica[0].referencia, 'P');
   assert.equal(unica[0].prazo, '2030-01-10');
   await Api.salvarAtividade({ ...criada, prazo: '2030-02-01' });
   assert.equal(json(await Api.listarOcorrencias({ atividade_id: id }))[0].prazo, '2030-02-01', 'P acompanha o prazo');
-  await rejeita(Api.salvarAtividade({ ...criada, responsaveis: [leticia.id, ids.wallace] }),
+  await rejeita(Api.salvarAtividade({ ...criada, responsaveis: [souza.id, ids.costa] }),
     /Apenas a chefia pode alterar os responsáveis/);
   await rejeita(Api.salvarAtividade({ ...criada, tipo: 'recorrente', periodicidade: 'mensal', dia_mes: 5 }),
     /transformar uma atividade em recorrente/);
-  const deWallace = atividades.find((a) => a.responsaveis[0] === ids.wallace);
-  await rejeita(Api.salvarAtividade({ ...deWallace, titulo: 'Mudado' }), /Apenas a chefia ou os responsáveis/);
+  const deCosta = atividades.find((a) => a.responsaveis[0] === ids.costa);
+  await rejeita(Api.salvarAtividade({ ...deCosta, titulo: 'Mudado' }), /Apenas a chefia ou os responsáveis/);
   /* chave ausente mantém o valor: editar só o título preserva o resto */
   await Api.salvarAtividade({ id, titulo: 'Atividade de teste (editada)' });
   const editada = json(await Api.listarAtividades()).find((a) => a.id === id);
   assert.equal(editada.titulo, 'Atividade de teste (editada)');
   assert.equal(editada.prazo, '2030-02-01');
-  assert.deepEqual(editada.responsaveis, [leticia.id]);
+  assert.deepEqual(editada.responsaveis, [souza.id]);
   /* deixar de ser pontual apaga a 'P' intocada e não vencida */
   await Api.salvarAtividade({ id, tipo: 'sob_demanda' });
   assert.deepEqual(json(await Api.listarOcorrencias({ atividade_id: id })), []);
@@ -485,7 +485,7 @@ await etapa('adjunto: cria só pontual/sob demanda incluindo a si; não muda res
     prazo: null, status: 'concluida', observacao: '' }));
   temCampos(exec, CAMPOS.vocorrencia, 'criarOcorrencia');
   assert.equal(exec.referencia, null);
-  assert.equal(exec.concluida_por, leticia.id);
+  assert.equal(exec.concluida_por, souza.id);
   assert.equal(exec.data_ref, hoje);
   assert.equal(exec.concluida_no_prazo, true);
   await rejeita(Api.criarOcorrencia({ atividade_id: atividades[0].id, titulo_execucao: 'x', status: 'concluida' }),
@@ -495,7 +495,7 @@ await etapa('adjunto: cria só pontual/sob demanda incluindo a si; não muda res
   await rejeita(Api.salvarMilitar({ posto: 'Ten', nome_guerra: 'Intruso', papel: 'chefia' }), /permissão/);
 });
 
-await etapa('Letícia sai; chefia entra e recebe a notificação do comentário', async () => {
+await etapa('Souza sai; chefia entra e recebe a notificação do comentário', async () => {
   await Api.sair();
   await pausa(5);
   assert.ok(eventosSessao.includes('saiu'));
@@ -508,7 +508,7 @@ await etapa('Letícia sai; chefia entra e recebe a notificação do comentário'
   const doComentario = notificacoes.find((n) => n.tipo === 'comentario' && n.ocorrencia_id === ocConcluida.id);
   assert.ok(doComentario, 'gatilho de comentário notifica a chefia');
   assert.equal(doComentario.titulo, 'Novo comentário');
-  assert.match(doComentario.mensagem, /^Ten Letícia em ".+": Concluído, chefe\.$/);
+  assert.match(doComentario.mensagem, /^Ten Souza em ".+": Concluído, chefe\.$/);
   assert.equal(doComentario.lida, false);
   const naoLidas = await Api.contarNaoLidas();
   assert.equal(typeof naoLidas, 'number');
@@ -520,18 +520,18 @@ await etapa('Letícia sai; chefia entra e recebe a notificação do comentário'
 
 let avisoNovo;
 
-await etapa('chefia publica aviso para Ten Wallace ⇒ notificação e ciência', async () => {
+await etapa('chefia publica aviso para Ten Costa ⇒ notificação e ciência', async () => {
   avisoNovo = json(await Api.salvarAviso({ titulo: 'Entregar auditoria', mensagem: 'Até sexta.', nivel: 'importante',
-    para_todos: false, destinatarios: [ids.wallace], prazo: null, atividade_id: null, fixado: false, expira_em: null }));
+    para_todos: false, destinatarios: [ids.costa], prazo: null, atividade_id: null, fixado: false, expira_em: null }));
   temCampos(avisoNovo, CAMPOS.aviso, 'salvarAviso');
-  assert.deepEqual(avisoNovo.destinatarios, [ids.wallace]);
+  assert.deepEqual(avisoNovo.destinatarios, [ids.costa]);
   assert.equal(avisoNovo.criado_por_nome, 'Maj Chefia NSP');
   assert.equal(avisoNovo.ciente_por_mim, false);
   await rejeita(Api.salvarAviso({ titulo: 'Sem destino', para_todos: false, destinatarios: [] }), /destinatário/);
 
-  await entrarComo('wallace@demo.local');
+  await entrarComo('costa@demo.local');
   const notif = json(await Api.listarNotificacoes({})).find((n) => n.aviso_id === avisoNovo.id);
-  assert.ok(notif, 'Wallace foi notificado');
+  assert.ok(notif, 'Costa foi notificado');
   assert.equal(notif.tipo, 'aviso');
   const visiveis = json(await Api.listarAvisos({}));
   assert.ok(visiveis.some((a) => a.id === avisoNovo.id));
@@ -541,25 +541,25 @@ await etapa('chefia publica aviso para Ten Wallace ⇒ notificação e ciência'
   assert.equal(depois.ciente_por_mim, true);
   assert.equal(depois.ciencias.length, 1);
 
-  await entrarComo('balieiro@demo.local');
-  assert.ok(!json(await Api.listarAvisos({})).some((a) => a.id === avisoNovo.id), 'Balieiro não vê');
+  await entrarComo('lima@demo.local');
+  assert.ok(!json(await Api.listarAvisos({})).some((a) => a.id === avisoNovo.id), 'Lima não vê');
   assert.ok(!json(await Api.listarNotificacoes({})).some((n) => n.aviso_id === avisoNovo.id));
   await rejeita(Api.darCiencia(avisoNovo.id), /não encontrado/);
 
   await entrarComo('chefia@demo.local');
   const visto = json(await Api.listarAvisos({})).find((a) => a.id === avisoNovo.id);
-  assert.deepEqual(visto.ciencias.map((c) => c.militar_id), [ids.wallace], 'gestor vê todas as ciências');
+  assert.deepEqual(visto.ciencias.map((c) => c.militar_id), [ids.costa], 'gestor vê todas as ciências');
   /* aviso dirigido que passa a ser para todos avisa quem ainda não sabia (uma vez só) */
-  const dirigido = json(await Api.salvarAviso({ titulo: 'Só Letícia', mensagem: 'x', para_todos: false,
-    destinatarios: [ids.leticia] }));
+  const dirigido = json(await Api.salvarAviso({ titulo: 'Só Souza', mensagem: 'x', para_todos: false,
+    destinatarios: [ids.souza] }));
   await Api.salvarAviso({ ...dirigido, para_todos: true });
-  await Api.salvarAviso({ ...dirigido, para_todos: true, titulo: 'Só Letícia (corrigido)' });
-  await entrarComo('balieiro@demo.local');
+  await Api.salvarAviso({ ...dirigido, para_todos: true, titulo: 'Só Souza (corrigido)' });
+  await entrarComo('lima@demo.local');
   assert.equal(json(await Api.listarNotificacoes({ limite: 100 })).filter((n) => n.aviso_id === dirigido.id).length, 1);
-  await entrarComo('leticia@demo.local');
-  const daLeticia = json(await Api.listarNotificacoes({ limite: 100 })).filter((n) => n.aviso_id === dirigido.id);
-  assert.equal(daLeticia.length, 1, 'sem duplicar para quem já tinha sido avisada');
-  assert.equal(daLeticia[0].titulo, 'Novo aviso: Só Letícia');
+  await entrarComo('souza@demo.local');
+  const daSouza = json(await Api.listarNotificacoes({ limite: 100 })).filter((n) => n.aviso_id === dirigido.id);
+  assert.equal(daSouza.length, 1, 'sem duplicar para quem já tinha sido avisada');
+  assert.equal(daSouza[0].titulo, 'Novo aviso: Só Souza');
   await entrarComo('chefia@demo.local');
   await Api.excluirAviso(dirigido.id);
   const expirado = json(await Api.salvarAviso({ titulo: 'Velho', mensagem: '', nivel: 'informativo', para_todos: true,
@@ -576,13 +576,13 @@ await etapa('chefia não derruba a conta institucional; ninguém exclui a si mes
   await rejeita(Api.adminUsuario('redefinir_senha', ids.aqs), /administrador/);
   const aqs = json(await Api.listarMilitares()).find((m) => m.id === ids.aqs);
   await rejeita(Api.salvarMilitar({ ...aqs, nome_guerra: 'Outro nome' }), /administrador/);
-  const balieiro = json(await Api.listarMilitares()).find((m) => m.id === ids.balieiro);
-  await rejeita(Api.salvarMilitar({ ...balieiro, papel: 'administrador' }), /administrador/,
+  const lima = json(await Api.listarMilitares()).find((m) => m.id === ids.lima);
+  await rejeita(Api.salvarMilitar({ ...lima, papel: 'administrador' }), /administrador/,
     'chefia não promove a administrador');
   await rejeita(Api.adminUsuario('excluir', chefia.id), /próprio/);
   await rejeita(Api.adminUsuario('desativar', chefia.id), /próprio/);
   await rejeita(Api.salvarMilitar({ ...chefia, ativo: false }), /próprio/);
-  await rejeita(Api.adminUsuario('qualquer', ids.balieiro), /desconhecida/);
+  await rejeita(Api.adminUsuario('qualquer', ids.lima), /desconhecida/);
   const ainda = json(await Api.listarMilitares()).find((m) => m.id === ids.aqs);
   assert.equal(ainda.ativo, true);
 });
@@ -614,11 +614,11 @@ await etapa('chefia cadastra militar, cria acesso, passa a chefia e vira adjunto
     { email: 'novo.chefe2@demo.local' });
   await rejeita(Api.adminUsuario('alterar_email', novoChefe.id, { email: 'novo.chefe2@demo.local' }), /igual ao atual/);
   assert.equal(json(await Api.listarMilitares()).find((m) => m.id === novoChefe.id).email, 'novo.chefe2@demo.local');
-  await rejeita(Api.adminUsuario('alterar_email', novoChefe.id, { email: 'leticia@demo.local' }), /em uso/);
+  await rejeita(Api.adminUsuario('alterar_email', novoChefe.id, { email: 'souza@demo.local' }), /em uso/);
   assert.equal(typeof json(await Api.adminUsuario('redefinir_senha', novoChefe.id)).senha_temporaria, 'string');
 
   await rejeita(Api.transferirChefia({ de: chefia.id, para: ids.aqs }), /não assume a chefia/);
-  await rejeita(Api.transferirChefia({ de: ids.leticia, para: novoChefe.id }), /não está com o papel de chefia/);
+  await rejeita(Api.transferirChefia({ de: ids.souza, para: novoChefe.id }), /não está com o papel de chefia/);
   await rejeita(Api.transferirChefia({ de: chefia.id, para: chefia.id }), /militares diferentes/);
   await rejeita(Api.transferirChefia({ de: chefia.id, para: novoChefe.id, papel_anterior: 'administrador' }), /adjunto/);
   await Api.transferirChefia({ de: chefia.id, para: novoChefe.id, papel_anterior: 'adjunto', transferir_atividades: true });
@@ -699,30 +699,30 @@ await etapa('chefia edita a agenda de uma recorrente ⇒ ocorrências futuras re
 await etapa('administrador exclui um adjunto: histórico mantém o nome', async () => {
   await entrarComo('aqs@demo.local');
   const comentariosAntes = json(await Api.listarComentarios({ atividade_id: atividades[5].id }));
-  const deWallace = comentariosAntes.filter((c) => c.autor_id === ids.wallace);
-  assert.ok(deWallace.length >= 1, 'Wallace tem comentário na carga');
-  await Api.excluirMilitar(ids.wallace);
+  const deCosta = comentariosAntes.filter((c) => c.autor_id === ids.costa);
+  assert.ok(deCosta.length >= 1, 'Costa tem comentário na carga');
+  await Api.excluirMilitar(ids.costa);
   const militares = json(await Api.listarMilitares());
-  assert.ok(!militares.some((m) => m.id === ids.wallace));
+  assert.ok(!militares.some((m) => m.id === ids.costa));
   const comentariosDepois = json(await Api.listarComentarios({ atividade_id: atividades[5].id }));
-  for (const c of deWallace) {
+  for (const c of deCosta) {
     const agora = comentariosDepois.find((x) => x.id === c.id);
     assert.ok(agora, 'comentário continua');
     assert.equal(agora.autor_id, null);
-    assert.equal(agora.autor_nome, 'Ten Wallace');
+    assert.equal(agora.autor_nome, 'Ten Costa');
   }
   const evidencias = json(await Api.listarEvidencias({ atividade_id: atividades[4].id }));
-  assert.ok(evidencias.some((e) => e.enviado_por === null && e.enviado_por_nome === 'Ten Wallace'));
+  assert.ok(evidencias.some((e) => e.enviado_por === null && e.enviado_por_nome === 'Ten Costa'));
   const concluidas = json(await Api.listarOcorrencias({ atividade_id: atividades[4].id }))
     .filter((o) => o.status === 'concluida');
-  assert.ok(concluidas.length && concluidas.every((o) => o.concluida_por === null && o.concluida_por_nome === 'Ten Wallace'));
+  assert.ok(concluidas.length && concluidas.every((o) => o.concluida_por === null && o.concluida_por_nome === 'Ten Costa'));
   const ativs = json(await Api.listarAtividades());
   assert.deepEqual(ativs[4].responsaveis, []);
   assert.deepEqual(ativs[5].responsaveis, []);
   const aviso = json(await Api.listarAvisos({})).find((a) => a.id === avisoNovo.id);
   assert.deepEqual(aviso.destinatarios, [], 'destinatário removido');
   assert.deepEqual(aviso.ciencias, [], 'ciência removida');
-  await rejeita(Api.entrar('wallace@demo.local', 'x'), /incorretos/, 'acesso apagado');
+  await rejeita(Api.entrar('costa@demo.local', 'x'), /incorretos/, 'acesso apagado');
 });
 
 await etapa('alertas de continuidade a partir da API', async () => {
@@ -751,14 +751,14 @@ await etapa('exportarTudo grava ultimo_backup; auditoria no formato', async () =
   assert.equal(auditoria.length, 10);
   auditoria.forEach((r) => temCampos(r, CAMPOS.auditoria, 'auditoria'));
   for (let i = 1; i < auditoria.length; i += 1) { assert.ok(auditoria[i - 1].id > auditoria[i].id); }
-  const exclusao = json(await Api.listarAuditoria({ tabela: 'militares' })).find((r) => r.operacao === 'DELETE' && r.registro_id === ids.wallace);
-  assert.ok(exclusao && exclusao.antes.nome_guerra === 'Wallace' && exclusao.militar_nome === 'AQS — conta institucional');
+  const exclusao = json(await Api.listarAuditoria({ tabela: 'militares' })).find((r) => r.operacao === 'DELETE' && r.registro_id === ids.costa);
+  assert.ok(exclusao && exclusao.antes.nome_guerra === 'Costa' && exclusao.militar_nome === 'AQS — conta institucional');
   /* Ações de acesso: linha 'ADMIN:<ação>' em auth.users, como a Edge Function — sem a senha. */
   const acessos = json(await Api.listarAuditoria({ tabela: 'auth.users', limite: 500 }));
   const criacao = acessos.find((r) => r.operacao === 'ADMIN:criar' && r.registro_id === novoChefe.id);
   assert.ok(criacao && criacao.depois.acao === 'ADMIN:criar' && criacao.depois.deve_trocar_senha === true, 'ADMIN:criar auditado');
   assert.ok(!JSON.stringify(acessos).includes(senhaTemporaria), 'a senha temporária nunca vai para a auditoria');
-  assert.ok(acessos.some((r) => r.operacao === 'ADMIN:excluir' && r.registro_id === ids.wallace), 'ADMIN:excluir auditado');
+  assert.ok(acessos.some((r) => r.operacao === 'ADMIN:excluir' && r.registro_id === ids.costa), 'ADMIN:excluir auditado');
 });
 
 await etapa('trava anti-bloqueio', async () => {
@@ -771,9 +771,9 @@ await etapa('trava anti-bloqueio', async () => {
   assert.equal(aindaAdmin.papel, 'administrador', 'nada mudou depois do erro');
   /* transferir a chefia para quem não tem acesso e rebaixar... */
   await Api.adminUsuario('reativar', novoChefe.id);
-  await Api.transferirChefia({ de: null, para: ids.balieiro, papel_anterior: 'adjunto' });
+  await Api.transferirChefia({ de: null, para: ids.lima, papel_anterior: 'adjunto' });
   const militares = json(await Api.listarMilitares());
-  assert.equal(militares.find((m) => m.id === ids.balieiro).papel, 'chefia');
+  assert.equal(militares.find((m) => m.id === ids.lima).papel, 'chefia');
   assert.equal(militares.find((m) => m.id === novoChefe.id).papel, 'chefia', 'de nulo não rebaixa ninguém');
   /* a chefia (com acesso) pode ser desativada porque o administrador fica */
   await Api.adminUsuario('desativar', novoChefe.id);
@@ -782,7 +782,7 @@ await etapa('trava anti-bloqueio', async () => {
 });
 
 await etapa('segundo fator simulado', async () => {
-  await entrarComo('leticia@demo.local');
+  await entrarComo('souza@demo.local');
   assert.deepEqual(json(await Api.mfaFatores()), []);
   const cadastro = json(await Api.mfaIniciarCadastro());
   temCampos(cadastro, ['fator_id', 'qr_code', 'segredo'], 'mfaIniciarCadastro');
@@ -794,25 +794,25 @@ await etapa('segundo fator simulado', async () => {
   temCampos(fatores[0], ['id', 'status', 'criado_em'], 'mfaFatores');
   assert.equal(fatores[0].status, 'verified');
   await Api.sair();
-  assert.deepEqual(json(await Api.entrar('leticia@demo.local', 'x')), { precisaMfa: true });
+  assert.deepEqual(json(await Api.entrar('souza@demo.local', 'x')), { precisaMfa: true });
   assert.equal(await Api.sessaoAtual(), null, 'sem sessão antes do código');
   await rejeita(Api.meuPerfil(), /sessão/i);
   await rejeita(Api.verificarMfa('abc'), /Código inválido/);
   await Api.verificarMfa('654321');
-  assert.equal(json(await Api.meuPerfil()).id, leticia.id);
+  assert.equal(json(await Api.meuPerfil()).id, souza.id);
   await Api.mfaRemover(fatores[0].id);
   assert.deepEqual(json(await Api.mfaFatores()), []);
 });
 
 await etapa('estado persiste no sessionStorage e sobrevive a um recarregamento', async () => {
   const salvo = armazenamento.getItem('aqs_demo_estado');
-  assert.ok(salvo && JSON.parse(salvo).militares.every((m) => m.id !== ids.wallace));
+  assert.ok(salvo && JSON.parse(salvo).militares.every((m) => m.id !== ids.costa));
   const ctx2 = montarDemo(armazenamento);
   ctx2.ApiDemo.definirAtraso(0);
   const sessao = json(await ctx2.Api.iniciar());
-  assert.equal(sessao.email, 'leticia@demo.local', 'sessão restaurada');
+  assert.equal(sessao.email, 'souza@demo.local', 'sessão restaurada');
   const militares = json(await ctx2.Api.listarMilitares());
-  assert.ok(!militares.some((m) => m.id === ids.wallace));
+  assert.ok(!militares.some((m) => m.id === ids.costa));
   /* arquivo enviado não sobrevive ao recarregamento: o download explica */
   const ev = json(await ctx2.Api.listarEvidencias({})).find((e) => e.id === evidenciaEnviada.id);
   const texto = await (await ctx2.Api.baixarEvidencia(ev)).text();
@@ -825,8 +825,8 @@ await etapa('sessionStorage indisponível: segue só na memória', async () => {
   const ctx3 = montarDemo(quebrado);
   ctx3.ApiDemo.definirAtraso(0);
   assert.equal(await ctx3.Api.iniciar(), null);
-  await ctx3.Api.entrar('balieiro@demo.local', 'x');
-  assert.equal(json(await ctx3.Api.meuPerfil()).nome_guerra, 'Balieiro');
+  await ctx3.Api.entrar('lima@demo.local', 'x');
+  assert.equal(json(await ctx3.Api.meuPerfil()).nome_guerra, 'Lima');
   assert.equal((await ctx3.Api.listarAtividades()).length, 16);
 });
 
@@ -836,7 +836,7 @@ await etapa('reiniciar restaura o estado inicial e encerra a sessão', async () 
   await entrarComo('chefia@demo.local');
   const militares = json(await Api.listarMilitares());
   assert.equal(militares.length, 5);
-  assert.ok(militares.some((m) => m.id === ids.wallace));
+  assert.ok(militares.some((m) => m.id === ids.costa));
   assert.equal(militares.find((m) => m.id === chefia.id).papel, 'chefia');
   assert.equal(await Api.gerarOcorrencias(), 0, 'carga já está completa');
   const depois = await Api.gerarOcorrencias();

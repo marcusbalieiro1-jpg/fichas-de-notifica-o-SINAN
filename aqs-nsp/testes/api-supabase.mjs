@@ -70,7 +70,7 @@ function token(payload) {
   return b64({ alg: 'HS256' }) + '.' + b64(payload) + '.assinatura';
 }
 
-function sessao({ aal = 'aal1', fatores = [], id = 'u-1', email = 'leticia@habe.exemplo' } = {}) {
+function sessao({ aal = 'aal1', fatores = [], id = 'u-1', email = 'souza@habe.exemplo' } = {}) {
   return { access_token: token({ sub: id, aal }), user: { id, email, factors: fatores } };
 }
 
@@ -211,7 +211,7 @@ const args = (c, metodo) => c.cadeia.filter((x) => x[0] === metodo).map((x) => j
 /* ---------- ambiente ---------- */
 
 const ORDEM = ['config.js', 'util.js', 'regras.js', 'recorrencia.js', 'api-supabase.js', 'api.js'];
-const MILITAR = { id: 'm-1', usuario_id: 'u-1', posto: '1º Ten', nome_guerra: 'Letícia', email: 'leticia@habe.exemplo',
+const MILITAR = { id: 'm-1', usuario_id: 'u-1', posto: '1º Ten', nome_guerra: 'Souza', email: 'souza@habe.exemplo',
   papel: 'adjunto', ativo: true, deve_trocar_senha: false };
 const CHEFE = Object.assign({}, MILITAR, { id: 'm-chefe', posto: 'Maj', nome_guerra: 'Chefe', papel: 'chefia' });
 
@@ -331,7 +331,7 @@ await teste('armazenamento bloqueado (modo privado): segue na memória sem quebr
 await teste('iniciar com sessão completa devolve { usuario_id, email }; com 2º fator pendente, null', async () => {
   const amb = montar();
   amb.sb.sessao = sessao();
-  igual(await amb.A.iniciar(), { usuario_id: 'u-1', email: 'leticia@habe.exemplo' });
+  igual(await amb.A.iniciar(), { usuario_id: 'u-1', email: 'souza@habe.exemplo' });
   amb.sb.aal = { currentLevel: 'aal1', nextLevel: 'aal2' };
   amb.sb.sessao = sessao({ fatores: [FATOR_OK] });
   assert.equal(await amb.A.sessaoAtual(), null);
@@ -346,20 +346,20 @@ await teste('entrar: e-mail normalizado, preferência gravada e cliente recriado
   await amb.A.iniciar();
   amb.localStorage.setItem('aqs-nsp-sessao', 'velha');
   amb.sessionStorage.setItem('aqs-nsp-sessao', 'velha');
-  const r = await amb.A.entrar('  Leticia@HABE.exemplo ', 'Senha12345', true);
+  const r = await amb.A.entrar('  Souza@HABE.exemplo ', 'Senha12345', true);
   igual(r, { precisaMfa: false });
   assert.equal(amb.localStorage.getItem('aqs_lembrar'), '1');
   assert.equal(amb.sb.clientes.length, 2, 'cliente novo com localStorage');
   assert.equal(amb.sessionStorage.getItem('aqs-nsp-sessao'), null, 'token do outro armazenamento apagado');
   const login = amb.sb.auth.find((x) => x[0] === 'signInWithPassword');
-  igual(login[1], { email: 'leticia@habe.exemplo', password: 'Senha12345' });
+  igual(login[1], { email: 'souza@habe.exemplo', password: 'Senha12345' });
   assert.ok(amb.sb.clientes[0]._ouvintes.length === 0, 'ouvinte do cliente antigo desligado');
   /* mesma escolha: não recria */
-  await amb.A.entrar('leticia@habe.exemplo', 'Senha12345', true);
+  await amb.A.entrar('souza@habe.exemplo', 'Senha12345', true);
   assert.equal(amb.sb.clientes.length, 2);
   /* sem lembrar: volta ao sessionStorage e apaga o token lembrado */
   amb.localStorage.setItem('aqs-nsp-sessao', 'lembrada');
-  await amb.A.entrar('leticia@habe.exemplo', 'Senha12345', false);
+  await amb.A.entrar('souza@habe.exemplo', 'Senha12345', false);
   assert.equal(amb.sb.clientes.length, 3);
   assert.equal(amb.localStorage.getItem('aqs_lembrar'), '0');
   assert.equal(amb.localStorage.getItem('aqs-nsp-sessao'), null);
@@ -369,7 +369,7 @@ await teste('entrar com segundo fator: precisaMfa; verificarMfa usa o TOTP verif
   const amb = montar();
   amb.sb.fatores = [{ id: 'f-pendente', factor_type: 'totp', status: 'unverified' }, FATOR_OK];
   amb.sb.aal = { currentLevel: 'aal1', nextLevel: 'aal2' };
-  igual(await amb.A.entrar('leticia@habe.exemplo', 'Senha12345', false), { precisaMfa: true });
+  igual(await amb.A.entrar('souza@habe.exemplo', 'Senha12345', false), { precisaMfa: true });
   await rejeita(amb.A.verificarMfa('12a456'), /6 números/);
   assert.ok(!amb.sb.auth.some((x) => x[0] === 'challengeAndVerify'), 'formato inválido nem chega ao servidor');
   await amb.A.verificarMfa(' 123 456 ');
@@ -711,7 +711,7 @@ await teste('adminUsuario: erro HTTP lê { erro } do corpo; sem corpo, mensagem 
 await teste('salvarMilitar: chefia não mexe na conta institucional; e-mail de quem tem acesso só pela Edge Function', async () => {
   const amb = montar({ perfil: CHEFE });
   const admin = { id: 'm-adm', usuario_id: 'u-adm', papel: 'administrador', ativo: true, nome_guerra: 'AQS', email: 'aqs@habe.exemplo' };
-  const comAcesso = { id: 'm-1', usuario_id: 'u-1', papel: 'adjunto', ativo: true, nome_guerra: 'Letícia', email: 'leticia@habe.exemplo' };
+  const comAcesso = { id: 'm-1', usuario_id: 'u-1', papel: 'adjunto', ativo: true, nome_guerra: 'Souza', email: 'souza@habe.exemplo' };
   servidor(amb, { 'from:militares': (c) => {
     const id = (args(c, 'eq')[0] || [])[1];
     if (args(c, 'update').length || args(c, 'insert').length) { return { data: [Object.assign({ id: id || 'm-novo' }, (args(c, 'update')[0] || args(c, 'insert')[0])[0])], error: null }; }
@@ -719,12 +719,12 @@ await teste('salvarMilitar: chefia não mexe na conta institucional; e-mail de q
   } });
   await rejeita(amb.A.salvarMilitar({ id: 'm-adm', nome_guerra: 'AQS', papel: 'administrador' }), /conta institucional da AQS/);
   await rejeita(amb.A.salvarMilitar({ nome_guerra: 'Novo', papel: 'administrador' }), /conta institucional da AQS/);
-  await rejeita(amb.A.salvarMilitar({ id: 'm-1', nome_guerra: 'Letícia', email: 'outro@habe.exemplo' }), /Alterar e-mail de acesso/);
-  const salvo = await amb.A.salvarMilitar({ id: 'm-1', posto: ' 1º Ten ', nome_guerra: 'Letícia', email: 'LETICIA@habe.exemplo', papel: 'chefia' });
+  await rejeita(amb.A.salvarMilitar({ id: 'm-1', nome_guerra: 'Souza', email: 'outro@habe.exemplo' }), /Alterar e-mail de acesso/);
+  const salvo = await amb.A.salvarMilitar({ id: 'm-1', posto: ' 1º Ten ', nome_guerra: 'Souza', email: 'SOUZA@habe.exemplo', papel: 'chefia' });
   assert.equal(salvo.papel, 'chefia');
   const upd = amb.sb.de('from:militares').find((c) => args(c, 'update').length);
-  igual(args(upd, 'update')[0][0], { posto: '1º Ten', nome_guerra: 'Letícia', nome_completo: null,
-    email: 'leticia@habe.exemplo', setor_id: null, papel: 'chefia', ativo: true });
+  igual(args(upd, 'update')[0][0], { posto: '1º Ten', nome_guerra: 'Souza', nome_completo: null,
+    email: 'souza@habe.exemplo', setor_id: null, papel: 'chefia', ativo: true });
 });
 
 await teste('transferirChefia chama rpc("transferir_chefia") com os parâmetros p_*', async () => {

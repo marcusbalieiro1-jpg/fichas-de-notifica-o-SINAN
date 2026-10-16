@@ -291,8 +291,8 @@ teste('não depende do fuso do computador (TZ alterado em tempo de execução)',
    Regras
    ========================================================================= */
 
-const adjunto = { id: 'm-leticia', papel: 'adjunto', ativo: true, posto: 'Ten', nome_guerra: 'Letícia', usuario_id: 'u1' };
-const outroAdjunto = { id: 'm-wallace', papel: 'adjunto', ativo: true, posto: 'Ten', nome_guerra: 'Wallace', usuario_id: 'u2' };
+const adjunto = { id: 'm-souza', papel: 'adjunto', ativo: true, posto: 'Ten', nome_guerra: 'Souza', usuario_id: 'u1' };
+const outroAdjunto = { id: 'm-costa', papel: 'adjunto', ativo: true, posto: 'Ten', nome_guerra: 'Costa', usuario_id: 'u2' };
 const chefia = { id: 'm-chefia', papel: 'chefia', ativo: true, posto: 'Maj', nome_guerra: 'Chefia NSP', usuario_id: 'u3' };
 const admin = { id: 'm-aqs', papel: 'administrador', ativo: true, posto: '', nome_guerra: 'AQS — conta institucional', usuario_id: 'u4' };
 const chefiaInativa = Object.assign({}, chefia, { id: 'm-chefia-velha', ativo: false });
@@ -311,13 +311,13 @@ teste('rótulos e constantes do contrato', () => {
 });
 
 teste('nomeMilitar e nomesResponsaveis', () => {
-  assert.equal(Regras.nomeMilitar({ posto: '1º Ten', nome_guerra: 'Balieiro' }), '1º Ten Balieiro');
+  assert.equal(Regras.nomeMilitar({ posto: '1º Ten', nome_guerra: 'Lima' }), '1º Ten Lima');
   assert.equal(Regras.nomeMilitar({ posto: '', nome_guerra: 'Chefia AQS/NSP' }), 'Chefia AQS/NSP');
-  assert.equal(Regras.nomeMilitar({ posto: '  Ten ', nome_guerra: ' Letícia  ' }), 'Ten Letícia');
+  assert.equal(Regras.nomeMilitar({ posto: '  Ten ', nome_guerra: ' Souza  ' }), 'Ten Souza');
   assert.equal(Regras.nomeMilitar(null), '—');
-  const mapa = { 'm-leticia': adjunto, 'm-wallace': outroAdjunto };
-  assert.equal(Regras.nomesResponsaveis(['m-leticia', 'm-wallace'], mapa), 'Ten Letícia, Ten Wallace');
-  assert.equal(Regras.nomesResponsaveis(['m-wallace'], [adjunto, outroAdjunto]), 'Ten Wallace');
+  const mapa = { 'm-souza': adjunto, 'm-costa': outroAdjunto };
+  assert.equal(Regras.nomesResponsaveis(['m-souza', 'm-costa'], mapa), 'Ten Souza, Ten Costa');
+  assert.equal(Regras.nomesResponsaveis(['m-costa'], [adjunto, outroAdjunto]), 'Ten Costa');
   assert.equal(Regras.nomesResponsaveis([], mapa), 'Sem responsável');
   assert.equal(Regras.nomesResponsaveis(['x'], mapa), 'Militar não encontrado');
 });
@@ -332,16 +332,16 @@ teste('papéis: eChefia, eAdministrador, eGestor, eResponsavel', () => {
   assert.equal(Regras.eGestor(adjunto), false);
   assert.equal(Regras.eGestor(chefiaInativa), false, 'gestor precisa estar ativo');
   assert.equal(Regras.eGestor(null), false);
-  assert.equal(Regras.eResponsavel(adjunto, { responsaveis: ['m-leticia'] }), true);
-  assert.equal(Regras.eResponsavel(adjunto, { responsaveis: ['m-wallace'] }), false);
+  assert.equal(Regras.eResponsavel(adjunto, { responsaveis: ['m-souza'] }), true);
+  assert.equal(Regras.eResponsavel(adjunto, { responsaveis: ['m-costa'] }), false);
   assert.equal(Regras.eResponsavel(adjunto, { responsaveis: null }), false);
-  assert.equal(Regras.eResponsavel(Object.assign({}, adjunto, { ativo: false }), { responsaveis: ['m-leticia'] }), false);
+  assert.equal(Regras.eResponsavel(Object.assign({}, adjunto, { ativo: false }), { responsaveis: ['m-souza'] }), false);
 });
 
 teste('permissões de atividades e ocorrências (espelho da RLS e do RPC)', () => {
-  const minha = { tipo: 'sob_demanda', responsaveis: ['m-leticia'] };
-  const alheia = { tipo: 'recorrente', responsaveis: ['m-wallace'] };
-  const pontualMinha = { tipo: 'pontual', responsaveis: ['m-leticia'] };
+  const minha = { tipo: 'sob_demanda', responsaveis: ['m-souza'] };
+  const alheia = { tipo: 'recorrente', responsaveis: ['m-costa'] };
+  const pontualMinha = { tipo: 'pontual', responsaveis: ['m-souza'] };
   for (const gestor of [chefia, admin]) {
     assert.equal(Regras.podeEditarAtividade(gestor, alheia), true);
     assert.equal(Regras.podeCriarAtividade(gestor, 'recorrente'), true);
@@ -362,8 +362,8 @@ teste('permissões de atividades e ocorrências (espelho da RLS e do RPC)', () =
   assert.equal(Regras.podeCriarAtividade(adjunto), true);
   assert.equal(Regras.podeCriarAtividade(Object.assign({}, adjunto, { ativo: false }), 'pontual'), false);
   assert.equal(Regras.podeAlterarResponsaveis(adjunto), false);
-  assert.equal(Regras.podeAtualizarOcorrencia(adjunto, { responsaveis: ['m-leticia'] }), true);
-  assert.equal(Regras.podeAtualizarOcorrencia(adjunto, { responsaveis: ['m-wallace'] }), false);
+  assert.equal(Regras.podeAtualizarOcorrencia(adjunto, { responsaveis: ['m-souza'] }), true);
+  assert.equal(Regras.podeAtualizarOcorrencia(adjunto, { responsaveis: ['m-costa'] }), false);
   assert.equal(Regras.podeAlterarPrazoOcorrencia(adjunto), false);
   assert.equal(Regras.podeExcluirOcorrencia(adjunto), false);
   assert.equal(Regras.podeRegistrarExecucao(adjunto, minha), true);
@@ -371,10 +371,10 @@ teste('permissões de atividades e ocorrências (espelho da RLS e do RPC)', () =
   assert.equal(Regras.podeRegistrarExecucao(outroAdjunto, minha), false);
   assert.equal(Regras.podeEnviarEvidencia(adjunto, minha), true);
   assert.equal(Regras.podeEnviarEvidencia(adjunto, alheia), false);
-  assert.equal(Regras.podeExcluirEvidencia(adjunto, { enviado_por: 'm-leticia' }), true);
-  assert.equal(Regras.podeExcluirEvidencia(adjunto, { enviado_por: 'm-wallace' }), false);
+  assert.equal(Regras.podeExcluirEvidencia(adjunto, { enviado_por: 'm-souza' }), true);
+  assert.equal(Regras.podeExcluirEvidencia(adjunto, { enviado_por: 'm-costa' }), false);
   assert.equal(Regras.podeExcluirEvidencia(adjunto, { enviado_por: null }), false, 'autor excluído');
-  assert.equal(Regras.podeExcluirComentario(adjunto, { autor_id: 'm-leticia' }), true);
+  assert.equal(Regras.podeExcluirComentario(adjunto, { autor_id: 'm-souza' }), true);
   assert.equal(Regras.podeExcluirComentario(adjunto, { autor_id: null }), false);
   assert.equal(Regras.podeComentar(adjunto), true);
   assert.equal(Regras.podePublicarAviso(adjunto), false);
@@ -397,7 +397,7 @@ teste('tiposPermitidos e podeAssumirChefia (espelho de salvar_atividade e transf
 });
 
 teste('avisos visíveis: gestor, para todos ou destinatário', () => {
-  const restrito = { para_todos: false, destinatarios: ['m-wallace'] };
+  const restrito = { para_todos: false, destinatarios: ['m-costa'] };
   assert.equal(Regras.podeVerAviso(adjunto, { para_todos: true }), true);
   assert.equal(Regras.podeVerAviso(adjunto, restrito), false);
   assert.equal(Regras.podeVerAviso(outroAdjunto, restrito), true);
@@ -430,7 +430,7 @@ teste('gestão de usuários: só administrador mexe em administrador; ninguém e
 
 teste('militaresAtribuiveis exclui a conta institucional e os inativos', () => {
   const lista = Regras.militaresAtribuiveis([adjunto, outroAdjunto, chefia, admin, chefiaInativa]);
-  igual(lista.map((m) => m.id), ['m-leticia', 'm-wallace', 'm-chefia']);
+  igual(lista.map((m) => m.id), ['m-souza', 'm-costa', 'm-chefia']);
 });
 
 teste('trava anti-bloqueio (espelho do gatilho de militares)', () => {
@@ -461,7 +461,7 @@ function baseContinuidade() {
       Object.assign({}, admin, { ultimo_acesso: '2026-10-10T11:00:00Z' })
     ],
     atividades: [
-      { id: 'a1', titulo: 'Verificar o SIGADAER', ativa: true, responsaveis: ['m-leticia'] },
+      { id: 'a1', titulo: 'Verificar o SIGADAER', ativa: true, responsaveis: ['m-souza'] },
       { id: 'a2', titulo: 'Arquivada', ativa: false, responsaveis: [] }
     ],
     feriados: FERIADOS.map((data) => ({ data, descricao: 'x' })),
@@ -535,7 +535,7 @@ teste('alertasContinuidade: cada situação de (a) a (g)', () => {
   const g = Regras.alertasContinuidade(esquecido);
   assert.equal(g.length, 1);
   assert.equal(g[0].titulo, '2 acessos sem uso há mais de 90 dias', '(g)');
-  assert.match(g[0].texto, /Ten Wallace e Ten Nunca Entrou/);
+  assert.match(g[0].texto, /Ten Costa e Ten Nunca Entrou/);
 });
 
 teste('estaAtrasada e statusEfetivo', () => {

@@ -587,10 +587,10 @@ await teste('remover_mfa apaga todos os fatores do militar', async () => {
 
 await teste('alterar_email: Auth e cadastro com o e-mail novo (minúsculo)', async () => {
   const mundo = criarMundo();
-  const r = await pedir(mundo, { corpo: corpoDe('alterar_email', 'adjunto', { email: 'Leticia.Nova@HABE.exemplo' }) });
+  const r = await pedir(mundo, { corpo: corpoDe('alterar_email', 'adjunto', { email: 'Souza.Nova@HABE.exemplo' }) });
   assert.equal(r.status, 200, JSON.stringify(r.corpo));
-  assert.equal(mundo.usuarios.get('u-adjunto').email, 'leticia.nova@habe.exemplo');
-  assert.equal(mundo.militares.get(IDS.adjunto).email, 'leticia.nova@habe.exemplo');
+  assert.equal(mundo.usuarios.get('u-adjunto').email, 'souza.nova@habe.exemplo');
+  assert.equal(mundo.militares.get(IDS.adjunto).email, 'souza.nova@habe.exemplo');
   const auth = mundo.chamadas.find((c) => c[0] === 'atualizarUsuario');
   assert.deepEqual(auth[2], ['email']);
 });

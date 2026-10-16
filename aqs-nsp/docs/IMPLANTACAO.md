@@ -382,6 +382,10 @@ Além disso, publicar a partir de repositório privado exige plano pago, e
 uma correção pode levar minutos para chegar a todos por causa do cache.
 Cloudflare Pages e Netlify aplicam o `_headers` e são gratuitos.
 
+> O repositório usa o GitHub Pages **apenas para a demonstração**
+> (`demo.html`, dados fictícios, sem rede). Isso não muda a recomendação
+> acima para a versão real, que guarda dados do NSP.
+
 ### Opção A — Cloudflare Pages (recomendada)
 
 1. **dash.cloudflare.com/sign-up** → conta com o **e-mail institucional**;

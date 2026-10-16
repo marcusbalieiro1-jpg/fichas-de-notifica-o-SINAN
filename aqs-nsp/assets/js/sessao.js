@@ -706,11 +706,11 @@ var Sessao = (function () {
 
   /* ---------- perfil e entrada no aplicativo ---------- */
 
-  /* Postos e graduações que abrem o nome ("1º Ten Balieiro", "Maj Fulano"):
+  /* Postos e graduações que abrem o nome ("1º Ten Lima", "Maj Fulano"):
      ficam de fora das iniciais do avatar. */
   var POSTOS = /^(?:\d+º\s*)?(?:ten(?:ente)?(?:[\s-]cel)?|tc|cap(?:it[aã]o)?|maj(?:or)?|cel|brig|asp|so|[123]º?\s*sgt|[123]s|sgt|cb|s[12]|sd)\.?\s+/i;
 
-  /* Iniciais para o avatar: 'Ten Letícia' → 'L'; 'Maj Chefia NSP' → 'CN';
+  /* Iniciais para o avatar: 'Ten Souza' → 'L'; 'Maj Chefia NSP' → 'CN';
      a conta institucional é sempre 'AQS'. */
   function iniciais(nome, administrador) {
     if (administrador) { return 'AQS'; }

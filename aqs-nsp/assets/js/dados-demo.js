@@ -159,52 +159,52 @@ var DadosDemo = (function () {
   var PLANO = [
     { titulo: 'Verificar o SIGADAER e os retornos das notificações',
       descricao: 'Verificação diária do SIGADAER e dos retornos das notificações.',
-      tipo: 'recorrente', periodicidade: 'diaria_util', resp: ['leticia'] },
+      tipo: 'recorrente', periodicidade: 'diaria_util', resp: ['souza'] },
     { titulo: 'Analisar as notificações recebidas e encaminhar ao responsável',
       descricao: 'Analisar as notificações recebidas e encaminhar ao responsável para elaboração do plano de ação.',
-      tipo: 'sob_demanda', resp: ['leticia'] },
+      tipo: 'sob_demanda', resp: ['souza'] },
     { titulo: 'Notificar no NOTIVISA',
       descricao: 'Lançar no NOTIVISA, mensalmente, as notificações do período.',
-      tipo: 'recorrente', periodicidade: 'mensal', dia_mes: 31, resp: ['leticia'] },
+      tipo: 'recorrente', periodicidade: 'mensal', dia_mes: 31, resp: ['souza'] },
     { titulo: 'Salvar os retornos das notificações na pasta do setor',
       descricao: 'Arquivar na pasta do setor os retornos das notificações.',
-      tipo: 'recorrente', periodicidade: 'semanal', dia_semana: 5, resp: ['leticia'] },
+      tipo: 'recorrente', periodicidade: 'semanal', dia_semana: 5, resp: ['souza'] },
     { titulo: 'Realizar auditoria cirúrgica',
       descricao: 'Auditoria de cirurgia segura, uma vez por semana.',
-      tipo: 'recorrente', periodicidade: 'semanal', dia_semana: 5, resp: ['wallace'] },
+      tipo: 'recorrente', periodicidade: 'semanal', dia_semana: 5, resp: ['costa'] },
     { titulo: 'Realizar auditoria de identificação do paciente',
       descricao: 'Auditoria do protocolo de identificação, uma vez por semana.',
-      tipo: 'recorrente', periodicidade: 'semanal', dia_semana: 5, resp: ['wallace'] },
+      tipo: 'recorrente', periodicidade: 'semanal', dia_semana: 5, resp: ['costa'] },
     { titulo: 'Acompanhar as observações de higienização das mãos',
       descricao: 'Acompanhar as observações de higienização das mãos e estimular o grupo de observadores.',
-      tipo: 'recorrente', periodicidade: 'mensal', dia_mes: 31, resp: ['balieiro'] },
+      tipo: 'recorrente', periodicidade: 'mensal', dia_mes: 31, resp: ['lima'] },
     { titulo: 'Auditar LPP, queda e SBAR dos pacientes baixados no mês',
       descricao: 'Auditar lesão por pressão (LPP), quedas e a comunicação SBAR de todos os pacientes baixados no mês.',
-      tipo: 'recorrente', periodicidade: 'mensal', dia_mes: 10, resp: ['balieiro'] },
+      tipo: 'recorrente', periodicidade: 'mensal', dia_mes: 10, resp: ['lima'] },
     { titulo: 'Revisar o protocolo de identificação e o protocolo de flebite',
       descricao: 'Incluir no protocolo de identificação as alterações de pulseiras e etiquetas e revisar o protocolo de flebite.',
-      tipo: 'pontual', prazoDias: 10, resp: ['balieiro'] },
+      tipo: 'pontual', prazoDias: 10, resp: ['lima'] },
     { titulo: 'Acompanhar as auditorias mensais do HEMOPA e os relatórios',
       descricao: 'Acompanhar as auditorias mensais do HEMOPA e os respectivos relatórios.',
-      tipo: 'recorrente', periodicidade: 'mensal', dia_mes: 31, resp: ['balieiro'] },
+      tipo: 'recorrente', periodicidade: 'mensal', dia_mes: 31, resp: ['lima'] },
     { titulo: 'Realizar treinamentos e orientações',
       descricao: 'Treinamentos e orientações conforme o cronograma ou a demanda.',
-      tipo: 'sob_demanda', resp: ['leticia'] },
+      tipo: 'sob_demanda', resp: ['souza'] },
     { titulo: 'Reunião com os anestesistas',
       descricao: 'Etapa única, não recorrente.',
-      tipo: 'pontual', prazoDias: 3, resp: ['leticia', 'balieiro'] },
+      tipo: 'pontual', prazoDias: 3, resp: ['souza', 'lima'] },
     { titulo: 'Apresentação de indicadores e despacho com a chefia',
       descricao: 'Fazer a apresentação de indicadores no layout previsto e despachar com a chefia até o dia 15 de cada mês.',
-      tipo: 'recorrente', periodicidade: 'mensal', dia_mes: 15, prioridade: 'alta', resp: ['balieiro'] },
+      tipo: 'recorrente', periodicidade: 'mensal', dia_mes: 15, prioridade: 'alta', resp: ['lima'] },
     { titulo: 'Apresentar os indicadores mensais',
       descricao: 'Apresentação mensal dos indicadores. Responsável a confirmar.',
       tipo: 'recorrente', periodicidade: 'mensal', dia_mes: 31, resp: ['chefia'] },
     { titulo: 'Encaminhar os dados mensais da CGC',
       descricao: 'Salvar os dados mensais na planilha da CGC até o dia 05 de cada mês.',
-      tipo: 'recorrente', periodicidade: 'mensal', dia_mes: 5, prioridade: 'alta', resp: ['balieiro'] },
+      tipo: 'recorrente', periodicidade: 'mensal', dia_mes: 5, prioridade: 'alta', resp: ['lima'] },
     { titulo: 'Analisar incidentes conforme a demanda',
       descricao: 'Analisar os incidentes de acordo com a demanda de ocorrência.',
-      tipo: 'sob_demanda', resp: ['leticia', 'balieiro'] }
+      tipo: 'sob_demanda', resp: ['souza', 'lima'] }
   ];
 
   /* Observações de exemplo por nº da atividade (usadas em parte das concluídas). */
@@ -300,9 +300,9 @@ var DadosDemo = (function () {
     }
     militar('aqs', '', 'AQS — conta institucional', 'aqs@demo.local', setorAqs, 'administrador', 3, 10);
     militar('chefia', 'Maj', 'Chefia NSP', 'chefia@demo.local', setorNsp, 'chefia', 1, 9);
-    militar('leticia', 'Ten', 'Letícia', 'leticia@demo.local', setorNsp, 'adjunto', 1, 8);
-    militar('wallace', 'Ten', 'Wallace', 'wallace@demo.local', setorNsp, 'adjunto', 1, 8);
-    militar('balieiro', 'Ten', 'Balieiro', 'balieiro@demo.local', setorNsp, 'adjunto', 1, 7);
+    militar('souza', 'Ten', 'Souza', 'souza@demo.local', setorNsp, 'adjunto', 1, 8);
+    militar('costa', 'Ten', 'Costa', 'costa@demo.local', setorNsp, 'adjunto', 1, 8);
+    militar('lima', 'Ten', 'Lima', 'lima@demo.local', setorNsp, 'adjunto', 1, 7);
 
     function nome(chaveOuMilitar) {
       return Regras.nomeMilitar(typeof chaveOuMilitar === 'string' ? M[chaveOuMilitar] : chaveOuMilitar);
@@ -478,20 +478,20 @@ var DadosDemo = (function () {
       if (!extra || !extra.status) { concluir(oc, autor, dataCriado, hora, 40); }
       return oc;
     }
-    var exNot112 = execucao(A[2], M.leticia, 'Notificação ' + ano + '/112 — erro de medicação (encaminhada à Clínica Médica)', 14, 10);
-    execucao(A[2], M.leticia, 'Notificação ' + ano + '/118 — flebite (encaminhada à Enfermagem)', 7, 14);
-    execucao(A[2], M.leticia, 'Notificação ' + ano + '/121 — falha na identificação do paciente', 2, 11, {
+    var exNot112 = execucao(A[2], M.souza, 'Notificação ' + ano + '/112 — erro de medicação (encaminhada à Clínica Médica)', 14, 10);
+    execucao(A[2], M.souza, 'Notificação ' + ano + '/118 — flebite (encaminhada à Enfermagem)', 7, 14);
+    execucao(A[2], M.souza, 'Notificação ' + ano + '/121 — falha na identificação do paciente', 2, 11, {
       status: 'em_andamento', prazo: proximoDiaUtil(somar(hoje, 5), feriadosMapa),
       iniciada_em: instante(diaUtilAtras(2), 11, 15), observacao: 'Aguardando o relato do setor.'
     });
-    var exTreinoUti = execucao(A[11], M.leticia, 'Treinamento: higiene das mãos — UTI', 21, 9);
-    execucao(A[11], M.leticia, 'Orientação: identificação do paciente — Pediatria', 9, 15);
-    execucao(A[11], M.leticia, 'Treinamento: prevenção de quedas — Clínica Médica', 1, 16, {
+    var exTreinoUti = execucao(A[11], M.souza, 'Treinamento: higiene das mãos — UTI', 21, 9);
+    execucao(A[11], M.souza, 'Orientação: identificação do paciente — Pediatria', 9, 15);
+    execucao(A[11], M.souza, 'Treinamento: prevenção de quedas — Clínica Médica', 1, 16, {
       status: 'pendente', prazo: proximoDiaUtil(somar(hoje, 8), feriadosMapa),
       observacao: 'Agendado com a supervisão de Enfermagem.'
     });
-    var exIncidente037 = execucao(A[16], M.balieiro, 'Incidente ' + ano + '/037 — queda no leito', 18, 10);
-    var exIncidente041 = execucao(A[16], M.leticia, 'Incidente ' + ano + '/041 — troca de pulseira de identificação', 3, 9, {
+    var exIncidente037 = execucao(A[16], M.lima, 'Incidente ' + ano + '/037 — queda no leito', 18, 10);
+    var exIncidente041 = execucao(A[16], M.souza, 'Incidente ' + ano + '/041 — troca de pulseira de identificação', 3, 9, {
       status: 'em_andamento', prazo: proximoDiaUtil(somar(hoje, 5), feriadosMapa),
       iniciada_em: instante(diaUtilAtras(3), 9, 30)
     });
@@ -542,7 +542,7 @@ var DadosDemo = (function () {
     concluidas(13).forEach(function (oc) {
       var ref = mesAnterior(oc.referencia);
       evidencia(oc, A[13], 'Indicadores-' + MESES[ref.mes - 1] + '-' + ref.ano + '.pptx',
-        2340112 + inteiro(0, 400000), M.balieiro, minutosAntes(oc.concluida_em, 12),
+        2340112 + inteiro(0, 400000), M.lima, minutosAntes(oc.concluida_em, 12),
         'Apresentação no layout previsto.');
     });
     /* A do mês corrente, ainda em andamento, já tem a versão preliminar. */
@@ -550,39 +550,39 @@ var DadosDemo = (function () {
       .forEach(function (oc) {
         var ref = mesAnterior(oc.referencia);
         evidencia(oc, A[13], 'Indicadores-' + MESES[ref.mes - 1] + '-' + ref.ano + '.pptx',
-          2518337, M.balieiro, instante(maior(diaUtilAtras(1), dataDoInstante(oc.iniciada_em)), 17, 45),
+          2518337, M.lima, instante(maior(diaUtilAtras(1), dataDoInstante(oc.iniciada_em)), 17, 45),
           'Versão preliminar para o despacho com a chefia.');
       });
     /* CGC: planilha do mês anterior, entregue até o dia 05. */
     concluidas(15).forEach(function (oc) {
       var ref = mesAnterior(oc.referencia);
       evidencia(oc, A[15], 'Planilha-CGC-' + MESES_ABREV[ref.mes - 1] + ref.ano + '.xlsx',
-        84213 + inteiro(0, 9000), M.balieiro, minutosAntes(oc.concluida_em, 8), '');
+        84213 + inteiro(0, 9000), M.lima, minutosAntes(oc.concluida_em, 8), '');
     });
     var ultimaCirurgica = ultimaConcluidaVencida(5);
     if (ultimaCirurgica) {
       evidencia(ultimaCirurgica, A[5], 'Auditoria-cirurgica-' + ultimaCirurgica.referencia.slice(6).replace('W', 'S') + '.pdf',
-        412876, M.wallace, minutosAntes(ultimaCirurgica.concluida_em, 15), 'Checklist de cirurgia segura consolidado.');
+        412876, M.costa, minutosAntes(ultimaCirurgica.concluida_em, 15), 'Checklist de cirurgia segura consolidado.');
     }
     var ultimaIdentificacao = ultimaConcluidaVencida(6);
     if (ultimaIdentificacao) {
       evidencia(ultimaIdentificacao, A[6], 'Auditoria-identificacao-' + ultimaIdentificacao.referencia.slice(6).replace('W', 'S') + '.pdf',
-        298433, M.wallace, minutosAntes(ultimaIdentificacao.concluida_em, 20), '');
+        298433, M.costa, minutosAntes(ultimaIdentificacao.concluida_em, 20), '');
     }
     var ultimoNotivisa = ultimaConcluidaVencida(3);
     if (ultimoNotivisa) {
       var refNotivisa = ultimoNotivisa.referencia.slice(1);
       evidencia(ultimoNotivisa, A[3], 'Comprovante-NOTIVISA-' + MESES_ABREV[Number(refNotivisa.slice(5, 7)) - 1] +
-        refNotivisa.slice(0, 4) + '.pdf', 156002, M.leticia, minutosAntes(ultimoNotivisa.concluida_em, 5),
+        refNotivisa.slice(0, 4) + '.pdf', 156002, M.souza, minutosAntes(ultimoNotivisa.concluida_em, 5),
         'Comprovantes de envio do período.');
     }
-    evidencia(null, A[12], 'Ata-reuniao-anestesistas.docx', 48211, M.balieiro,
+    evidencia(null, A[12], 'Ata-reuniao-anestesistas.docx', 48211, M.lima,
       instante(diaUtilAtras(2), 14, 20), 'Ata da última reunião com a Anestesiologia (referência para a pauta).');
-    evidencia(oc9, A[9], 'Minuta-protocolo-identificacao-v2.docx', 97654, M.balieiro,
+    evidencia(oc9, A[9], 'Minuta-protocolo-identificacao-v2.docx', 97654, M.lima,
       instante(diaUtilAtras(4), 15, 25), 'Minuta com as novas pulseiras e etiquetas.');
-    evidencia(exTreinoUti, A[11], 'Lista-presenca-higiene-maos-UTI.pdf', 211340, M.leticia,
+    evidencia(exTreinoUti, A[11], 'Lista-presenca-higiene-maos-UTI.pdf', 211340, M.souza,
       minutosAntes(exTreinoUti.concluida_em, 3), 'Lista de presença assinada.');
-    evidencia(exIncidente037, A[16], 'Analise-incidente-037-queda.pdf', 187520, M.balieiro,
+    evidencia(exIncidente037, A[16], 'Analise-incidente-037-queda.pdf', 187520, M.lima,
       minutosAntes(exIncidente037.concluida_em, 6), 'Análise de causa raiz e plano de ação.');
 
     /* ----- comentários ----- */
@@ -615,35 +615,35 @@ var DadosDemo = (function () {
     }
 
     var ontem = diaUtilAtras(1);
-    var atrasadaWallace = ultimaDe(6, 'em_andamento');
-    if (atrasadaWallace) {
-      comentar(A[6], atrasadaWallace, M.chefia,
-        'Ten Wallace, a auditoria de identificação desta semana ainda está em aberto. Consegue concluir até amanhã?',
-        instante(maior(ontem, atrasadaWallace.prazo), 10, 20));
-      comentar(A[6], atrasadaWallace, M.wallace,
+    var atrasadaCosta = ultimaDe(6, 'em_andamento');
+    if (atrasadaCosta) {
+      comentar(A[6], atrasadaCosta, M.chefia,
+        'Ten Costa, a auditoria de identificação desta semana ainda está em aberto. Consegue concluir até amanhã?',
+        instante(maior(ontem, atrasadaCosta.prazo), 10, 20));
+      comentar(A[6], atrasadaCosta, M.costa,
         'Sim, senhor. Falta consolidar os dados da Clínica Cirúrgica; concluo amanhã cedo.',
-        instante(maior(ontem, atrasadaWallace.prazo), 11, 2));
+        instante(maior(ontem, atrasadaCosta.prazo), 11, 2));
     }
     var indicadoresAnterior = ultimaConcluidaVencida(13);
     if (indicadoresAnterior) {
       var dataApresentacao = dataDoInstante(indicadoresAnterior.concluida_em);
       var dataElogio = maior(menor(proximoDiaUtil(somar(dataApresentacao, 1), feriadosMapa), ontem), dataApresentacao);
       comentar(A[13], indicadoresAnterior, M.chefia,
-        'Excelente apresentação, Ten Balieiro. Indicadores claros e no layout previsto. Parabéns!',
+        'Excelente apresentação, Ten Lima. Indicadores claros e no layout previsto. Parabéns!',
         instante(dataElogio, dataElogio === dataApresentacao ? 17 : 14, dataElogio === dataApresentacao ? 20 : 5));
     }
     if (ultimoNotivisa) {
-      comentar(A[3], ultimoNotivisa, M.leticia,
+      comentar(A[3], ultimoNotivisa, M.souza,
         'Lançadas 14 notificações no NOTIVISA. Duas aguardam retorno do setor para complementação.',
         new Date(new Date(ultimoNotivisa.concluida_em).getTime() + 4 * 60000).toISOString());
     }
-    var atrasadaBalieiro = ultimaDe(8, 'pendente');
-    if (atrasadaBalieiro) {
-      comentar(A[8], atrasadaBalieiro, M.balieiro,
+    var atrasadaLima = ultimaDe(8, 'pendente');
+    if (atrasadaLima) {
+      comentar(A[8], atrasadaLima, M.lima,
         'Aguardando a lista de altas do SAME para fechar a auditoria do mês.',
-        instante(maior(diaUtilAtras(2), atrasadaBalieiro.prazo), 16, 10));
+        instante(maior(diaUtilAtras(2), atrasadaLima.prazo), 16, 10));
     }
-    comentar(A[9], oc9, M.balieiro,
+    comentar(A[9], oc9, M.lima,
       'Minuta com as alterações de pulseiras e etiquetas enviada à Enfermagem para validação.',
       instante(diaUtilAtras(4), 15, 30));
     comentar(A[9], oc9, M.chefia,
@@ -652,10 +652,10 @@ var DadosDemo = (function () {
     comentar(A[12], oc12, M.chefia,
       'Agendem com a Anestesiologia e confirmem a sala. Pauta: checklist de cirurgia segura e notificações do centro cirúrgico.',
       instante(diaUtilAtras(2), 8, 50));
-    comentar(A[16], exIncidente037, M.balieiro,
+    comentar(A[16], exIncidente037, M.lima,
       'Plano de ação recebido da Clínica Médica; acompanharemos a instalação das grades nos leitos.',
       instante(diaUtilAtras(17), 11, 0));
-    comentar(A[16], exIncidente041, M.leticia,
+    comentar(A[16], exIncidente041, M.souza,
       'Setor notificado; aguardando o relato da equipe do plantão noturno.',
       instante(diaUtilAtras(2), 8, 35));
 
@@ -709,7 +709,7 @@ var DadosDemo = (function () {
         'Enviem a minuta para validação da chefia antes do prazo.',
       nivel: 'importante', para_todos: false, prazo: A[9].prazo, atividade_id: A[9].id,
       criado_em: instante(diaUtilAtras(4), 9, 0)
-    }, [M.balieiro, M.wallace], M.chefia);
+    }, [M.lima, M.costa], M.chefia);
     var avisoBoasVindas = aviso({
       titulo: 'Bem-vindos à ferramenta de gestão de atividades',
       mensagem: 'As missões do NSP passam a ser registradas aqui. Anexem as evidências na própria ' +
@@ -718,10 +718,10 @@ var DadosDemo = (function () {
       criado_em: instante(diaUtilAtras(2), 14, 0)
     }, null, M.aqs);
 
-    ciencia(avisoCgc, M.leticia, instante(diaUtilAtras(5), 9, 30));
-    ciencia(avisoCgc, M.balieiro, instante(diaUtilAtras(4), 8, 0));
-    ciencia(avisoProtocolo, M.balieiro, instante(diaUtilAtras(4), 10, 0));
-    /* A Ten Letícia ainda não deu ciência do aviso de boas-vindas: quem abre
+    ciencia(avisoCgc, M.souza, instante(diaUtilAtras(5), 9, 30));
+    ciencia(avisoCgc, M.lima, instante(diaUtilAtras(4), 8, 0));
+    ciencia(avisoProtocolo, M.lima, instante(diaUtilAtras(4), 10, 0));
+    /* A Ten Souza ainda não deu ciência do aviso de boas-vindas: quem abre
        a demonstração como adjunta já vê, no Início, um aviso com "Ciente". */
     ciencia(avisoBoasVindas, M.chefia, instante(diaUtilAtras(2), 16, 0));
 
@@ -748,7 +748,7 @@ var DadosDemo = (function () {
       chave: 'contatos',
       valor: {
         email_institucional: 'aqs@demo.local',
-        responsavel_tecnico: 'Ten Balieiro (NSP) — até a passagem da função',
+        responsavel_tecnico: 'Ten Lima (NSP) — até a passagem da função',
         telefone: 'Ramal 0000 (fictício)',
         observacoes: 'Dados de exemplo da demonstração. No sistema real, use o e-mail e o ramal ' +
           'institucionais da AQS, nunca os de uma pessoa.'
@@ -779,8 +779,8 @@ var DadosDemo = (function () {
     auditar(setorAqs.criado_em, null, 'setores', 'INSERT', setorAqs.id, null, copia(setorAqs, ['sigla', 'nome']));
     auditar(M.aqs.criado_em, null, 'militares', 'INSERT', M.aqs.id, null,
       copia(M.aqs, ['posto', 'nome_guerra', 'email', 'papel']));
-    auditar(instante(diaUtilAte(somar(hoje, -89)), 9, 0), M.aqs, 'militares', 'UPDATE', M.leticia.id,
-      { usuario_id: null }, { usuario_id: M.leticia.usuario_id });
+    auditar(instante(diaUtilAte(somar(hoje, -89)), 9, 0), M.aqs, 'militares', 'UPDATE', M.souza.id,
+      { usuario_id: null }, { usuario_id: M.souza.usuario_id });
     auditar(A[13].criado_em, M.chefia, 'atividades', 'INSERT', A[13].id, null,
       copia(A[13], ['ordem', 'titulo', 'tipo', 'periodicidade', 'dia_mes']));
     auditar(instante(diaUtilAte(somar(hoje, -60)), 10, 0), M.aqs, 'configuracoes', 'INSERT', 'contatos', null,
@@ -793,9 +793,9 @@ var DadosDemo = (function () {
       copia(avisoCgc, ['titulo', 'nivel', 'para_todos']));
     auditar(avisoProtocolo.criado_em, M.chefia, 'avisos', 'INSERT', avisoProtocolo.id, null,
       copia(avisoProtocolo, ['titulo', 'nivel', 'para_todos']));
-    auditar(oc9.iniciada_em, M.balieiro, 'ocorrencias', 'UPDATE', oc9.id,
+    auditar(oc9.iniciada_em, M.lima, 'ocorrencias', 'UPDATE', oc9.id,
       { status: 'pendente' }, { status: 'em_andamento' });
-    auditar(instante(diaUtilAtras(2), 8, 40), M.leticia, 'comentarios', 'DELETE', novoId(),
+    auditar(instante(diaUtilAtras(2), 8, 40), M.souza, 'comentarios', 'DELETE', novoId(),
       { texto: 'Comentário duplicado (enviado duas vezes).' }, null);
     auditar(avisoBoasVindas.criado_em, M.aqs, 'avisos', 'INSERT', avisoBoasVindas.id, null,
       copia(avisoBoasVindas, ['titulo', 'nivel', 'para_todos']));

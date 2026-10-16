@@ -67,10 +67,17 @@ DEMONSTRAÇÃO" fica sempre visível). Na tela de login, escolha um perfil em
 "Entrar como…" — conta institucional, chefia ou um adjunto; qualquer senha
 serve.
 
-- No site publicado: `https://<endereço-da-ferramenta>/demo.html`.
-- No computador, a partir de uma cópia do repositório: abra
+- **Pelo link (computador ou celular):**
+  <https://marcusbalieiro1-jpg.github.io/fichas-de-notifica-o-SINAN/aqs-nsp/demo.html>
+  — publicado pelo GitHub Pages do repositório (*Settings → Pages* →
+  "Deploy from a branch", branch padrão, pasta "/ (root)"). O GitHub Pages
+  serve **só para a demonstração**; a versão real vai para Cloudflare Pages
+  ou Netlify (ver [IMPLANTACAO](docs/IMPLANTACAO.md)).
+- No site da implantação real: `https://<endereço-da-ferramenta>/demo.html`.
+- Sem internet, baixando: no GitHub, botão **Code → Download ZIP**,
+  descompacte e abra
   `aqs-nsp/demo.html` com dois cliques (Chrome ou Edge) ou, com Node.js
-  instalado:
+  instalado, a partir de uma cópia do repositório:
 
   ```bash
   npx http-server aqs-nsp -p 8080

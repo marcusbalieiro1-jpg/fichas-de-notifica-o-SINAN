@@ -5,12 +5,12 @@
 // (1280×800) e no celular (390×844, toque), e percorre o uso real da
 // ferramenta pelos três papéis:
 //
-//   Ten Letícia (adjunta): Início (indicadores, aviso com "Ciente"),
+//   Ten Souza (adjunta): Início (indicadores, aviso com "Ciente"),
 //     Quadro (abre a missão, inicia, conclui, anexa um PDF, comenta, abre a
 //     evidência), Calendário, Atividades (cria uma pontual; não há a opção
 //     "Recorrente" para ela), Avisos, Relatórios (CSV), Plano (.doc),
 //     Equipe (somente leitura), Minha conta e Sair;
-//   Chefia: aviso só para o Ten Wallace; cadastra um militar e cria o acesso
+//   Chefia: aviso só para o Ten Costa; cadastra um militar e cria o acesso
 //     (senha temporária na tela); passa a chefia para ele (a chefia antiga
 //     vira adjunta);
 //   Conta institucional (aqs@demo.local, pelo formulário de login): alertas
@@ -281,17 +281,17 @@ const PDF_FALSO = Buffer.from(
 // ---------------------------------------------------------------- roteiro
 
 async function roteiroAdjunta(pagina, base, perfil, estado) {
-  contexto = `${perfil.nome} · Ten Letícia`;
+  contexto = `${perfil.nome} · Ten Souza`;
   console.log(`== ${contexto}`);
   await pagina.goto(base + '/demo.html');
   await pagina.waitForSelector('.entrar-como__botao');
   await capturar(pagina, '00-login', perfil);
   if (perfil.nome === 'celular') { await semRolagemHorizontal(pagina, 'tela de login'); }
 
-  await entrarComo(pagina, base, 'Ten Letícia');
+  await entrarComo(pagina, base, 'Ten Souza');
   if (perfil.nome === 'celular') { await semRolagemHorizontal(pagina, '#/inicio'); }
-  estado.leticia = await militarPorNome(pagina, 'Letícia');
-  ok(!!estado.leticia, 'a Ten Letícia existe na demonstração');
+  estado.souza = await militarPorNome(pagina, 'Souza');
+  ok(!!estado.souza, 'a Ten Souza existe na demonstração');
 
   // Início: indicadores e aviso com "Ciente".
   ok(await pagina.locator('#inicioIndicadores a.indicador').count() === 4, 'Início mostra os 4 indicadores');
@@ -330,7 +330,7 @@ async function roteiroAdjunta(pagina, base, perfil, estado) {
     const minhas = l.filter((o) => o.responsaveis.includes(eu) && o.status === 'pendente' && o.atrasada);
     return minhas.length ? minhas[0] : null;
   }));
-  ok(!!alvo, 'há uma missão atrasada e pendente da Ten Letícia');
+  ok(!!alvo, 'há uma missão atrasada e pendente da Ten Souza');
   estado.ocorrencia = alvo.id;
   const cartao = pagina.locator(`#quadroConteudo [data-abrir-ocorrencia="${alvo.id}"]:visible`).first();
   if (await cartao.count()) {
@@ -345,7 +345,7 @@ async function roteiroAdjunta(pagina, base, perfil, estado) {
   await pagina.click('#painelDetalhe [data-situacao="concluida"]');
   await pagina.waitForSelector('#painelDetalhe [data-situacao="concluida"][aria-pressed="true"]');
   const concluida = await pagina.evaluate((id) => Api.obterOcorrencia(id), alvo.id);
-  ok(concluida.status === 'concluida' && !!concluida.iniciada_em && concluida.concluida_por === estado.leticia.id,
+  ok(concluida.status === 'concluida' && !!concluida.iniciada_em && concluida.concluida_por === estado.souza.id,
     'Iniciar e Concluir gravam a situação, o início e quem concluiu');
 
   await pagina.setInputFiles('#detArquivo', { name: 'Relatorio-indicadores-E2E.pdf', mimeType: 'application/pdf', buffer: PDF_FALSO });
@@ -398,7 +398,7 @@ async function roteiroAdjunta(pagina, base, perfil, estado) {
   const prazo = await pagina.evaluate(() => Api.referencias()
     .then((r) => Recorrencia.antecipar(U.somarDias(U.hojeBelem(), 9), r.feriados)));
   await pagina.fill('#faPrazo', prazo);
-  ok(await pagina.locator(`#faForm input[name="faResponsavel"][value="${estado.leticia.id}"]`).isChecked(),
+  ok(await pagina.locator(`#faForm input[name="faResponsavel"][value="${estado.souza.id}"]`).isChecked(),
     'a própria adjunta já vem marcada como responsável');
   if (perfil.nome === 'celular') { await semRolagemHorizontal(pagina, 'formulário de atividade'); }
   await capturar(pagina, '06-nova-atividade', perfil);
@@ -464,25 +464,25 @@ async function roteiroChefia(pagina, base, perfil, estado) {
   console.log(`== ${contexto}`);
   await entrarComo(pagina, base, 'Chefia NSP');
   estado.chefia = await militarPorNome(pagina, 'Chefia NSP');
-  const wallace = await militarPorNome(pagina, 'Wallace');
+  const costa = await militarPorNome(pagina, 'Costa');
 
-  // Aviso só para o Ten Wallace.
+  // Aviso só para o Ten Costa.
   await irPara(pagina, 'avisos', perfil);
   await pagina.click('#pagina-avisos [data-acao="novo"]');
   await pagina.waitForSelector('#avForm');
   const tituloAviso = 'Entregar a planilha da CGC até sexta (' + perfil.nome + ')';
   await pagina.fill('#avTitulo', tituloAviso);
-  await pagina.fill('#avMensagem', 'Ten Wallace, confira os números de setembro antes de enviar.');
+  await pagina.fill('#avMensagem', 'Ten Costa, confira os números de setembro antes de enviar.');
   await pagina.locator('#avForm label', { has: pagina.locator('input[name="avPara"][value="escolhidos"]') }).click();
-  await pagina.locator('#avForm label', { has: pagina.locator(`input[name="avDestinatario"][value="${wallace.id}"]`) }).click();
+  await pagina.locator('#avForm label', { has: pagina.locator(`input[name="avDestinatario"][value="${costa.id}"]`) }).click();
   if (perfil.nome === 'celular') { await semRolagemHorizontal(pagina, 'formulário de aviso'); }
   await capturar(pagina, '13-novo-aviso', perfil);
   await pagina.click('#avSalvar');
   await pagina.waitForFunction(() => !document.querySelector('#avForm'));
   await esperarTexto(pagina, '#pagina-avisos', tituloAviso);
   const aviso = await pagina.evaluate((t) => Api.listarAvisos({}).then((l) => l.find((a) => a.titulo === t)), tituloAviso);
-  ok(aviso && aviso.para_todos === false && aviso.destinatarios.length === 1 && aviso.destinatarios[0] === wallace.id,
-    'o aviso foi publicado só para o Ten Wallace');
+  ok(aviso && aviso.para_todos === false && aviso.destinatarios.length === 1 && aviso.destinatarios[0] === costa.id,
+    'o aviso foi publicado só para o Ten Costa');
   await capturar(pagina, '14-avisos-chefia', perfil);
 
   // Novo militar + Criar acesso.
@@ -559,31 +559,31 @@ async function roteiroInstitucional(pagina, base, perfil, estado) {
   ok(alertas.length >= 1 && alertas.some((t) => /backup|cópia/i.test(t)), 'Início mostra os alertas de continuidade (backup antigo)');
   await capturar(pagina, '17-inicio-institucional', perfil);
 
-  // Exclui a Ten Letícia; o histórico mantém o nome.
+  // Exclui a Ten Souza; o histórico mantém o nome.
   await irPara(pagina, 'equipe', perfil);
-  const leticia = estado.leticia;
-  await pagina.locator(`#pagina-equipe button[data-militar="${leticia.id}"]:visible`).first().click();
+  const souza = estado.souza;
+  await pagina.locator(`#pagina-equipe button[data-militar="${souza.id}"]:visible`).first().click();
   await pagina.waitForSelector('#mlConfirmaNome');
-  await pagina.fill('#mlConfirmaNome', 'Letícia');
+  await pagina.fill('#mlConfirmaNome', 'Souza');
   await pagina.waitForSelector('#mlExcluir:not([disabled])');
   if (perfil.nome === 'celular') { await semRolagemHorizontal(pagina, 'painel de exclusão'); }
   await pagina.click('#mlExcluir');
   await pagina.waitForFunction(() => !document.querySelector('#painelDetalhe .painel'));
-  ok(!(await militarPorNome(pagina, 'Letícia')), 'a Ten Letícia foi excluída');
+  ok(!(await militarPorNome(pagina, 'Souza')), 'a Ten Souza foi excluída');
   await pagina.evaluate((id) => { window.location.hash = '#/quadro?ocorrencia=' + id; }, estado.ocorrencia);
   await pagina.waitForSelector('#painelDetalhe .comentario__autor');
   const autores = await pagina.locator('#painelDetalhe .comentario__autor').allInnerTexts();
-  ok(autores.some((t) => t.includes('Ten Letícia')), 'o comentário da militar excluída continua com o nome dela');
+  ok(autores.some((t) => t.includes('Ten Souza')), 'o comentário da militar excluída continua com o nome dela');
   const metaEvidencia = await pagina.locator('#painelDetalhe .evidencia__meta').allInnerTexts();
-  ok(metaEvidencia.some((t) => t.includes('Ten Letícia')), 'a evidência enviada por ela continua com o nome');
+  ok(metaEvidencia.some((t) => t.includes('Ten Souza')), 'a evidência enviada por ela continua com o nome');
   const oc = await pagina.evaluate((id) => Api.obterOcorrencia(id), estado.ocorrencia);
-  ok(oc.concluida_por === null && oc.concluida_por_nome === 'Ten Letícia', 'a conclusão guarda o nome e solta o vínculo');
+  ok(oc.concluida_por === null && oc.concluida_por_nome === 'Ten Souza', 'a conclusão guarda o nome e solta o vínculo');
   await capturar(pagina, '18-historico-preservado', perfil);
   await fecharPainel(pagina);
 
   // Auditoria.
   await irPara(pagina, 'equipe', perfil, '?aba=auditoria');
-  await esperarTexto(pagina, '#pagina-equipe', 'Letícia');
+  await esperarTexto(pagina, '#pagina-equipe', 'Souza');
   await capturar(pagina, '19-auditoria', perfil);
 
   // Demais abas da Equipe (rolagem no celular e capturas para revisão).
