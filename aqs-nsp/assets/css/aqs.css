@@ -92,6 +92,9 @@ a { color: var(--azul-texto); }
 .botao--secundario { color: var(--azul-texto); }
 .botao--secundario:hover { background: var(--azul-claro); filter: none; }
 .filtro:hover { color: var(--azul-texto); }
+/* No filtro ativo (fundo azul) o texto continua branco também no hover —
+   no celular o hover "gruda" depois do toque e o chip ficava ilegível. */
+.filtro--ativo, .filtro--ativo:hover { color: #fff; }
 .selo--padrao  { color: var(--azul-texto); }
 .selo--urgente { color: var(--urgente-texto); }
 .selo--atencao { color: var(--atencao-texto); }

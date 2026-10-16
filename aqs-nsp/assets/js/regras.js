@@ -555,9 +555,9 @@ var Regras = (function () {
         titulo: 'Nenhuma conta institucional de administrador ativa',
         texto: 'Não há conta de administrador (e-mail institucional da AQS) ativa e com acesso. ' +
           'É ela que mantém a ferramenta administrável quando chefes ou o responsável técnico saem do HABE. ' +
-          'Cadastre a conta institucional e crie o acesso dela em Equipe → Militares ' +
-          '(passo a passo em docs/CONTINUIDADE.md).',
-        link: '#/equipe?aba=militares'
+          'Por segurança, a chefia não cria nem religa essa conta: peça a quem é dono do projeto no ' +
+          'Supabase (e-mail institucional) para aplicar as receitas R2 ou R4 de docs/CONTINUIDADE.md, seção 8.1.',
+        link: '#/equipe?aba=continuidade'
       });
     }
 

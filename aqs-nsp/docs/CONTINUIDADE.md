@@ -440,13 +440,13 @@ e-mail institucional mudou:**
 -- 1) Descubra o "id" do cadastro dela:
 select id, posto, nome_guerra, papel, ativo, email from public.militares order by nome_guerra;
 
--- 2) Ligue o login ao cadastro, garanta o papel e desbloqueie o login:
+-- 2) Ligue o login ao cadastro (isso também reativa o cadastro e tira o
+--    bloqueio de login deixado por uma desativação feita pela tela) e
+--    garanta o papel:
 select privado.vincular_usuario('chefe@exemplo.mil.br',              -- ← e-mail de login dela
                                 '00000000-0000-0000-0000-000000000000'); -- ← id do passo 1
 update public.militares set papel = 'chefia'
  where id = '00000000-0000-0000-0000-000000000000';                   -- ← o mesmo id
-update auth.users set banned_until = null
- where lower(email) = lower('chefe@exemplo.mil.br');                  -- ← o mesmo e-mail
 ```
 
 Se ela também esqueceu a senha: **não use a R2** (a R2 é só para a conta

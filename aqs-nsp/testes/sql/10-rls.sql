@@ -194,6 +194,13 @@ select testes.afirmar(
 select testes.afirmar(
   (select usuario_id is null and email is null from public.militares where id = :'m_chefia'),
   'o cadastro antigo perde o usuário e o e-mail');
+-- Chefia desativada pela tela fica com o login bloqueado no Auth; a
+-- recuperação precisa desbloqueá-lo, senão ela continua sem entrar.
+update auth.users set banned_until = now() + interval '876000 hours' where id = :'u_chefia';
+select privado.vincular_usuario('chefia@teste.local', :'m_chefia');
+select testes.afirmar(
+  (select banned_until is null from auth.users where id = :'u_chefia'),
+  'vincular_usuario tira o bloqueio de login (banned_until) do usuário religado');
 rollback to savepoint emergencia;
 
 savepoint emergencia_trava;

@@ -14,8 +14,8 @@
    Edge Functions → Secrets.)
 
    * ORIGEM_PERMITIDA: endereço(s) de onde a ferramenta é aberta, sem barra
-     no fim, separados por vírgula (ex.: o GitHub Pages e um endereço de
-     teste). Sem ele, nenhum navegador consegue usar a função — de
+     no fim, separados por vírgula (ex.: https://habe-aqs-nsp.pages.dev e
+     um endereço de teste). Sem ele, nenhum navegador consegue usar a função — de
      propósito. Mudou o endereço do site? Atualize o segredo.
    * --no-verify-jwt: a própria função confere o token do chamador
      (auth.getUser) e o papel dele no banco; desligar a verificação do
@@ -23,7 +23,11 @@
      token) seja barrada e funciona com as chaves de assinatura novas do
      Supabase.
    * SUPABASE_URL, SUPABASE_ANON_KEY e SUPABASE_SERVICE_ROLE_KEY são
-     fornecidas pelo próprio Supabase a toda Edge Function. A service role
+     fornecidas pelo próprio Supabase a toda Edge Function. Se um dia o
+     projeto deixar de fornecer as chaves no formato antigo (só as novas
+     sb_publishable_…/sb_secret_…), crie os segredos AQS_CHAVE_PUBLICA e
+     AQS_CHAVE_SERVICO com essas chaves: a função passa a usá-los
+     (docs/IMPLANTACAO.md explica). A service role
      NUNCA sai daqui: ela ignora a RLS, por isso cada ação é conferida pela
      lógica antes de ser executada.
    * As GRAVAÇÕES em public.militares (ligar o login, desativar, reativar,
@@ -40,8 +44,10 @@ import { tratarRequisicao } from './logica.ts';
 import type { AtributosUsuario, Dependencias, FatorMfa, LinhaAuditoria, Militar, UsuarioToken } from './logica.ts';
 
 const URL_SUPABASE = Deno.env.get('SUPABASE_URL') ?? '';
-const CHAVE_ANON = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-const CHAVE_SERVICO = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+/* As variáveis padrão vêm primeiro; os segredos AQS_* são o plano B para
+   projetos que só têm as chaves novas (ver o comentário do topo). */
+const CHAVE_ANON = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('AQS_CHAVE_PUBLICA') || '';
+const CHAVE_SERVICO = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('AQS_CHAVE_SERVICO') || '';
 const ORIGEM_PERMITIDA = Deno.env.get('ORIGEM_PERMITIDA') ?? '';
 
 /* Corpo maior que isto não é um pedido legítimo desta função. */
@@ -58,7 +64,7 @@ const admin = configurada
   : null;
 
 function servico() {
-  if (!admin) { throw new Error('SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY ausentes no ambiente da função.'); }
+  if (!admin) { throw new Error('SUPABASE_URL ou a chave de serviço (SUPABASE_SERVICE_ROLE_KEY/AQS_CHAVE_SERVICO) ausente no ambiente da função.'); }
   return admin;
 }
 
@@ -122,8 +128,9 @@ function criarDeps(token: string | null): Dependencias {
   return {
     origemPermitida: ORIGEM_PERMITIDA,
     erroDeConfiguracao: configurada ? null
-      : 'A função admin-usuarios está sem as variáveis SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY. Implante-a de ' +
-        'novo pelo Supabase (elas são fornecidas automaticamente) — veja docs/CONTINUIDADE.md.',
+      : 'A função admin-usuarios está sem a chave de serviço (SUPABASE_SERVICE_ROLE_KEY). Implante-a de ' +
+        'novo pelo Supabase ou crie o segredo AQS_CHAVE_SERVICO com a chave secreta do projeto — ' +
+        'veja docs/IMPLANTACAO.md.',
 
     async usuarioDoToken(token: string): Promise<UsuarioToken | null> {
       /* Cliente com o token do chamador, como pede o Supabase; o token vai

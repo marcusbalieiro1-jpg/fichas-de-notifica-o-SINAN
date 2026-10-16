@@ -2162,7 +2162,7 @@ Paginas.equipe = (function () {
       '<ol class="lista-auditoria">' + registros.map(function (r) {
         var op = rotuloOperacao(r.operacao);
         var quem = r.militar_nome || (r.militar_id ? nomeMilitarAuditoria(r.militar_id, ctx) : '') ||
-          (r.usuario_id ? 'Usuário sem cadastro' : 'Sistema (rotina automática)');
+          (r.usuario_id ? 'Usuário sem cadastro' : 'Sistema (rotina automática ou SQL Editor)');
         var detalhes = (r.antes || r.depois)
           ? '<details class="detalhes-gestao"><summary>ver detalhes</summary><div class="auditoria-json">' +
               (r.antes ? '<div><h4>Antes</h4><pre>' + U.esc(JSON.stringify(r.antes, null, 2)) + '</pre></div>' : '') +

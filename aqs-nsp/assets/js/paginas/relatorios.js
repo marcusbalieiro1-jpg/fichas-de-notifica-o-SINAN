@@ -298,13 +298,22 @@ Paginas.relatorios = (function () {
       Api.listarOcorrencias({ somenteAbertas: true })
     ]).then(function (r) {
       if (!vigente(el, minhaGeracao, minhaCarga)) { return; }
+      /* Mesmo critério do Início e do Quadro: as missões ainda em aberto de
+         uma atividade arquivada saem das contas — ninguém vai mais cumpri-las,
+         e contá-las como atrasadas para sempre distorceria o cumprimento. As
+         já concluídas continuam no histórico. */
+      var arquivadas = {};
+      (r[2] || []).forEach(function (a) { if (a.ativa === false) { arquivadas[a.id] = true; } });
+      function valeParaContas(oc) {
+        return !(arquivadas[oc.atividade_id] && Regras.estaAberta(oc));
+      }
       var ocorrencias = (r[0] || []).filter(function (oc) {
         var ref = String(oc.data_ref || oc.prazo || '').slice(0, 10);
-        return !ref || (ref >= iv.de && ref <= iv.ate);
+        return valeParaContas(oc) && (!ref || (ref >= iv.de && ref <= iv.ate));
       });
       /* Atrasadas que vêm de antes do período e continuam em aberto. */
       var anteriores = atrasadas((r[3] || []).filter(function (oc) {
-        return String(oc.data_ref || oc.prazo || '').slice(0, 10) < iv.de;
+        return valeParaContas(oc) && String(oc.data_ref || oc.prazo || '').slice(0, 10) < iv.de;
       }), hoje);
       dados = { intervalo: iv, ocorrencias: ocorrencias, anteriores: anteriores, ref: r[1], atividades: r[2] || [], hoje: hoje };
       desenhar(el);

@@ -34,12 +34,16 @@
 --
 -- Emergência — "perdemos todos os acessos de gestor" (chefia saiu, senha
 -- esquecida, ninguém consegue administrar):
---   a) A conta institucional existe, mas ninguém sabe a senha:
---      Authentication → Users → (e-mail institucional) → "Send password
---      recovery" — ou crie um usuário novo (passo 2 acima, com outro
---      e-mail institucional) e rode:
+--   a) A conta institucional existe, mas ninguém sabe a senha: use a
+--      receita R2 de docs/CONTINUIDADE.md (seção 8.1), que define uma senha
+--      provisória e obriga a trocá-la no primeiro acesso. NÃO use o
+--      "Send password recovery" do painel: a ferramenta não tem a tela de
+--      redefinição por e-mail. Alternativa: crie um usuário novo (passo 2
+--      acima, com outro e-mail institucional) e rode
 --        select privado.vincular_usuario('novo-email-institucional@da.aqs');
 --      O usuário antigo é desligado do cadastro e o novo assume.
+--      vincular_usuario também tira o bloqueio de login (banned_until)
+--      deixado por uma desativação feita pela tela.
 --   b) O celular do 2º fator (TOTP) da conta institucional se perdeu:
 --        delete from auth.mfa_factors
 --         where user_id = (select id from auth.users
@@ -975,6 +979,14 @@ begin
      and m.id <> v_militar;
 
   set constraints public.militares_usuario_unico immediate;
+
+  -- Quem foi desativado pela tela (Edge Function admin-usuarios) tem o
+  -- login bloqueado no Auth (banned_until). Religar o cadastro sem tirar o
+  -- bloqueio deixaria a pessoa ainda sem conseguir entrar.
+  update auth.users u
+     set banned_until = null
+   where u.id = v_usuario
+     and u.banned_until is not null;
 
   select * into v_linha from public.militares m where m.id = v_militar;
   raise notice 'Usuário % ligado a "%" (papel %). Já é possível entrar na ferramenta.',

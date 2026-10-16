@@ -330,9 +330,6 @@ kbd {
   align-items: center; justify-content: space-between; padding-top: .6rem; border-top: 1px solid var(--borda);
 }
 .filtros-quadro__resumo { margin-left: auto; font-size: .84rem; font-weight: 700; color: var(--texto-suave); }
-/* aqs.css pinta o texto do .filtro no hover; no filtro ativo (fundo azul) e
-   no toque do celular (o hover "gruda") o texto precisa continuar branco. */
-.filtros-quadro .filtro--ativo, .filtros-quadro .filtro--ativo:hover { color: #fff; }
 .filtros-quadro__resumo--alerta { color: var(--urgente-texto); }
 /* Botão "Filtros": só existe no celular (ver o bloco de até 719 px). */
 .filtros-quadro__alternar { display: none; }

@@ -413,6 +413,13 @@ Agendada pelo pg_cron às 00:05 de Belém (`5 3 * * *` UTC) e chamada também pe
 Erros: `Error` com mensagem em português pronta para exibir (`U.falha(erro)`).
 Objetos com os mesmos nomes de campos do banco.
 
+Códigos que o banco devolve (todos com mensagem em português, repassada pelo adaptador):
+`42501` sem permissão (inclui `sem_cadastro`, traduzido para "Seu usuário não está vinculado a um
+cadastro ativo…"); `22023` dado inválido; `P0002` não encontrado; `P0001` regra de negócio (trava
+anti-bloqueio "É preciso manter ao menos uma conta de chefia ou administrador ativa e com acesso.",
+setor em uso); `23514` check (ex.: justificativa de "não se aplica"); `23505` duplicado. A Edge
+Function devolve a trava como HTTP 409.
+
 **Sessão**
 * `iniciar()` · `sessaoAtual() → {usuario_id, email} | null` · `aoMudarSessao(cb(evento: 'entrou'|'saiu')) → cancelar()`
 * `entrar(email, senha, lembrar) → { precisaMfa: bool }` · `verificarMfa(codigo)`

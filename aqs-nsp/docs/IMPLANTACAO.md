@@ -503,6 +503,19 @@ npx supabase secrets set ORIGEM_PERMITIDA=https://habe-aqs-nsp.pages.dev
 npx supabase functions deploy admin-usuarios --no-verify-jwt
 ```
 
+### Se a função disser que está "sem a chave de serviço"
+
+O Supabase entrega à função, sozinho, as chaves do projeto
+(`SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY`). Se um dia o projeto só
+tiver as **chaves novas** e a função reclamar que falta a chave de serviço:
+
+1. **"Project Settings" → "API Keys"**: copie a chave **publishable**
+   (`sb_publishable_…`) e a chave **secret** (`sb_secret_…`).
+2. **"Edge Functions" → "Secrets"** → crie dois segredos:
+   `AQS_CHAVE_PUBLICA` (a publishable) e `AQS_CHAVE_SERVICO` (a secret).
+3. Publique a função de novo. A chave secreta fica **só** nesse segredo —
+   nunca no `config.js`, no repositório ou em mensagens.
+
 ### Quando refazer este passo
 
 - **O endereço do site mudou:** atualize o segredo `ORIGEM_PERMITIDA`.

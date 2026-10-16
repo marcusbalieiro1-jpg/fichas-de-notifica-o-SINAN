@@ -47,8 +47,11 @@ grant usage on schema auth to anon, authenticated, service_role;
 
 create table if not exists auth.users (
   id uuid primary key,
-  email text
+  email text,
+  banned_until timestamptz
 );
+-- Bancos de teste criados antes desta coluna existir.
+alter table auth.users add column if not exists banned_until timestamptz;
 
 -- Mesma lógica do Supabase: aceita o formato antigo (request.jwt.claim.sub)
 -- e o atual (request.jwt.claims, JSON com o crachá inteiro).
