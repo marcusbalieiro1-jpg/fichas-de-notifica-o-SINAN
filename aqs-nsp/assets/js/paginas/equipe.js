@@ -434,7 +434,7 @@ Paginas.equipe = (function () {
     var barra = '<div class="cartao filtros-gestao">' +
       '<div class="filtros-gestao__linha">' +
         '<div class="busca-gestao cresce"><input type="search" id="eqBusca" autocomplete="off" maxlength="80" ' +
-          'placeholder="Buscar por nome, posto, setor' + (gestor ? ' ou e-mail' : '') + '" aria-label="Buscar militares" value="' +
+          'placeholder="Buscar militar" aria-label="Buscar militares por nome, posto, setor' + (gestor ? ' ou e-mail' : '') + '" value="' +
           U.esc(filtroMilitares.busca) + '"></div>' +
         (gestor ? '<button type="button" class="botao" data-eq-acao="novo-militar">+ Novo militar</button>' : '') +
       '</div>' +

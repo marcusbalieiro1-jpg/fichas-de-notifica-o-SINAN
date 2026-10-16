@@ -1007,7 +1007,7 @@ Paginas.atividades = (function () {
     return '<div class="cartao filtros-gestao">' +
       '<div class="busca-gestao">' +
         '<input type="search" id="atvBusca" autocomplete="off" maxlength="120" ' +
-          'placeholder="Buscar por título, detalhamento, responsável ou nº" aria-label="Buscar atividades" value="' +
+          'placeholder="Buscar atividade" aria-label="Buscar atividades por título, detalhamento, responsável ou nº" value="' +
           U.esc(filtros.busca) + '">' +
       '</div>' +
       '<div class="filtros filtros--gestao" role="group" aria-label="Tipo de atividade">' +
