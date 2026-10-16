@@ -1,5 +1,16 @@
 # HABE SINAN
 
+> **Também neste repositório: [HABE · AQS e NSP — Ferramenta de Gestão de
+> Atividades](aqs-nsp/README.md).** Sistema da Assessoria de Qualidade e
+> Segurança e do Núcleo de Segurança do Paciente para as missões da equipe
+> (prazos, evidências, avisos, relatórios e o plano de atividades), com
+> login, banco de dados no Supabase e uso no celular. Fica inteiro na pasta
+> [`aqs-nsp/`](aqs-nsp/) e é independente do SINAN descrito abaixo:
+> [manual](aqs-nsp/docs/MANUAL.md) ·
+> [implantação](aqs-nsp/docs/IMPLANTACAO.md) ·
+> [continuidade](aqs-nsp/docs/CONTINUIDADE.md) ·
+> [demonstração](aqs-nsp/demo.html).
+
 Diretório de fichas de notificação compulsória do SINAN do **Hospital de
 Aeronáutica de Belém**, com registro das solicitações, anexo das fichas
 digitalizadas e relatórios para o Núcleo de Epidemiologia.

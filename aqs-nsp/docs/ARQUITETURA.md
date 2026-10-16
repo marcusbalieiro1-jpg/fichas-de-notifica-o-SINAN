@@ -46,6 +46,12 @@ navegador (index.html)                         Supabase (São Paulo)
   gravados nas colunas `*_nome` (instantâneo no momento do registro).
 * Passagem de chefia guiada (RPC `transferir_chefia`), alertas de continuidade no Início para os
   gestores e o manual `docs/CONTINUIDADE.md` (o que fazer quando alguém sai).
+* Segundo fator (TOTP): opcional, recomendado para gestores. Quem o ativou só é reconhecido pelo
+  banco com a sessão confirmada pelo código (`aal2`) — `privado.mfa_ok()` está dentro de
+  `meu_militar_id`, `eh_gestor` e `eh_administrador`, então vale em todas as políticas e RPCs (senha
+  vazada sozinha não lê nem grava nada pela API REST). A Edge Function exige o mesmo dos gestores.
+* Implantação e emergência (ninguém mais consegue administrar): `privado.vincular_usuario` no SQL
+  Editor — passo a passo em `docs/IMPLANTACAO.md` e `docs/CONTINUIDADE.md`.
 
 ### Ordem de carga dos scripts
 
@@ -105,9 +111,9 @@ inline — ele não é renderizado pela página.
 | `Sessao` | sessao.js | login, troca de senha, MFA, inatividade — §7 |
 | `TempoReal` | tempo-real.js | assinatura de mudanças e ressincronização — §7 |
 | `Paginas` | paginas/*.js | `Paginas.<rota> = { titulo, render(el, params), aoVivo? }` |
-| `Detalhe` | paginas/detalhe.js | `Detalhe.abrirOcorrencia(id)`, `Detalhe.abrirAtividade(id)` |
-| `FormAtividade` | paginas/atividades.js | `FormAtividade.abrir(atividade \| null, valoresIniciais?)` — formulário de criação/edição (usado por Detalhe e Avisos) |
-| `App` | app.js | `App.navegar()`, `App.ir(hash)`, `App.recarregar(tabelas?)`, `App.aoAtualizarPainel(fn)`, `App.atualizarContadores()`, `App.militar()` (perfil logado), `App.eChefia()` |
+| `Detalhe` | paginas/detalhe.js | `Detalhe.abrirOcorrencia(id)`, `Detalhe.abrirAtividade(id)`; peças usadas por Início e Quadro: `cartaoMissaoHtml(oc, ctx, opcoes)`, `acaoRapida(oc, acao, botao)`, `tratarClique(evento, buscar)`, `compararAbertas`, `seloPrazo(oc, hoje)`, `chipsResponsaveis(ids, mapa, euId)` |
+| `FormAtividade` | paginas/atividades.js | `FormAtividade.abrir(atividade \| null, valoresIniciais?, opcoes?)` — formulário de criação/edição (usado por Detalhe e Avisos); `opcoes.voltar(id)` é chamada depois de salvar, arquivar, reativar ou cancelar (o Detalhe reabre a atividade) |
+| `App` | app.js | `App.navegar()`, `App.ir(hash)`, `App.recarregar(tabelas?)`, `App.aoAtualizarPainel(fn)`, `App.atualizarContadores()`, `App.militar()` (perfil logado), `App.eChefia()` (= `Regras.eGestor`), `App.eGestor()`, `App.eAdministrador()`, `App.preferenciaTema()`, `App.definirTema('automatico'\|'claro'\|'escuro')` |
 
 `Paginas` é declarado em `regras.js` como `var Paginas = window.Paginas || {};`
 para existir antes de qualquer página.
@@ -141,7 +147,10 @@ Função de data: `public.hoje_belem() returns date` =
 `nome_completo` text, `email` text (único quando não nulo, sempre minúsculo),
 `setor_id` → setores, `papel` default `'adjunto'`, `ativo` bool default true,
 `deve_trocar_senha` bool default true, `ultimo_acesso` timestamptz,
-`criado_em`, `atualizado_em`.
+`criado_em`, `atualizado_em`. A unicidade de `usuario_id` é `deferrable initially immediate` (exigido por
+`vincular_usuario`): não use `usuario_id` como alvo de `on conflict`/upsert.
+Gatilho também em INSERT (normalização, proteção do administrador); ninguém exclui o próprio cadastro
+nem desativa o próprio acesso.
 Gatilho (BEFORE UPDATE/DELETE): impede a operação se, depois dela, não restar nenhum gestor
 (papel chefia ou administrador) `ativo` e com `usuario_id` não nulo — mensagem:
 'É preciso manter ao menos uma conta de chefia ou administrador ativa e com acesso.'
@@ -180,7 +189,9 @@ ocorrencias + `atividade_titulo`, `atividade_tipo`, `periodicidade`, `prioridade
 `setor_id`, `exige_evidencia`, `responsaveis` uuid[] (vazio se nenhum),
 `data_ref` date = `coalesce(prazo, (criado_em at time zone 'America/Belem')::date)`,
 `atrasada` bool = status em (pendente, em_andamento) e prazo < hoje_belem(),
-`concluida_no_prazo` bool = status concluida e (prazo nulo ou data de conclusão em Belém <= prazo),
+`concluida_no_prazo` bool = status concluida e (prazo nulo, ou data de conclusão em Belém <= prazo, ou
+`concluida_em = criado_em` — a ocorrência nasceu concluída: execução registrada depois de feita, com a
+data em que ocorreu, não tem prazo a cumprir),
 `qtd_evidencias` int, `qtd_comentarios` int.
 
 **evidencias** — `id`, `atividade_id` not null → atividades on delete cascade,
@@ -202,7 +213,9 @@ gravados pelo gatilho na inserção), `texto` not null (1..4000), `criado_em`. S
 **avisos_ciencia** — `aviso_id` → cascade, `militar_id` → cascade, `ciente_em` default now(); PK dupla.
 
 **notificacoes** — `id`, `destinatario_id` → militares on delete cascade, `tipo`, `titulo`, `mensagem`,
-`atividade_id`, `ocorrencia_id`, `aviso_id` (nulos), `lida` bool default false, `criado_em`.
+`atividade_id`, `ocorrencia_id`, `aviso_id` (nulos; → atividades/ocorrencias/avisos on delete cascade),
+`lida` bool default false, `criado_em`. `privado.rotina_diaria()` apaga as lidas com mais de 180 dias.
+Dar ciência de um aviso (`Api.darCiencia`) marca como lida a notificação dele.
 Preenchida só por gatilhos/funções SECURITY DEFINER:
 * inserção em atividade_responsaveis → `atribuicao` para o militar (exceto se ele mesmo fez);
 * inserção em comentarios → `comentario` para responsáveis da atividade e chefias ativas (não o administrador), exceto o autor;
@@ -219,27 +232,35 @@ observacoes }`), `ultimo_backup` (`{ em, por_nome }`, gravado por `Api.exportarT
 
 **auditoria** — `id` bigserial, `quando` timestamptz default now(), `militar_id` uuid nulo (sem FK),
 `militar_nome` text (instantâneo),
-`usuario_id` uuid nulo, `tabela`, `operacao` (INSERT/UPDATE/DELETE), `registro_id` text,
-`antes` jsonb, `depois` jsonb. Gatilho genérico AFTER em: setores, militares, atividades,
-atividade_responsaveis, ocorrencias, evidencias, comentarios, avisos, feriados, configuracoes.
+`usuario_id` uuid nulo, `tabela`, `operacao` (INSERT/UPDATE/DELETE, ou `ADMIN:<ação>` — check
+`^ADMIN:[a-z_]{1,40}$`), `registro_id` text, `antes` jsonb, `depois` jsonb. Gatilho genérico AFTER em:
+setores, militares, atividades, atividade_responsaveis, ocorrencias, evidencias, comentarios, avisos,
+feriados, configuracoes (atualizações que só mudam `atualizado_em`/`ultimo_acesso` não são gravadas).
+A Edge Function `admin-usuarios` grava cada ação de acesso como `tabela = 'auth.users'`,
+`operacao = 'ADMIN:<ação>'`, `registro_id` = id do militar, `depois.acao = 'ADMIN:<ação>'` — nunca a senha.
 
 ### Funções auxiliares (schema `privado`, não exposto pela API REST)
 SECURITY DEFINER, STABLE, `set search_path = ''`, usadas nas políticas como
 `(select privado.eh_gestor())`:
-* `privado.meu_militar_id() → uuid` (militar ativo ligado a `auth.uid()`; nulo se não houver)
+* `privado.mfa_ok() → bool` (sessão `aal2`, ou o usuário não tem fator TOTP verificado em `auth.mfa_factors`)
+* `privado.meu_militar_id() → uuid` (militar ativo ligado a `auth.uid()` e com `mfa_ok()`; nulo se não houver)
 * `privado.eh_ativo() → bool`
-* `privado.eh_gestor() → bool` (ativo e papel chefia ou administrador) — usada onde o contrato diz "gestor"
-* `privado.eh_administrador() → bool` (ativo e papel administrador)
+* `privado.eh_gestor() → bool` (ativo, papel chefia ou administrador, e `mfa_ok()`) — usada onde o contrato diz "gestor"
+* `privado.eh_administrador() → bool` (ativo, papel administrador, e `mfa_ok()`)
 * `privado.eh_responsavel(atividade uuid) → bool`
 * `privado.datas_ocorrencia(...)` e `privado.notificar_prazos()` — §4
 * `privado.vincular_usuario(email text, militar uuid default null)` — implantação e **recuperação de
   emergência** (rodada no SQL Editor pelo dono do projeto): liga o usuário do Auth com esse e-mail ao
   militar indicado — por padrão, à conta institucional (papel administrador) — reativa-o e grava o e-mail.
 * `privado.nome_militar(id uuid) → text` (posto + nome de guerra; usado nos instantâneos)
+* outros auxiliares internos: `pode_enviar_evidencia(pasta)` (política do Storage), `resumir`, `json_*`
+  (leitura validada do JSON de `salvar_atividade`), `eh_dia_util`, `antecipar_dia_util`,
+  `gerar_ocorrencias_atividade`, `gerar_todas`, `rotina_diaria` (pg_cron).
 
 ### RPCs públicas (expostas; `grant execute ... to authenticated`, revogado de anon)
-* `meu_perfil() → militares` — registra `ultimo_acesso = now()` e devolve a linha do militar logado
-  (erro `'sem_cadastro'` se não houver militar ativo ligado ao usuário).
+* `meu_perfil() → militares` — registra `ultimo_acesso = now()` (no máximo 1×/minuto) e devolve a linha do
+  militar logado (erro `'sem_cadastro'` se não houver militar ativo ligado ao usuário; erro 42501
+  "Confirme o código do aplicativo autenticador (segundo fator)…" se faltar o `aal2`).
 * `confirmar_troca_senha() → void` — `deve_trocar_senha = false` para o próprio militar.
 * `salvar_atividade(p jsonb) → uuid` — cria/atualiza a atividade e seus responsáveis de forma atômica.
   `p`: `{id?, ordem?, titulo, descricao, setor_id, tipo, periodicidade, dia_semana, dia_mes, mes_inicio,
@@ -248,7 +269,13 @@ SECURITY DEFINER, STABLE, `set search_path = ''`, usadas nas políticas como
   em `responsaveis`; **editar** só atividades em que é responsável e sem alterar `responsaveis`
   (lista diferente ⇒ erro). Se mudar regra de agenda/`ativa`/`data_inicio`: apaga ocorrências futuras
   (prazo >= hoje) ainda `pendente` sem evidências nem comentários e regenera. Para `pontual`, mantém a
-  ocorrência única `P` com o mesmo prazo (se ainda não concluída).
+  ocorrência única `P` com o mesmo prazo (se ainda não concluída). **Arquivar** (`ativa` true → false)
+  passa a `nao_se_aplica` tudo o que ainda estava em aberto, com a justificativa
+  "Atividade arquivada em DD/MM/AAAA por …" (nada fica "atrasado" cobrando a atividade arquivada).
+  Também recusa: adjunto transformando atividade em recorrente; responsável novo inativo ou
+  administrador. Chave ausente no JSON mantém o valor (edição) ou o padrão (criação); presente com
+  null/'' limpa; sem `responsaveis` na edição, o conjunto fica como está.
+  Erros: 42501 sem permissão; 22023 dado inválido; P0002 não encontrado (mensagens prontas).
 * `gerar_ocorrencias() → int` — idempotente; qualquer usuário ativo pode chamar.
 * `transferir_chefia(p_de uuid, p_para uuid, p_papel_anterior text default 'adjunto', p_transferir_atividades boolean default true) → void`
   — só gestor. `p_para` vira `chefia` (e é reativado se preciso); `p_de` (pode ser nulo quando não há
@@ -363,6 +390,15 @@ Agendada pelo pg_cron às 00:05 de Belém (`5 3 * * *` UTC) e chamada também pe
 * `Regras.mimeDe(file) → mime` (usa a extensão quando `file.type` vier vazio ou genérico).
 * HTML de selos (usam classes de aqs.css): `Regras.seloStatus(statusEfetivo)`,
   `Regras.seloPrioridade(p)`, `Regras.seloNivel(n)`, `Regras.seloTipo(tipo)`.
+* Extras (espelho de regras do banco que a tela antecipa): `MENSAGEM_TRAVA`, `violaTravaGestor(antes,
+  militares)`, `gestoresComAcesso`, `eGestorComAcesso`, `eAtivo`, `validarEmail`, `podeDesativarMilitar`,
+  `podeAssumirChefia` (a conta institucional não assume), `tiposPermitidos(m, atividade)` (adjunto: só
+  pontual/sob demanda ao criar; o formulário nem mostra "Recorrente"), `rotuloPapelAutor(papel) →
+  'CHEFIA'|'AQS'|''`, `podeComentar`, `podeExcluirAtividade`, `podeExcluirOcorrencia`,
+  `podeAlterarPrazoOcorrencia`, `podeGerenciarEquipe`, `podeVerAuditoria`, `estaAberta`,
+  `concluidaNoPrazo` (igual à coluna da view), `dataBelem`, `diasEntre`, `extensaoDe`, `STATUS_ABERTOS`.
+  Em `Recorrencia`: `janelaGeracao`, `somarDias`, `diasEntre`, `diaSemana`, `dataValida`,
+  `ultimoDiaDoMes`, `normalizarFeriados`.
 
 ## `Recorrencia` (recorrencia.js)
 * `Recorrencia.datas(atividade, de, ate, feriados) → [{referencia, prazo}]` (ordenado por prazo;
@@ -395,12 +431,18 @@ Objetos com os mesmos nomes de campos do banco.
 * `excluirMilitar(id)` — via Edge Function (`adminUsuario('excluir', id)`): apaga o cadastro e o usuário de acesso
 * `transferirChefia({ de, para, papel_anterior, transferir_atividades })` (RPC `transferir_chefia`)
 * `obterConfiguracoes() → { chave: valor }` · `salvarConfiguracao(chave, valor)` (gestor)
-* `adminUsuario(acao, militar_id, extra?) → { senha_temporaria? }` — acao: `criar` | `redefinir_senha` |
+* `adminUsuario(acao, militar_id, extra?) → { senha_temporaria?, aviso?, email?, removidos? }` — `aviso` traz
+  o que não deu para fazer no Auth (a tela mostra). acao: `criar` | `redefinir_senha` |
   `desativar` | `reativar` | `remover_mfa` | `alterar_email` (extra.email) | `excluir` (Edge Function
   `admin-usuarios`). Chamador: gestor ativo; contas de administrador só por administrador; ninguém
   desativa/exclui a si mesmo; a trava anti-bloqueio do banco vale (erro 409 com a mensagem do banco).
   `excluir` apaga primeiro a linha de militares (se a trava recusar, nada muda) e depois o usuário do Auth.
-* `listarFeriados() → [{data, descricao}]` · `salvarFeriado(f)` · `excluirFeriado(data)`
+  Para militar COM login, desativar/reativar é por aqui (também bloqueia/desbloqueia o login); sem login,
+  pelo campo `ativo` de `salvarMilitar`. As gravações em `militares` da função usam o token de quem
+  chamou (RLS e auditoria com a identidade real); a service role fica só para `auth.admin.*`.
+  Senha temporária: 14 caracteres (maiúscula, minúscula, número e um símbolo de `@#%+=`).
+* `listarFeriados() → [{data, descricao}]` · `salvarFeriado(f)` (aceita `f.data_original` para trocar a data) ·
+  `excluirFeriado(data)`. `referencias()` também traz `listaFeriados: [{data, descricao}]`.
 
 **Atividades**
 * `listarAtividades() → [Atividade & { responsaveis: [militar_id] }]` (todas, inclusive arquivadas), ordenadas por `ordem`
@@ -431,7 +473,8 @@ Objetos com os mesmos nomes de campos do banco.
 **Avisos**
 * `listarAvisos({ incluirExpirados? }) → [Aviso & { destinatarios: [id], ciencias: [{militar_id, ciente_em}], ciente_por_mim: bool }]`
   (mais recentes primeiro; fixados antes). Expirado = `expira_em < hoje`.
-* `salvarAviso(aviso & { destinatarios }) → Aviso` · `excluirAviso(id)` · `darCiencia(aviso_id)`
+* `salvarAviso(aviso & { destinatarios }) → Aviso` · `excluirAviso(id)` · `darCiencia(aviso_id)` (também marca
+  como lida a notificação do aviso)
 
 **Notificações**
 * `listarNotificacoes({ limite? = 30 }) → [Notificacao]` (mais recentes primeiro)
@@ -439,11 +482,17 @@ Objetos com os mesmos nomes de campos do banco.
 
 **Chefia**
 * `listarAuditoria({ limite? = 200, tabela? }) → [RegistroAuditoria]`
-* `exportarTudo() → objeto JSON com todas as tabelas (sem conteúdo de arquivos)`; grava
-  `configuracoes.ultimo_backup = { em, por_nome }`
+* `exportarTudo() → { sistema, origem: 'supabase'|'demonstracao', gerado_em, gerado_por, observacao,
+  tabelas: { setores, militares, feriados, atividades, atividade_responsaveis, ocorrencias, evidencias,
+  comentarios, avisos, avisos_destinatarios, avisos_ciencia, notificacoes, configuracoes, auditoria } }`
+  (sem conteúdo de arquivos; nada do Auth); grava `configuracoes.ultimo_backup = { em, por_nome }` só
+  depois de ler tudo.
 
 **Tempo real**
-* `assinarMudancas(cb({ tabela, evento })) → cancelar()` (demo: nunca dispara)
+* `assinarMudancas(cb({ tabela, evento })) → cancelar()` (demo: nunca dispara). Canal único com as 10 tabelas
+  da publicação (03-tempo-real-agenda.sql); notificações filtradas pelo militar logado; depois de uma
+  queda, reassina com espera crescente (1 s … 60 s) e emite `{ tabela, evento: 'RESSINCRONIZAR' }`
+  para todas, exceto notificações.
 
 A fachada (`api.js`) mantém a lista canônica `Api.METODOS`; ao carregar, verifica que o
 adaptador presente implementa todos e falha alto se faltar algum. `Api.modo` é `'supabase'` ou `'demo'`.
@@ -456,7 +505,14 @@ adaptador presente implementa todos e falha alto se faltar algum. `Api.modo` é 
   (cabeçalho, navegação, `<main class="conteudo">` com uma `<section class="pagina oculto" id="pagina-ROTA">`
   por rota, rodapé), `#painelDetalhe` e `#avisosFlutuantes`.
 * Rotas: `inicio` (padrão), `quadro`, `atividades`, `avisos`, `relatorios`, `plano`, `equipe`, `conta`.
-  Parâmetros `?ocorrencia=ID` e `?atividade=ID` em qualquer rota abrem o painel de detalhe.
+  Parâmetros `?ocorrencia=ID` e `?atividade=ID` em qualquer rota abrem o painel de detalhe (ao fechar o
+  painel, a casca tira o parâmetro do endereço). Quadro: `escopo=minhas|todas`, `responsavel=ID|sem`,
+  `setor=ID`, `periodo=semana|mes|30dias|atrasadas`, `modo=quadro|calendario`, `mes=AAAA-MM`,
+  `diarias=0|1`. Equipe: `aba=militares|chefia|setores|feriados|continuidade|auditoria` (aceita
+  `passagem`). Atividades: `tipo`, `responsavel` (`sem`), `setor`.
+* Ao sair, a casca apaga páginas, cabeçalho, menus, torradas, as preferências de tela guardadas na aba
+  (`aqs_quadro_estado:*`, `aqs_inicio_visao:*`, `aqs_atividades_filtros`, `aqs_plano_filtros`,
+  `aqs_relatorios_periodo`) e volta o endereço para `#/inicio` — quem entra depois começa limpo.
 * Navegação: abas no cabeçalho (≥ 720 px); barra inferior no celular (Início, Quadro, Avisos,
   Atividades, Mais → Relatórios, Plano, Equipe, Minha conta, Sair). Equipe aparece para todos
   (somente leitura para adjuntos).
@@ -465,7 +521,8 @@ adaptador presente implementa todos e falha alto se faltar algum. `Api.modo` é 
 * `App.recarregar(tabelas)`: invalida referências se `militares`/`setores`/`feriados` mudaram; chama a
   função registrada por `App.aoAtualizarPainel(fn)` se o painel estiver aberto; re-renderiza a página
   atual se `Paginas[rota].aoVivo !== false` **e** o foco não estiver num campo de formulário da página
-  (nesse caso, adia até o campo perder o foco).
+  (nesse caso, adia até o campo perder o foco). Extensão: `aoVivo` pode ser uma função
+  `(el, params, tabelas)` que atualiza só o necessário, sem remontar (preserva filtros e rascunhos).
 * `TempoReal`: `Api.assinarMudancas` → adia 300 ms → `App.recarregar(tabelas)`; ressincroniza ao
   voltar a aba/tela (`visibilitychange`) e a cada 5 min; mudança em `notificacoes` atualiza o sino e
   mostra uma torrada.
@@ -502,4 +559,10 @@ adaptador presente implementa todos e falha alto se faltar algum. `Api.modo` é 
   `.selo--atrasada`, `.selo--prio-baixa/normal/alta/urgente`, `.selo--nivel-informativo/importante/urgente`,
   `.selo--tipo-recorrente/pontual/sob_demanda`.
 * impressão: `.cabecalho-impressao` (só aparece no papel), `.rodape-impressao`, `.nao-imprimir`.
+  A casca imprime o próprio cabeçalho/rodapé institucional; se a página trouxer os seus, os da casca somem.
+* extras de aqs.css: `.titulo-secao`, `.botao--texto`, `.botao--perigo-secundario`, `.avatar(--grande/
+  --administrador/--adjunto)`, `.selo--chefia`/`.selo--aqs` (autor), `.selo--papel-*`, `.chip--eu`,
+  `.contador--urgente/--neutro`, `.so-gestor`, `.so-celular`, `.so-computador`, `.sem-quebra`. Ícones:
+  `<svg class="icone" aria-hidden="true"><use href="#i-NOME"></use></svg>` (sprite em index/demo.html).
+* No máximo 3 torradas à vista (as mais antigas saem; erros por último).
 * celular (< 720 px): painel em tela cheia, barra inferior fixa, conteúdo com espaço inferior.
