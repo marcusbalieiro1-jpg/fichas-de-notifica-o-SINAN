@@ -1,0 +1,774 @@
+<title>Caderno de Contas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: uma coluna estreita como um talão; cabeçalho com o mês, faixa de totais, lista de contas por dia de vencimento. */
+:root {
+  --bg: #EEF3F1;
+  --surface: #FFFFFF;
+  --sunk: #E3EBE8;
+  --ink: #132E28;
+  --muted: #587069;
+  --line: #D3DFDA;
+  --accent: #1D6650;
+  --accent-ink: #FFFFFF;
+  --ok: #24744A;   --ok-bg: #DDF0E4;
+  --warn: #8F5A07; --warn-bg: #FBEBCB;
+  --bad: #B3261E;  --bad-bg: #FADBD7;
+  --shadow: 0 1px 2px rgba(19,46,40,.06), 0 8px 24px rgba(19,46,40,.06);
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1916; --surface: #15231F; --sunk: #1B2C27; --ink: #E2EDE9; --muted: #92A9A2; --line: #273A34;
+    --accent: #5BC29F; --accent-ink: #0A1A15;
+    --ok: #6CD29A; --ok-bg: #173A2A; --warn: #E9B45A; --warn-bg: #3A2D12; --bad: #F2867A; --bad-bg: #431D1A;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1916; --surface: #15231F; --sunk: #1B2C27; --ink: #E2EDE9; --muted: #92A9A2; --line: #273A34;
+  --accent: #5BC29F; --accent-ink: #0A1A15;
+  --ok: #6CD29A; --ok-bg: #173A2A; --warn: #E9B45A; --warn-bg: #3A2D12; --bad: #F2867A; --bad-bg: #431D1A;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+}
+.wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 20px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+
+/* Cabeçalho */
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 20px; }
+.brand { font-family: var(--f-display); font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.month { display: flex; align-items: center; gap: 6px; }
+.month h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(28px, 6vw, 40px); line-height: 1.05; margin: 0; text-wrap: balance; min-width: 0; }
+.month h1 small { font-weight: 600; color: var(--muted); font-size: .6em; margin-left: 6px; }
+.icon-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; font-size: 20px; line-height: 1; flex: none; }
+.icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+.head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 9px 16px; font-weight: 600; font-size: 15px; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: var(--bad); }
+.btn.ghost { background: transparent; }
+.btn:disabled { opacity: .5; cursor: default; }
+.link { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Totais */
+.totals { background: var(--surface); border-radius: 14px; box-shadow: var(--shadow); padding: 18px 20px; display: grid; gap: 14px; }
+.tgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.t .lbl { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.t .val { font-family: var(--f-num); font-variant-numeric: tabular-nums; font-size: clamp(16px, 3.6vw, 22px); font-weight: 600; margin-top: 2px; overflow-wrap: anywhere; }
+.t .sub { font-size: 13px; color: var(--muted); }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.bar { height: 10px; border-radius: 999px; background: var(--sunk); overflow: hidden; display: flex; }
+.bar span { display: block; height: 100%; transition: width .4s ease; }
+.bar .p { background: var(--ok); } .bar .l { background: var(--bad); }
+.barcap { font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 560px) { .tgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Avisos */
+.notice { border-radius: var(--r); padding: 12px 14px; font-size: 15px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.notice.bad { background: var(--bad-bg); color: var(--bad); }
+.notice.info { background: var(--sunk); color: var(--ink); }
+.notice b { font-weight: 700; }
+
+/* Filtros */
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 12px; font-size: 14px; font-weight: 600; color: var(--muted); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip .c { font-family: var(--f-num); font-size: 12px; margin-left: 4px; opacity: .8; }
+
+/* Lista */
+.list { background: var(--surface); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.row { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 16px; border-top: 1px solid var(--line); }
+.row:first-child { border-top: 0; }
+.stub { width: 56px; border-radius: 8px; background: var(--sunk); text-align: center; padding: 6px 0 5px; line-height: 1; }
+.stub .d { font-family: var(--f-display); font-weight: 700; font-size: 24px; }
+.stub .w { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
+.row.pago .stub { background: var(--ok-bg); } .row.pago .stub .d { color: var(--ok); }
+.row.atrasada .stub { background: var(--bad-bg); } .row.atrasada .stub .d { color: var(--bad); }
+.row.hoje .stub, .row.breve .stub { background: var(--warn-bg); } .row.hoje .stub .d, .row.breve .stub .d { color: var(--warn); }
+.info { min-width: 0; display: grid; gap: 2px; }
+.name { font-weight: 700; font-size: 17px; background: none; border: 0; padding: 0; text-align: left; overflow-wrap: anywhere; }
+.name:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.meta { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+.pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 2px 9px; font-size: 12.5px; font-weight: 700; }
+.pill.pago { background: var(--ok-bg); color: var(--ok); }
+.pill.atrasada { background: var(--bad-bg); color: var(--bad); }
+.pill.hoje, .pill.breve { background: var(--warn-bg); color: var(--warn); }
+.pill.pendente { background: var(--sunk); color: var(--muted); }
+.right { display: grid; justify-items: end; gap: 6px; }
+.amt { font-family: var(--f-num); font-variant-numeric: tabular-nums; font-weight: 600; font-size: 16px; white-space: nowrap; }
+.amt.alt { color: var(--warn); }
+.pay { border-radius: 999px; padding: 6px 12px; font-size: 14px; font-weight: 700; border: 1.5px solid var(--accent); background: transparent; color: var(--accent); white-space: nowrap; }
+.pay:hover { background: var(--accent); color: var(--accent-ink); }
+.pay.done { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
+.pay.done:hover { background: var(--ok-bg); filter: brightness(.96); }
+.pay:disabled { opacity: .55; cursor: default; }
+.ro .pay { display: none; }
+@media (max-width: 480px) {
+  .row { grid-template-columns: 48px minmax(0, 1fr); gap: 10px 12px; }
+  .stub { width: 48px; }
+  .right { grid-column: 2; grid-auto-flow: column; justify-content: space-between; align-items: center; justify-items: start; }
+}
+
+/* Vazio */
+.empty { padding: 28px 20px; display: grid; gap: 14px; justify-items: start; }
+.empty h2 { font-family: var(--f-display); font-size: 22px; margin: 0; text-wrap: balance; }
+.empty p { margin: 0; color: var(--muted); max-width: 58ch; }
+.ghost-list { width: 100%; border: 1px dashed var(--line); border-radius: var(--r); opacity: .7; }
+.ghost-list .row { padding: 10px 12px; }
+.tag-ex { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+/* Anotações e compartilhamento */
+.panel { background: var(--surface); border-radius: 14px; padding: 16px 18px; display: grid; gap: 10px; border: 1px solid var(--line); }
+.panel h3 { margin: 0; font-family: var(--f-display); font-size: 17px; }
+.panel p { margin: 0; color: var(--muted); font-size: 15px; max-width: 65ch; }
+.panel ol { margin: 0; padding-left: 20px; color: var(--muted); font-size: 15px; display: grid; gap: 4px; }
+textarea, input[type="text"], input[type="number"], input[type="month"], select {
+  width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 9px 11px; font-size: 16px; min-width: 0;
+}
+textarea { resize: vertical; min-height: 80px; }
+.saved { font-size: 13px; color: var(--muted); min-height: 1em; }
+.bottom { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 640px) { .bottom { grid-template-columns: minmax(0, 1fr); } }
+
+/* Modal */
+.overlay { position: fixed; inset: 0; background: rgba(8, 20, 17, .45); display: grid; place-items: center; z-index: 20;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.modal { background: var(--surface); border-radius: 16px; width: min(560px, 100%); max-height: 100%; overflow: auto; padding: 20px; display: grid; gap: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+.modal.wide { width: min(760px, 100%); }
+.modal h2 { margin: 0; font-family: var(--f-display); font-size: 22px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .02em; }
+.field .hint { font-size: 13px; color: var(--muted); }
+.fgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 480px) { .fgrid { grid-template-columns: minmax(0, 1fr); } }
+.mactions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; }
+.mactions .grp { display: flex; gap: 8px; flex-wrap: wrap; }
+.confirm { background: var(--bad-bg); color: var(--bad); border-radius: var(--r); padding: 12px; display: grid; gap: 10px; font-size: 15px; }
+.err { color: var(--bad); font-size: 14px; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; max-height: 280px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); background: var(--sunk); position: sticky; top: 0; }
+td.bad { color: var(--bad); }
+.check { display: flex; gap: 8px; align-items: center; font-size: 15px; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: max(20px, calc(env(safe-area-inset-bottom, 0px) + 12px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-weight: 600; font-size: 15px; z-index: 30; max-width: calc(100% - 32px); }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+</style>
+
+<div class="wrap" id="app">
+  <header>
+    <div style="display:grid;gap:4px;min-width:0">
+      <div class="brand">Caderno de Contas</div>
+      <div class="month">
+        <button class="icon-btn" id="prev" aria-label="Mês anterior">‹</button>
+        <h1 id="monthTitle">—</h1>
+        <button class="icon-btn" id="next" aria-label="Próximo mês">›</button>
+      </div>
+    </div>
+    <div class="head-actions" id="headActions">
+      <button class="btn" id="btnToday" hidden>Ir para o mês atual</button>
+      <button class="btn" id="btnImport">Importar da planilha</button>
+      <button class="btn primary" id="btnAdd">+ Nova conta</button>
+    </div>
+  </header>
+
+  <div id="notices"></div>
+
+  <section class="totals" aria-label="Resumo do mês">
+    <div class="tgrid">
+      <div class="t"><div class="lbl">Total do mês</div><div class="val" id="tTotal">R$ 0,00</div><div class="sub" id="tCount">0 contas</div></div>
+      <div class="t"><div class="lbl"><span class="dot" style="background:var(--ok)"></span>Pago</div><div class="val" id="tPago">R$ 0,00</div><div class="sub" id="tPagoN">0 contas</div></div>
+      <div class="t"><div class="lbl"><span class="dot" style="background:var(--muted)"></span>A pagar</div><div class="val" id="tPend">R$ 0,00</div><div class="sub" id="tPendN">0 contas</div></div>
+      <div class="t"><div class="lbl"><span class="dot" style="background:var(--bad)"></span>Atrasado</div><div class="val" id="tLate">R$ 0,00</div><div class="sub" id="tLateN">0 contas</div></div>
+    </div>
+    <div class="bar" aria-hidden="true"><span class="p" id="barP" style="width:0"></span><span class="l" id="barL" style="width:0"></span></div>
+    <div class="barcap"><span id="barCap">Nada pago ainda</span><span id="nextDue"></span></div>
+  </section>
+
+  <div class="toolbar">
+    <div class="chips" role="group" aria-label="Filtrar contas" id="chips">
+      <button class="chip" data-f="todas" aria-pressed="true">Todas<span class="c" id="cTodas"></span></button>
+      <button class="chip" data-f="pendentes" aria-pressed="false">A pagar<span class="c" id="cPend"></span></button>
+      <button class="chip" data-f="atrasadas" aria-pressed="false">Atrasadas<span class="c" id="cLate"></span></button>
+      <button class="chip" data-f="pagas" aria-pressed="false">Pagas<span class="c" id="cPagas"></span></button>
+    </div>
+    <button class="btn ghost" id="btnCopy">Copiar resumo</button>
+  </div>
+
+  <section class="list" id="list" aria-live="polite">
+    <div class="empty">
+      <span class="tag-ex">Carregando suas contas</span>
+      <h2>Suas contas do mês aparecem aqui</h2>
+      <p>Cada conta mostra o dia de vencimento deste mês, o valor e se já foi paga. Um toque em “Marcar pago” atualiza para você e para sua consultora.</p>
+    </div>
+  </section>
+
+  <div class="bottom">
+    <section class="panel">
+      <h3>Anotações do mês</h3>
+      <p>Espaço para você e sua consultora combinarem prioridades, renegociações e lembretes deste mês.</p>
+      <textarea id="nota" placeholder="Ex.: Negociar desconto do plano de internet. Separar R$ 300 para o IPVA."></textarea>
+      <div class="saved" id="notaSaved"></div>
+    </section>
+    <section class="panel">
+      <h3>Compartilhar com a consultora</h3>
+      <ol>
+        <li>Toque em <b>Compartilhar</b>, no topo desta página.</li>
+        <li>Convide pelo e-mail dela.</li>
+        <li>Ela vê as mesmas contas e status, atualizados ao vivo.</li>
+      </ol>
+      <p>Para ela também marcar pagamentos e escrever nas anotações, dê acesso de edição. Com acesso só de leitura, ela acompanha sem alterar nada. Ela também pode deixar comentários pelo modo de comentários da página.</p>
+    </section>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  "use strict";
+  const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  const DIAS = ["dom","seg","ter","qua","qui","sex","sáb"];
+  const DIAS_LONGOS = ["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
+  const CATEGORIAS = ["Moradia","Contas de consumo","Transporte","Saúde","Educação","Seguros","Impostos","Cartão de crédito","Empréstimos","Assinaturas","Outros"];
+  const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- Datas ----------
+  const pad = (n) => String(n).padStart(2, "0");
+  const mkey = (y, m) => `${y}-${pad(m)}`;
+  const parseKey = (k) => { const [y, m] = k.split("-").map(Number); return { y, m }; };
+  const addMonths = (k, n) => { const { y, m } = parseKey(k); const d = new Date(y, m - 1 + n, 1); return mkey(d.getFullYear(), d.getMonth() + 1); };
+  const monthDiff = (a, b) => { const A = parseKey(a), B = parseKey(b); return (B.y - A.y) * 12 + (B.m - A.m); };
+  const today = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+  const thisMonth = () => { const d = new Date(); return mkey(d.getFullYear(), d.getMonth() + 1); };
+  const isoDay = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const fmtDM = (d) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`;
+  const monthLabel = (k) => { const { y, m } = parseKey(k); return `${MESES[m - 1]} de ${y}`; };
+
+  function dueDate(conta, mes) {
+    const { y, m } = parseKey(mes);
+    const last = new Date(y, m, 0).getDate();
+    return new Date(y, m - 1, Math.min(Math.max(1, conta.dia || 1), last));
+  }
+  // Boleto que vence no fim de semana pode ser pago no próximo dia útil.
+  function nextBusinessDay(d) {
+    const e = new Date(d);
+    while (e.getDay() === 0 || e.getDay() === 6) e.setDate(e.getDate() + 1);
+    return e;
+  }
+
+  // ---------- Dinheiro e importação ----------
+  function parseMoney(s) {
+    if (s == null) return null;
+    let t = String(s).replace(/R\$|\s| /gi, "").replace(/^-/, "");
+    if (!/\d/.test(t) || /[^\d.,]/.test(t)) return null;
+    if (t.includes(",")) t = t.replace(/\./g, "").replace(",", ".");
+    else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");
+    const n = parseFloat(t);
+    return isFinite(n) ? Math.round(n * 100) / 100 : null;
+  }
+  function parseDay(s) {
+    const t = String(s || "").trim().toLowerCase().replace(/^dia\s*/, "");
+    let m;
+    if ((m = t.match(/^(\d{1,2})$/))) { const n = +m[1]; return n >= 1 && n <= 31 ? n : null; }
+    if ((m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return +m[3];
+    if ((m = t.match(/^(\d{1,2})[\/.\-](\d{1,2})([\/.\-]\d{2,4})?$/))) { const n = +m[1]; return n >= 1 && n <= 31 ? n : null; }
+    return null;
+  }
+  const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  function parseStatus(s) {
+    const t = norm(s);
+    if (!t) return null;
+    if (/^(nao|pendente|a pagar|aberto|em aberto|atrasad|falta)/.test(t)) return "pendente";
+    if (/^(pago|paga|pg|ok|sim|quitad|feito|liquidad|✓|✔|x)$|^pago|^paga|^quitad/.test(t)) return "pago";
+    return null;
+  }
+  const fmtMoneyInput = (n) => n == null ? "" : n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  function parseImport(txt) {
+    const lines = txt.split(/\r?\n/).filter((l) => l.trim());
+    if (!lines.length) return { rows: [], col: {} };
+    const sep = lines.some((l) => l.includes("\t")) ? "\t" : lines[0].includes(";") ? ";" : ",";
+    let rows = lines.map((l) => l.split(sep).map((c) => c.trim().replace(/^"(.*)"$/, "$1")));
+    const col = {};
+    const head = rows[0].map(norm);
+    const looksHeader = head.some((c) => /conta|descri|nome|item|despesa|valor|venc|dia|categ|status|situa|tipo/.test(c)) && !rows[0].some((c) => parseMoney(c) != null && /[,]|r\$/i.test(c));
+    if (looksHeader) {
+      head.forEach((c, i) => {
+        if (col.valor == null && /valor|r\$|total|quantia|preco/.test(c)) col.valor = i;
+        else if (col.dia == null && /venc|^dia|data/.test(c)) col.dia = i;
+        else if (col.status == null && /status|situa|pago|pagamento|quitad/.test(c)) col.status = i;
+        else if (col.cat == null && /categ|tipo|grupo|classif/.test(c)) col.cat = i;
+        else if (col.nome == null && /conta|descri|nome|item|despesa|fornec|obrigac/.test(c)) col.nome = i;
+      });
+      rows = rows.slice(1);
+    }
+    const ncol = Math.max(...rows.map((r) => r.length), 0);
+    const used = () => new Set(Object.values(col));
+    const score = (i, fn) => rows.filter((r) => r[i] && fn(r[i])).length / Math.max(1, rows.filter((r) => r[i]).length);
+    for (let i = 0; i < ncol; i++) {
+      if (used().has(i)) continue;
+      if (col.valor == null && score(i, (c) => parseMoney(c) != null && (/,|r\$/i.test(c) || parseDay(c) == null)) > .6) { col.valor = i; continue; }
+      if (col.dia == null && score(i, (c) => parseDay(c) != null) > .6) { col.dia = i; continue; }
+      if (col.status == null && score(i, (c) => parseStatus(c) != null) > .6) { col.status = i; continue; }
+    }
+    for (let i = 0; i < ncol; i++) {
+      if (used().has(i)) continue;
+      if (col.nome == null) col.nome = i; else if (col.cat == null) col.cat = i;
+    }
+    const out = rows.map((r) => ({
+      nome: (r[col.nome] || "").trim(),
+      valor: col.valor != null ? parseMoney(r[col.valor]) : null,
+      dia: col.dia != null ? parseDay(r[col.dia]) : null,
+      categoria: col.cat != null ? (r[col.cat] || "").trim() : "",
+      status: col.status != null ? parseStatus(r[col.status]) : null,
+    })).filter((r) => r.nome && !/^total/i.test(norm(r.nome)));
+    return { rows: out, col };
+  }
+
+  // ---------- DOM helper ----------
+  function h(tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else if (k === "text") el.textContent = v;
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of kids.flat()) if (c != null && c !== false) el.append(c.nodeType ? c : document.createTextNode(String(c)));
+    return el;
+  }
+  let toastT;
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 2600); }
+
+  // ---------- Estado ----------
+  const S = {
+    db: null, ready: false, canWrite: true, unavailable: false,
+    contas: new Map(), lanc: new Map(), notas: new Map(),
+    mes: thisMonth(), filtro: "todas", busy: new Set(),
+  };
+  try { const f = localStorage.getItem("cc-filtro"); if (f) S.filtro = f; } catch (e) {}
+
+  function contaAtiva(c, mes) {
+    if (c.inicio && mes < c.inicio) return false;
+    if (c.fim && mes > c.fim) return false;
+    return true;
+  }
+  function itemsFor(mes) {
+    const t = today();
+    const out = [];
+    for (const [id, c] of S.contas) {
+      if (!contaAtiva(c, mes)) continue;
+      const l = S.lanc.get(`${mes}_${id}`);
+      const due = dueDate(c, mes);
+      const eff = nextBusinessDay(due);
+      const valor = l && typeof l.valor === "number" ? l.valor : (c.valor || 0);
+      let status;
+      if (l && l.status === "pago") status = "pago";
+      else if (t > eff) status = "atrasada";
+      else if (t.getTime() === eff.getTime() || t.getTime() === due.getTime()) status = "hoje";
+      else if ((eff - t) / 864e5 <= 3) status = "breve";
+      else status = "pendente";
+      out.push({ id, c, l, due, eff, valor, alt: l && typeof l.valor === "number" && l.valor !== c.valor, status });
+    }
+    out.sort((a, b) => a.due - b.due || a.c.nome.localeCompare(b.c.nome, "pt-BR"));
+    return out;
+  }
+  function parcelaLabel(c, mes) {
+    if (!c.fim || !c.inicio) return null;
+    const total = monthDiff(c.inicio, c.fim) + 1;
+    const n = monthDiff(c.inicio, mes) + 1;
+    return total > 1 ? `parcela ${n}/${total}` : null;
+  }
+  function overdueOlder() {
+    const cur = thisMonth();
+    const res = [];
+    for (let k = addMonths(cur, -12); k < cur; k = addMonths(k, 1)) {
+      for (const it of itemsFor(k)) if (it.status === "atrasada") res.push({ mes: k, ...it });
+    }
+    return res;
+  }
+
+  // ---------- Render ----------
+  function render() {
+    const mes = S.mes;
+    const { y, m } = parseKey(mes);
+    $("monthTitle").replaceChildren(MESES[m - 1][0].toUpperCase() + MESES[m - 1].slice(1), h("small", { text: String(y) }));
+    $("btnToday").hidden = mes === thisMonth();
+    document.body.classList.toggle("ro", !S.canWrite);
+    $("btnAdd").hidden = $("btnImport").hidden = !S.canWrite;
+
+    const items = itemsFor(mes);
+    const sum = (arr) => arr.reduce((s, i) => s + i.valor, 0);
+    const pagos = items.filter((i) => i.status === "pago");
+    const late = items.filter((i) => i.status === "atrasada");
+    const pend = items.filter((i) => i.status !== "pago");
+    const total = sum(items);
+    const plural = (n) => `${n} conta${n === 1 ? "" : "s"}`;
+    $("tTotal").textContent = brl.format(total); $("tCount").textContent = plural(items.length);
+    $("tPago").textContent = brl.format(sum(pagos)); $("tPagoN").textContent = plural(pagos.length);
+    $("tPend").textContent = brl.format(sum(pend)); $("tPendN").textContent = plural(pend.length);
+    $("tLate").textContent = brl.format(sum(late)); $("tLateN").textContent = plural(late.length);
+    const pct = total ? sum(pagos) / total * 100 : 0;
+    $("barP").style.width = pct + "%";
+    $("barL").style.width = (total ? sum(late) / total * 100 : 0) + "%";
+    $("barCap").textContent = !items.length ? "Nenhuma conta neste mês" : pagos.length === items.length ? "Tudo pago neste mês" : `${Math.round(pct)}% do valor já pago`;
+    const nxt = pend.filter((i) => i.status !== "atrasada")[0];
+    $("nextDue").textContent = nxt ? `Próximo vencimento: ${nxt.c.nome}, ${fmtDM(nxt.due)}` : "";
+
+    $("cTodas").textContent = items.length; $("cPend").textContent = pend.length; $("cLate").textContent = late.length; $("cPagas").textContent = pagos.length;
+    for (const b of document.querySelectorAll(".chip")) b.setAttribute("aria-pressed", String(b.dataset.f === S.filtro));
+
+    // Avisos
+    const notices = [];
+    if (S.unavailable) notices.push(h("div", { class: "notice info" }, "Para ver e salvar suas contas, abra este link no claude.ai com sua conta conectada."));
+    else if (S.ready && !S.canWrite) notices.push(h("div", { class: "notice info" }, "Você está vendo em modo leitura. As contas e status são atualizados ao vivo por quem administra este caderno."));
+    if (S.ready) {
+      const old = overdueOlder();
+      if (old.length) {
+        const first = old[0].mes;
+        notices.push(h("div", { class: "notice bad" },
+          h("span", {}, h("b", { text: `${old.length} conta${old.length > 1 ? "s" : ""} de meses anteriores` }), ` sem pagamento marcado (${brl.format(old.reduce((s, i) => s + i.valor, 0))}).`),
+          mes !== first ? h("button", { class: "link", style: "color:inherit", onclick: () => go(first) }, `Ver ${MESES[parseKey(first).m - 1]}`) : null));
+      }
+    }
+    $("notices").replaceChildren(...notices);
+
+    // Lista
+    const list = $("list");
+    if (!S.ready) return renderEmpty(list, true);
+    if (!S.contas.size) return renderEmpty(list, false);
+    const shown = items.filter((i) => S.filtro === "todas" || (S.filtro === "pagas" ? i.status === "pago" : S.filtro === "atrasadas" ? i.status === "atrasada" : i.status !== "pago"));
+    if (!items.length) {
+      list.replaceChildren(h("div", { class: "empty" }, h("h2", { text: "Nenhuma conta ativa neste mês" }), h("p", { text: "As contas cadastradas começam depois ou já terminaram antes deste mês." })));
+    } else if (!shown.length) {
+      const msg = { pagas: "Nenhuma conta paga ainda neste mês.", atrasadas: "Nenhuma conta atrasada. Tudo em dia.", pendentes: "Nada a pagar. Todas as contas do mês estão pagas." }[S.filtro];
+      list.replaceChildren(h("div", { class: "empty" }, h("p", { text: msg })));
+    } else {
+      list.replaceChildren(...shown.map((it) => rowEl(it, mes)));
+    }
+
+    const nota = $("nota");
+    if (document.activeElement !== nota) nota.value = (S.notas.get(mes) || {}).texto || "";
+    nota.readOnly = !S.canWrite;
+  }
+
+  function rowEl(it, mes) {
+    const { c, status } = it;
+    const pillTxt = {
+      pago: it.l && it.l.pagoEm ? `Pago em ${it.l.pagoEm.slice(8, 10)}/${it.l.pagoEm.slice(5, 7)}` : "Pago",
+      atrasada: `Atrasada ${Math.floor((today() - it.eff) / 864e5)} dia${Math.floor((today() - it.eff) / 864e5) === 1 ? "" : "s"}`,
+      hoje: "Vence hoje",
+      breve: `Vence em ${Math.round((it.eff - today()) / 864e5)} dia${Math.round((it.eff - today()) / 864e5) === 1 ? "" : "s"}`,
+      pendente: "Pendente",
+    }[status];
+    const meta = [h("span", { class: `pill ${status}`, text: pillTxt })];
+    if (c.categoria) meta.push(h("span", { text: c.categoria }));
+    const parc = parcelaLabel(c, mes); if (parc) meta.push(h("span", { text: parc }));
+    if (status !== "pago" && it.eff.getTime() !== it.due.getTime()) meta.push(h("span", { text: `cai no ${DIAS_LONGOS[it.due.getDay()]}, pode pagar ${DIAS_LONGOS[it.eff.getDay()]} ${fmtDM(it.eff)}` }));
+    if (c.obs) meta.push(h("span", { text: c.obs }));
+    const busy = S.busy.has(it.id);
+    return h("div", { class: `row ${status}` },
+      h("div", { class: "stub", "aria-label": `Vence dia ${it.due.getDate()}` }, h("div", { class: "d", text: it.due.getDate() }), h("div", { class: "w", text: DIAS[it.due.getDay()] })),
+      h("div", { class: "info" },
+        S.canWrite ? h("button", { class: "name", onclick: () => openEdit(it.id), title: "Editar conta", text: c.nome }) : h("div", { class: "name", text: c.nome }),
+        h("div", { class: "meta" }, meta)),
+      h("div", { class: "right" },
+        h("div", { class: "amt" + (it.alt ? " alt" : ""), title: it.alt ? `Valor deste mês (normal: ${brl.format(c.valor || 0)})` : null, text: brl.format(it.valor) }),
+        h("button", { class: "pay" + (status === "pago" ? " done" : ""), disabled: busy, onclick: () => togglePaid(it) }, status === "pago" ? "✓ Pago · desfazer" : "Marcar pago")));
+  }
+
+  function renderEmpty(list, loading) {
+    const ex = [
+      { d: 5, w: "seg", n: "Aluguel", cat: "Moradia", v: 1850, s: "pago", p: "Pago em 04/10" },
+      { d: 10, w: "sáb", n: "Energia elétrica", cat: "Contas de consumo", v: 212.4, s: "pendente", p: "Pendente" },
+      { d: 15, w: "qui", n: "Financiamento do carro", cat: "Empréstimos · parcela 18/48", v: 980, s: "pendente", p: "Pendente" },
+    ];
+    const ghost = h("div", { class: "ghost-list", "aria-hidden": "true" }, ex.map((e) =>
+      h("div", { class: `row ${e.s}` },
+        h("div", { class: "stub" }, h("div", { class: "d", text: e.d }), h("div", { class: "w", text: e.w })),
+        h("div", { class: "info" }, h("div", { class: "name", text: e.n }), h("div", { class: "meta" }, h("span", { class: `pill ${e.s}`, text: e.p }), h("span", { text: e.cat }))),
+        h("div", { class: "right" }, h("div", { class: "amt", text: brl.format(e.v) })))));
+    list.replaceChildren(h("div", { class: "empty" },
+      h("span", { class: "tag-ex", text: loading ? "Carregando suas contas…" : "Exemplo de como fica" }),
+      ghost,
+      h("h2", { text: loading ? "Suas contas do mês aparecem aqui" : "Cadastre suas contas obrigatórias" }),
+      h("p", { text: "Cada conta é cadastrada uma vez, com o dia de vencimento. O app cria o vencimento de todos os meses sozinho, e você marca o que já pagou. Para trazer a sua planilha, copie as linhas no Google Planilhas e cole aqui." }),
+      !loading && S.canWrite ? h("div", { class: "head-actions" },
+        h("button", { class: "btn primary", onclick: openImport }, "Importar da planilha"),
+        h("button", { class: "btn", onclick: () => openEdit(null) }, "Adicionar uma conta")) : null));
+  }
+
+  function go(mes) { S.mes = mes; render(); }
+
+  // ---------- Escrita ----------
+  function writeFailed(e) {
+    if (e && e.code === "invalid_argument" && S.canWrite) { S.canWrite = false; render(); toast("Seu acesso é só de leitura."); return; }
+    if (e && e.code === "quota_exceeded") { toast("O caderno atingiu o limite de armazenamento."); return; }
+    toast("Não deu para salvar. Confira a conexão e tente de novo.");
+  }
+  async function togglePaid(it) {
+    if (!S.db || S.busy.has(it.id)) return;
+    S.busy.add(it.id); render();
+    const ref = S.db.doc(`lancamentos/${S.mes}_${it.id}`);
+    const prev = it.l || {};
+    const pago = it.status !== "pago";
+    const body = { contaId: it.id, mes: S.mes, status: pago ? "pago" : "pendente", pagoEm: pago ? isoDay(new Date()) : null };
+    if (typeof prev.valor === "number") body.valor = prev.valor;
+    try {
+      if (!pago && body.valor == null) await ref.delete(); else await ref.set(body);
+      toast(pago ? `${it.c.nome}: marcada como paga` : `${it.c.nome}: voltou para pendente`);
+    } catch (e) { writeFailed(e); }
+    S.busy.delete(it.id); render();
+  }
+
+  let notaTimer = null, notaLast = null;
+  async function saveNota() {
+    const texto = $("nota").value;
+    if (!S.db || !S.canWrite || texto === notaLast) return;
+    const mes = S.mes;
+    if (texto === ((S.notas.get(mes) || {}).texto || "")) return;
+    notaLast = texto;
+    $("notaSaved").textContent = "Salvando…";
+    try { await S.db.doc(`notas/${mes}`).set({ texto, atualizadoEm: new Date().toISOString() }); $("notaSaved").textContent = "Salvo"; }
+    catch (e) { $("notaSaved").textContent = ""; notaLast = null; writeFailed(e); }
+  }
+  $("nota").addEventListener("input", () => { clearTimeout(notaTimer); $("notaSaved").textContent = ""; notaTimer = setTimeout(saveNota, 900); });
+  $("nota").addEventListener("blur", () => { clearTimeout(notaTimer); saveNota(); });
+
+  // ---------- Modais ----------
+  function openModal(node) { const o = $("overlay"); o.replaceChildren(node); o.hidden = false; const f = node.querySelector("input,textarea,button"); if (f) f.focus(); }
+  function closeModal() { $("overlay").hidden = true; $("overlay").replaceChildren(); }
+  $("overlay").addEventListener("click", (e) => { if (e.target.id === "overlay") closeModal(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("overlay").hidden) closeModal(); });
+
+  function field(label, input, hint) { return h("div", { class: "field" }, h("label", { for: input.id, text: label }), input, hint ? h("div", { class: "hint", text: hint }) : null); }
+
+  function openEdit(id) {
+    const c = id ? S.contas.get(id) : { nome: "", valor: null, dia: 10, categoria: "", inicio: S.mes, fim: "", obs: "" };
+    const l = id ? S.lanc.get(`${S.mes}_${id}`) : null;
+    const iNome = h("input", { type: "text", id: "f-nome", value: c.nome || "", placeholder: "Ex.: Aluguel, Energia, Internet", autocomplete: "off" });
+    const iValor = h("input", { type: "text", id: "f-valor", inputmode: "decimal", value: fmtMoneyInput(c.valor), placeholder: "0,00" });
+    const iDia = h("input", { type: "number", id: "f-dia", min: "1", max: "31", value: c.dia || "" });
+    const dl = h("datalist", { id: "cats" }, [...new Set([...CATEGORIAS, ...[...S.contas.values()].map((x) => x.categoria).filter(Boolean)])].map((x) => h("option", { value: x })));
+    const iCat = h("input", { type: "text", id: "f-cat", list: "cats", value: c.categoria || "", placeholder: "Ex.: Moradia" });
+    const iIni = h("input", { type: "month", id: "f-ini", value: c.inicio || S.mes, placeholder: "AAAA-MM" });
+    const iFim = h("input", { type: "month", id: "f-fim", value: c.fim || "", placeholder: "AAAA-MM" });
+    const iObs = h("input", { type: "text", id: "f-obs", value: c.obs || "", placeholder: "Ex.: débito automático, boleto por e-mail" });
+    const iMes = h("input", { type: "text", id: "f-mes", inputmode: "decimal", value: l && typeof l.valor === "number" ? fmtMoneyInput(l.valor) : "", placeholder: "Igual ao valor normal" });
+    const err = h("div", { class: "err", role: "alert" });
+    const confirmBox = h("div", { class: "confirm", hidden: true });
+    const save = h("button", { class: "btn primary", type: "submit" }, id ? "Salvar" : "Adicionar conta");
+
+    const form = h("form", { class: "modal", "aria-labelledby": "m-title" },
+      h("h2", { id: "m-title", text: id ? "Editar conta" : "Nova conta" }),
+      field("Nome da conta", iNome),
+      h("div", { class: "fgrid" },
+        field("Valor normal (R$)", iValor),
+        field("Dia do vencimento", iDia, "Se o mês tiver menos dias, vence no último dia.")),
+      h("div", { class: "fgrid" },
+        field("Categoria", iCat), dl,
+        field("Observação", iObs)),
+      h("div", { class: "fgrid" },
+        field("Começa em", iIni),
+        field("Termina em (opcional)", iFim, "Para parcelas e contratos com fim. Vazio = todo mês.")),
+      id ? field(`Valor só em ${monthLabel(S.mes)} (opcional)`, iMes, "Use para contas que variam, como luz e água.") : null,
+      err, confirmBox,
+      h("div", { class: "mactions" },
+        h("div", { class: "grp" }, id ? h("button", { class: "btn danger ghost", type: "button", onclick: () => askRemove() }, "Encerrar ou excluir") : null),
+        h("div", { class: "grp" }, h("button", { class: "btn ghost", type: "button", onclick: closeModal }, "Cancelar"), save)));
+
+    function askRemove() {
+      confirmBox.hidden = false;
+      confirmBox.replaceChildren(
+        h("div", {}, h("b", { text: "O que fazer com " + c.nome + "?" }), h("div", { text: `Encerrar mantém o histórico e a conta some a partir de ${monthLabel(S.mes)}. Excluir apaga a conta de todos os meses.` })),
+        h("div", { class: "grp", style: "display:flex;gap:8px;flex-wrap:wrap" },
+          h("button", { class: "btn", type: "button", onclick: () => remove(false) }, `Encerrar a partir de ${MESES[parseKey(S.mes).m - 1]}`),
+          h("button", { class: "btn danger", type: "button", onclick: () => remove(true) }, "Excluir de vez"),
+          h("button", { class: "btn ghost", type: "button", onclick: () => (confirmBox.hidden = true) }, "Voltar")));
+    }
+    async function remove(hard) {
+      try {
+        if (hard) {
+          await S.db.doc(`contas/${id}`).delete();
+          for (const [k, v] of [...S.lanc]) if (v.contaId === id) await S.db.doc(`lancamentos/${k}`).delete();
+          toast(`${c.nome} excluída`);
+        } else {
+          const fim = addMonths(S.mes, -1);
+          if (c.inicio && fim < c.inicio) { await S.db.doc(`contas/${id}`).delete(); }
+          else await S.db.doc(`contas/${id}`).update({ fim });
+          toast(`${c.nome} encerrada a partir de ${MESES[parseKey(S.mes).m - 1]}`);
+        }
+        closeModal();
+      } catch (e) { writeFailed(e); }
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const nome = iNome.value.trim();
+      const valor = parseMoney(iValor.value);
+      const dia = parseInt(iDia.value, 10);
+      const ini = (iIni.value || S.mes).slice(0, 7), fim = (iFim.value || "").slice(0, 7);
+      const fmt = /^\d{4}-\d{2}$/;
+      if (!nome) return (err.textContent = "Escreva o nome da conta.");
+      if (valor == null) return (err.textContent = "Escreva o valor, por exemplo 1.250,90.");
+      if (!(dia >= 1 && dia <= 31)) return (err.textContent = "O dia do vencimento vai de 1 a 31.");
+      if (!fmt.test(ini) || (fim && !fmt.test(fim))) return (err.textContent = "Use meses no formato AAAA-MM, por exemplo 2026-10.");
+      if (fim && fim < ini) return (err.textContent = "O mês de término vem antes do mês de início.");
+      const mesTxt = iMes.value.trim();
+      const vMes = mesTxt ? parseMoney(mesTxt) : null;
+      if (mesTxt && vMes == null) return (err.textContent = "O valor deste mês não está num formato válido.");
+      err.textContent = ""; save.disabled = true;
+      const body = { nome, valor, dia, categoria: iCat.value.trim(), inicio: ini, fim: fim || null, obs: iObs.value.trim(), atualizadoEm: new Date().toISOString() };
+      try {
+        if (id) {
+          await S.db.doc(`contas/${id}`).set({ ...c, ...body });
+          const key = `${S.mes}_${id}`;
+          const cur = S.lanc.get(key);
+          const curV = cur && typeof cur.valor === "number" ? cur.valor : null;
+          if (vMes !== curV && !(vMes === valor && curV == null)) {
+            const nb = { contaId: id, mes: S.mes, status: (cur && cur.status) || "pendente", pagoEm: (cur && cur.pagoEm) || null };
+            if (vMes != null && vMes !== valor) nb.valor = vMes;
+            if (nb.valor == null && nb.status !== "pago") await S.db.doc(`lancamentos/${key}`).delete();
+            else await S.db.doc(`lancamentos/${key}`).set(nb);
+          }
+          toast("Conta salva");
+        } else {
+          await S.db.collection("contas").add({ ...body, criadoEm: new Date().toISOString() });
+          toast(`${nome} adicionada`);
+        }
+        closeModal();
+      } catch (e2) { save.disabled = false; writeFailed(e2); }
+    });
+    openModal(form);
+  }
+
+  function openImport() {
+    const ta = h("textarea", { id: "imp-txt", rows: "7", placeholder: "Conta\tValor\tVencimento\tCategoria\tStatus\nAluguel\tR$ 1.850,00\t05\tMoradia\tPago\nEnergia\tR$ 212,40\t10/10/2026\tContas de consumo\tPendente" });
+    const prev = h("div", {});
+    const chk = h("input", { type: "checkbox", id: "imp-pago", checked: true });
+    const chkWrap = h("label", { class: "check", for: "imp-pago" }, chk, `Marcar como pagas em ${monthLabel(S.mes)} as linhas com status “pago”`);
+    const go = h("button", { class: "btn primary", type: "button", disabled: true }, "Importar");
+    const err = h("div", { class: "err", role: "alert" });
+    let parsed = [];
+    function update() {
+      parsed = parseImport(ta.value).rows;
+      const ok = parsed.filter((r) => r.valor != null && r.dia);
+      go.disabled = !ok.length;
+      go.textContent = ok.length ? `Importar ${ok.length} conta${ok.length > 1 ? "s" : ""}` : "Importar";
+      chkWrap.hidden = !parsed.some((r) => r.status === "pago");
+      if (!parsed.length) { prev.replaceChildren(); return; }
+      const bad = parsed.length - ok.length;
+      prev.replaceChildren(
+        h("div", { class: "tablewrap" }, h("table", {},
+          h("thead", {}, h("tr", {}, ["Conta", "Valor", "Dia", "Categoria", "Status"].map((x) => h("th", { text: x })))),
+          h("tbody", {}, parsed.map((r) => h("tr", {},
+            h("td", { text: r.nome }),
+            h("td", { class: r.valor == null ? "bad" : "num", text: r.valor == null ? "não entendi" : brl.format(r.valor) }),
+            h("td", { class: r.dia ? "num" : "bad", text: r.dia || "não entendi" }),
+            h("td", { text: r.categoria || "—" }),
+            h("td", { text: r.status === "pago" ? "Pago" : r.status === "pendente" ? "Pendente" : "—" })))))),
+        bad ? h("div", { class: "hint", style: "color:var(--bad);font-size:14px;margin-top:6px", text: `${bad} linha${bad > 1 ? "s" : ""} sem valor ou dia válido não ser${bad > 1 ? "ão" : "á"} importada${bad > 1 ? "s" : ""}. Você pode cadastrar depois.` }) : null);
+    }
+    ta.addEventListener("input", update);
+    go.addEventListener("click", async () => {
+      const ok = parsed.filter((r) => r.valor != null && r.dia);
+      go.disabled = true; err.textContent = "";
+      let n = 0;
+      try {
+        for (const r of ok) {
+          const ref = await S.db.collection("contas").add({ nome: r.nome, valor: r.valor, dia: r.dia, categoria: r.categoria, inicio: S.mes, fim: null, obs: "", criadoEm: new Date().toISOString() });
+          if (chk.checked && r.status === "pago") await S.db.doc(`lancamentos/${S.mes}_${ref.id}`).set({ contaId: ref.id, mes: S.mes, status: "pago", pagoEm: isoDay(new Date()) });
+          n++;
+        }
+        closeModal(); toast(`${n} conta${n > 1 ? "s" : ""} importada${n > 1 ? "s" : ""}`);
+      } catch (e) {
+        err.textContent = n ? `${n} contas importadas antes de um erro. Confira a lista antes de importar de novo.` : "";
+        go.disabled = false; writeFailed(e);
+      }
+    });
+    openModal(h("div", { class: "modal wide", role: "dialog", "aria-labelledby": "i-title" },
+      h("h2", { id: "i-title", text: "Importar da planilha" }),
+      h("p", { style: "margin:0;color:var(--muted)" }, "No Google Planilhas, selecione as linhas das contas (pode incluir o cabeçalho), copie com Ctrl+C e cole abaixo. O app reconhece nome, valor, dia ou data de vencimento, categoria e status."),
+      field("Linhas copiadas", ta),
+      prev, chkWrap, err,
+      h("div", { class: "mactions" }, h("span", { class: "hint", style: "font-size:13px;color:var(--muted)", text: `As contas começam em ${monthLabel(S.mes)} e se repetem todo mês.` }),
+        h("div", { class: "grp" }, h("button", { class: "btn ghost", type: "button", onclick: closeModal }, "Cancelar"), go))));
+    chkWrap.hidden = true;
+  }
+
+  // ---------- Copiar resumo ----------
+  $("btnCopy").addEventListener("click", () => {
+    const items = itemsFor(S.mes);
+    const lines = [`Contas de ${monthLabel(S.mes)}`, ["Vencimento", "Conta", "Categoria", "Valor", "Status", "Pago em"].join("\t")];
+    for (const i of items) lines.push([fmtDM(i.due), i.c.nome, i.c.categoria || "", fmtMoneyInput(i.valor), i.status === "pago" ? "Pago" : i.status === "atrasada" ? "Atrasada" : "Pendente", i.l && i.l.pagoEm ? i.l.pagoEm.split("-").reverse().join("/") : ""].join("\t"));
+    const sum = (f) => items.filter(f).reduce((s, i) => s + i.valor, 0);
+    lines.push("", `Total\t\t\t${fmtMoneyInput(sum(() => true))}`, `Pago\t\t\t${fmtMoneyInput(sum((i) => i.status === "pago"))}`, `A pagar\t\t\t${fmtMoneyInput(sum((i) => i.status !== "pago"))}`);
+    const text = lines.join("\n");
+    const fallback = () => {
+      const ta = h("textarea", { id: "copy-txt", rows: "10", readonly: true }); ta.value = text;
+      openModal(h("div", { class: "modal" }, h("h2", { text: "Resumo do mês" }), h("p", { style: "margin:0;color:var(--muted)", text: "Selecione o texto e copie para colar numa planilha ou mensagem." }), ta, h("div", { class: "mactions" }, h("span"), h("button", { class: "btn", onclick: closeModal }, "Fechar"))));
+      ta.focus(); ta.select();
+    };
+    try { navigator.clipboard.writeText(text).then(() => toast("Resumo copiado. Cole numa planilha ou mensagem."), fallback); } catch (e) { fallback(); }
+  });
+
+  // ---------- Eventos ----------
+  $("prev").addEventListener("click", () => go(addMonths(S.mes, -1)));
+  $("next").addEventListener("click", () => go(addMonths(S.mes, 1)));
+  $("btnToday").addEventListener("click", () => go(thisMonth()));
+  $("btnAdd").addEventListener("click", () => openEdit(null));
+  $("btnImport").addEventListener("click", openImport);
+  $("chips").addEventListener("click", (e) => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    S.filtro = b.dataset.f; try { localStorage.setItem("cc-filtro", S.filtro); } catch (err) {}
+    render();
+  });
+
+  // ---------- Dados ----------
+  render();
+  (async () => {
+    const cl = window.claude;
+    const db = cl && cl.use ? await cl.use("db") : null;
+    if (!db) { S.unavailable = true; S.canWrite = false; render(); return; }
+    S.db = db;
+    try { const user = await cl.use("user"); const can = user ? await user.can("data.write") : null; if (can === false) S.canWrite = false; } catch (e) {}
+    let got = 0; const mark = () => { if (++got >= 2 && !S.ready) { S.ready = true; } render(); };
+    db.collection("contas").onSnapshot((snap) => {
+      S.contas = new Map(snap.docs.map((d) => [d.id, d.data()]));
+      mark();
+    }, () => { S.unavailable = true; render(); });
+    db.collection("lancamentos").where("mes", ">=", addMonths(thisMonth(), -24)).onSnapshot((snap) => {
+      S.lanc = new Map(snap.docs.map((d) => [d.id, d.data()]));
+      mark();
+    }, () => {});
+    db.collection("notas").onSnapshot((snap) => {
+      S.notas = new Map(snap.docs.map((d) => [d.id, d.data()]));
+      render();
+    }, () => {});
+  })();
+})();
+</script>
